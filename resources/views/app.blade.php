@@ -7,12 +7,12 @@
         <meta name="theme-color" content="#060118">
         <meta
             name="description"
-            content="A premium dark-mode-first restaurant ordering PWA for browsing meals, placing pickup orders, and paying cash at the restaurant."
+            content="Order tender grilled chicken and goat from Dri Africain Traditional Grill LLC in Papillion, Nebraska. Pickup-only, cash-at-pickup traditional African grill."
         >
-        <meta property="og:title" content="{{ config('app.name') }}">
+        <meta property="og:title" content="Dri Africain Traditional Grill LLC | Grilled Chicken & Goat in Papillion, NE">
         <meta
             property="og:description"
-            content="Browse the menu, order for pickup, and pay cash when you arrive. Mobile-first, installable, and ready for notification upgrades."
+            content="Pickup-only African grill in Papillion, Nebraska serving tender grilled chicken and goat with cash payment at pickup."
         >
         <meta property="og:type" content="website">
         <meta property="og:url" content="{{ url()->current() }}">
@@ -20,23 +20,32 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="apple-mobile-web-app-title" content="Ember Table">
+        <meta name="apple-mobile-web-app-title" content="Dri Grill">
         <link rel="canonical" href="{{ url()->current() }}">
         <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
         <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
         <link rel="apple-touch-icon" href="{{ asset('icons/app-icon.svg') }}">
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=sora:400,500,600,700,800|outfit:400,500,600,700,800" rel="stylesheet" />
-        <title>{{ config('app.name') }}</title>
+        <link href="https://fonts.bunny.net/css?family=josefin-sans:300,400,500,600,700|oswald:300,400,500,600,700" rel="stylesheet" />
+        <title>Dri Africain Traditional Grill LLC | Grilled Chicken &amp; Goat in Papillion, NE</title>
         @php
             $restaurantSchema = [
                 '@context' => 'https://schema.org',
-                '@type' => 'Restaurant',
-                'name' => 'Ember Table',
-                'servesCuisine' => 'Contemporary African Grill',
-                'description' => 'Pickup-first restaurant ordering experience with cash payment at the premises.',
+                '@type' => ['Restaurant', 'FoodEstablishment', 'LocalBusiness'],
+                'name' => 'Dri Africain Traditional Grill LLC',
+                'servesCuisine' => 'Traditional African Grill',
+                'description' => 'Pickup-only traditional African grilled chicken and grilled goat in Papillion, Nebraska.',
                 'url' => url('/'),
+                'address' => [
+                    '@type' => 'PostalAddress',
+                    'streetAddress' => '701 Golden Gate Circle',
+                    'addressLocality' => 'Papillion',
+                    'addressRegion' => 'NE',
+                    'postalCode' => '68046',
+                    'addressCountry' => 'US',
+                ],
                 'paymentAccepted' => 'Cash',
+                'currenciesAccepted' => 'USD',
                 'priceRange' => '$$',
             ];
         @endphp

@@ -11,19 +11,19 @@ type FoodCardProps = {
 
 export function FoodCard({ food, onSelectFood }: FoodCardProps) {
     return (
-        <Card className="group overflow-hidden">
+        <Card className="group overflow-hidden rounded-[1.25rem]">
             <button className="block w-full text-left" onClick={() => onSelectFood(food)} type="button">
-                <div className="relative h-56 overflow-hidden">
+                <div className="relative h-52 overflow-hidden">
                     <img
                         alt={`${food.name} from Dri Africain Traditional Grill LLC`}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                         src={food.image}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[rgba(6,1,24,0.92)] via-[rgba(6,1,24,0.2)] to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[rgba(17,16,15,0.94)] via-[rgba(17,16,15,0.1)] to-transparent" />
                     <div className="absolute left-4 top-4 flex flex-wrap gap-2">
                         {food.tags.slice(0, 2).map((tag) => (
                             <span
-                                className="rounded-full border border-white/15 bg-[rgba(12,2,49,0.72)] px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--text-950)]"
+                                className="rounded-full border border-white/15 bg-[rgba(17,16,15,0.7)] px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--text-950)]"
                                 key={tag}
                             >
                                 {tag}
@@ -38,7 +38,7 @@ export function FoodCard({ food, onSelectFood }: FoodCardProps) {
                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-900)]">
                                 {food.category}
                             </p>
-                            <h3 className="mt-2 text-2xl font-semibold">{food.name}</h3>
+                            <h3 className="mt-2 text-[1.65rem]">{food.name}</h3>
                         </div>
                         <MoneyDisplay amount={food.price} className="text-lg font-semibold text-[color:var(--primary-900)]" />
                     </div>

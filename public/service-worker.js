@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ember-table-shell-v1';
+const CACHE_NAME = 'dri-africain-shell-v1';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = ['/', OFFLINE_URL, '/manifest.webmanifest', '/favicon.ico', '/icons/app-icon.svg'];
 
@@ -37,7 +37,7 @@ self.addEventListener('fetch', (event) => {
 
             return fetch(request)
                 .then((response) => {
-                    if (! response.ok || !request.url.startsWith(self.location.origin)) {
+                    if (!response.ok || !request.url.startsWith(self.location.origin)) {
                         return response;
                     }
 
@@ -46,7 +46,7 @@ self.addEventListener('fetch', (event) => {
 
                     return response;
                 })
-                .catch(() => caches.match('/favicon.ico'));
+                .catch(() => caches.match('/icons/app-icon.svg'));
         }),
     );
 });

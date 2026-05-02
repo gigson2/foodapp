@@ -1,14 +1,11 @@
 import type { Customer } from '@/types';
 import { createId } from '@/utils/ids';
+import { formatUsPhone, normalizeUsPhone } from '@/utils/phone';
 import { readStorage, removeStorage, writeStorage } from '@/utils/storage';
 
 const CUSTOMER_KEY = 'restaurant.customer';
 const listeners = new Set<() => void>();
 let currentCustomer = readStorage<Customer | null>(CUSTOMER_KEY, null);
-
-function normalizePhone(phone: string) {
-    return phone.replace(/[^\d+]/g, '').trim();
-}
 
 function notify() {
     listeners.forEach((listener) => listener());
@@ -19,7 +16,7 @@ export const authService = {
         return currentCustomer;
     },
     saveCustomer(input: Pick<Customer, 'name' | 'phone'>): Customer {
-        const normalizedPhone = normalizePhone(input.phone);
+        const normalizedPhone = normalizeUsPhone(input.phone);
         const customer: Customer = {
             id: createId('customer'),
             name: input.name.trim(),
@@ -45,10 +42,11 @@ export const authService = {
     },
     async preparePhoneIdentity(phone: string) {
         return {
-            phone: normalizePhone(phone),
+            phone: normalizeUsPhone(phone),
             authMode: 'simple_phone_identity' as const,
             upgradePath: 'otp_sms' as const,
         };
     },
-    normalizePhone,
+    normalizePhone: normalizeUsPhone,
+    formatPhone: formatUsPhone,
 };

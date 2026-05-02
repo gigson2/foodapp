@@ -1,7 +1,7 @@
 {
-    "name": "Ember Table Pickup Ordering",
-    "short_name": "Ember Table",
-    "description": "A premium restaurant pickup ordering PWA with cash payment at the restaurant.",
+    "name": "Dri Africain Traditional Grill",
+    "short_name": "Dri Grill",
+    "description": "Pickup-only traditional African grill ordering PWA with cash payment at pickup.",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",

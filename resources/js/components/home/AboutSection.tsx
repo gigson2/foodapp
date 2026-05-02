@@ -1,34 +1,50 @@
-import { Card } from '@/components/common/Card';
+import { Button } from '@/components/common/Button';
 import { SectionContainer } from '@/components/layout/SectionContainer';
 
 export function AboutSection() {
     return (
-        <SectionContainer
-            description="A dark-mode-first ordering experience shaped for fast pickup decisions and comfortable mobile use."
-            eyebrow="About Ember Table"
-            id="about"
-            title="Built around speed, clarity, and warm hospitality"
-        >
-            <div className="grid gap-5 lg:grid-cols-3">
-                <Card className="p-6">
-                    <h3 className="text-2xl font-semibold">Chef-driven menu</h3>
-                    <p className="mt-3 text-sm leading-7 text-muted">
-                        The menu mixes expressive rice plates, grill items, soups, and light drinks with strong repeat-order appeal.
-                    </p>
-                </Card>
-                <Card className="p-6">
-                    <h3 className="text-2xl font-semibold">Pickup-first experience</h3>
-                    <p className="mt-3 text-sm leading-7 text-muted">
-                        No online payment complexity. Customers order quickly, collect at the premises, and pay cash on arrival.
-                    </p>
-                </Card>
-                <Card className="p-6">
-                    <h3 className="text-2xl font-semibold">Ready for growth</h3>
-                    <p className="mt-3 text-sm leading-7 text-muted">
-                        The UI already isolates auth, orders, notifications, and PWA behavior so Laravel APIs can replace mocks cleanly.
-                    </p>
-                </Card>
-            </div>
-        </SectionContainer>
+        <div className="relative overflow-hidden">
+            <SectionContainer className="relative" contentClassName="relative" id="about">
+                <div className="absolute left-0 top-10 hidden w-full opacity-18 lg:block">
+                    <img alt="" className="w-full object-contain" src="/assets/theme/about_shapes.png" />
+                </div>
+
+                <div className="relative mb-14 max-w-5xl lg:ml-[14%]">
+                    <h2 className="text-5xl sm:text-6xl lg:text-[5rem]">
+                        Traditional African Grill, Prepared with Care
+                    </h2>
+                </div>
+
+                <div className="relative grid gap-8 lg:grid-cols-[0.35fr_0.32fr_0.23fr] lg:items-start">
+                    <div className="overflow-hidden rounded-[1.75rem]">
+                        <img
+                            alt="Grilled chicken served with onions from Dri Africain Traditional Grill LLC"
+                            className="h-[22rem] w-full object-cover lg:h-[34rem]"
+                            src="/assets/images/image3.jpeg"
+                        />
+                    </div>
+
+                    <div className="lg:pt-10">
+                        <p className="text-base leading-8 text-muted">
+                            Dri Africain Traditional Grill LLC focuses on professionally grilled chicken and goat prepared in large scale without losing tenderness, flavor, or quality. Every pack is neatly arranged in takeaway containers, making pickup simple, clean, and satisfying.
+                        </p>
+                        <p className="mt-5 text-base leading-8 text-muted">
+                            The brand is built around trust, professional preparation, smoky flavor, and clean packaging that customers can rely on.
+                        </p>
+                        <Button className="mt-10" size="lg">
+                            More About
+                        </Button>
+                    </div>
+
+                    <div className="overflow-hidden rounded-[1.75rem] lg:-mt-32">
+                        <img
+                            alt="Packaged grilled goat ready for pickup from Dri Africain Traditional Grill LLC"
+                            className="h-[18rem] w-full object-cover lg:h-[26rem]"
+                            src="/assets/images/image4.jpeg"
+                        />
+                    </div>
+                </div>
+            </SectionContainer>
+        </div>
     );
 }

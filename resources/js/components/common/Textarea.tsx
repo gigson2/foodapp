@@ -12,7 +12,7 @@ export function Textarea({ className, error, label, ...props }: TextareaProps) {
             {label ? <span className="text-sm font-medium text-[color:var(--text-950)]">{label}</span> : null}
             <textarea
                 className={cn(
-                    'min-h-32 w-full rounded-[1.5rem] border border-white/10 bg-white/7 px-4 py-3 text-[color:var(--text-950)] outline-none transition placeholder:text-[color:var(--text-800)] focus:border-[color:var(--accent-500)]/40 focus:bg-white/10',
+                    'theme-field min-h-32 w-full rounded-[1.5rem] px-4 py-3',
                     error ? 'border-[color:var(--primary-500)]/45' : '',
                     className,
                 )}

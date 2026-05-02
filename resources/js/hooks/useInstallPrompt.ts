@@ -13,25 +13,39 @@ function detectIos() {
     return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 }
 
+function detectStandalone() {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+
+    return (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        ('standalone' in window.navigator && Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone))
+    );
+}
+
 export function useInstallPrompt() {
     const [promptEvent, setPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
-    const [isStandalone, setIsStandalone] = useState(false);
-    const isIos = useMemo(detectIos, []);
+    const [isStandalone, setIsStandalone] = useState(detectStandalone);
+    const isIos = useMemo(() => detectIos(), []);
 
     useEffect(() => {
         const handleBeforeInstallPrompt = (event: Event) => {
             event.preventDefault();
             setPromptEvent(event as BeforeInstallPromptEvent);
         };
+        const handleInstalled = () => {
+            setPromptEvent(null);
+            setIsStandalone(true);
+        };
 
-        const standalone =
-            window.matchMedia('(display-mode: standalone)').matches ||
-            ('standalone' in window.navigator && Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone));
-
-        setIsStandalone(standalone);
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.addEventListener('appinstalled', handleInstalled);
 
-        return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('appinstalled', handleInstalled);
+        };
     }, []);
 
     const promptInstall = async () => {

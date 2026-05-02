@@ -6,6 +6,8 @@ import { Modal } from '@/components/common/Modal';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MoneyDisplay } from '@/components/ordering/MoneyDisplay';
 import { OrderStatusBadge } from '@/components/ordering/OrderStatusBadge';
+import { openDirectionsPrompt } from '@/utils/location';
+import { formatUsPhone } from '@/utils/phone';
 import type { Order } from '@/types';
 
 type OrderSuccessModalProps = {
@@ -17,6 +19,7 @@ type OrderSuccessModalProps = {
 
 export function OrderSuccessModal({ isOpen, onClose, onOpenAccount, order }: OrderSuccessModalProps) {
     const isMobile = useMediaQuery('(max-width: 767px)');
+    const pickupAddress = '701 Golden Gate Circle, Papillion, NE 68046';
 
     if (! order) {
         return null;
@@ -50,7 +53,7 @@ export function OrderSuccessModal({ isOpen, onClose, onOpenAccount, order }: Ord
                 <div className="grid gap-3 text-sm text-muted sm:grid-cols-2">
                     <div>
                         <p className="font-medium text-[color:var(--text-950)]">{order.customerName}</p>
-                        <p>{order.customerPhone}</p>
+                        <p>{formatUsPhone(order.customerPhone)}</p>
                     </div>
                     <div>
                         <p className="font-medium text-[color:var(--text-950)]">Payment method</p>
@@ -78,7 +81,13 @@ export function OrderSuccessModal({ isOpen, onClose, onOpenAccount, order }: Ord
 
                 <div className="flex items-start gap-3 rounded-[1.5rem] border border-white/10 bg-white/6 p-4 text-sm text-muted">
                     <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>Pickup address: 701 Golden Gate Circle, Papillion, NE 68046</span>
+                    <button
+                        className="text-left underline decoration-white/20 underline-offset-4 transition hover:text-[color:var(--primary-500)]"
+                        onClick={() => openDirectionsPrompt(pickupAddress)}
+                        type="button"
+                    >
+                        Pickup address: {pickupAddress}
+                    </button>
                 </div>
             </Card>
 

@@ -1,16 +1,7 @@
-import { createContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
-
-export type ThemeMode = 'dark' | 'light';
-
-type ThemeContextValue = {
-    theme: ThemeMode;
-    toggleTheme: () => void;
-    setTheme: (theme: ThemeMode) => void;
-};
+import { useEffect, useMemo, useState, type PropsWithChildren } from 'react';
+import { ThemeContext, type ThemeContextValue, type ThemeMode } from '@/components/theme/ThemeContext';
 
 const STORAGE_KEY = 'restaurant-theme';
-
-export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: PropsWithChildren) {
     const [theme, setThemeState] = useState<ThemeMode>(() => {

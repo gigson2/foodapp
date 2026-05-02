@@ -8,14 +8,15 @@ import { Input } from '@/components/common/Input';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Modal } from '@/components/common/Modal';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { formatUsPhone, isValidUsPhone } from '@/utils/phone';
 
 const customerSchema = z.object({
     name: z.string().trim().min(2, 'Full name is required'),
     phone: z
         .string()
         .trim()
-        .min(7, 'Phone number is required')
-        .regex(/^[\d+\s()-]+$/, 'Enter a valid phone number'),
+        .min(1, 'Phone number is required')
+        .refine(isValidUsPhone, 'Enter a valid USA phone number'),
 });
 
 type CustomerFormValues = z.infer<typeof customerSchema>;
@@ -43,6 +44,7 @@ export function CustomerDetailsModal({
         handleSubmit,
         register,
         reset,
+        setValue,
     } = useForm<CustomerFormValues>({
         resolver: zodResolver(customerSchema),
         defaultValues: {
@@ -60,6 +62,15 @@ export function CustomerDetailsModal({
         }
     }, [initialValues?.name, initialValues?.phone, isOpen, reset]);
 
+    const phoneField = register('phone', {
+        onChange: (event) => {
+            setValue('phone', formatUsPhone(event.target.value), {
+                shouldDirty: true,
+                shouldValidate: true,
+            });
+        },
+    });
+
     const content = (
         <form
             className="space-y-4"
@@ -68,7 +79,15 @@ export function CustomerDetailsModal({
             })}
         >
             <Input autoComplete="name" error={errors.name?.message} label="Full name" placeholder="Enter your full name" {...register('name')} />
-            <Input autoComplete="tel" error={errors.phone?.message} label="Phone number" placeholder="Enter your phone number" {...register('phone')} />
+            <Input
+                autoComplete="tel-national"
+                error={errors.phone?.message}
+                inputMode="tel"
+                label="Phone number"
+                maxLength={14}
+                placeholder="(402) 555-1234"
+                {...phoneField}
+            />
 
             <div className="rounded-[1.5rem] border border-white/10 bg-white/6 p-4 text-sm leading-7 text-muted">
                 Enter your details so we can contact you when your grilled order is ready for pickup.
@@ -91,7 +110,7 @@ export function CustomerDetailsModal({
 
     if (isMobile) {
         return (
-            <BottomSheet description={description} isOpen={isOpen} onClose={onClose} title={title}>
+            <BottomSheet description={description} isOpen={isOpen} onClose={onClose} panelClassName="max-w-[min(100%,28rem)]" title={title}>
                 {content}
             </BottomSheet>
         );

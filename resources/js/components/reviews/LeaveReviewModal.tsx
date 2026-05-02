@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { BottomSheet } from '@/components/common/BottomSheet';
 import { Button } from '@/components/common/Button';
@@ -10,6 +10,7 @@ import { Modal } from '@/components/common/Modal';
 import { Textarea } from '@/components/common/Textarea';
 import { StarRatingInput } from '@/components/reviews/StarRatingInput';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { formatUsPhone, isValidUsPhone } from '@/utils/phone';
 import type { Food } from '@/types';
 
 const reviewSchema = z.object({
@@ -17,8 +18,8 @@ const reviewSchema = z.object({
     phone: z
         .string()
         .trim()
-        .min(7, 'Phone number is required')
-        .regex(/^[\d+\s()-]+$/, 'Enter a valid phone number'),
+        .min(1, 'Phone number is required')
+        .refine(isValidUsPhone, 'Enter a valid USA phone number'),
     foodName: z.string().optional(),
     rating: z.number().min(1, 'Rating is required').max(5),
     message: z.string().trim().min(10, 'Review message is required'),
@@ -46,12 +47,12 @@ export function LeaveReviewModal({
     const isMobile = useMediaQuery('(max-width: 767px)');
     const [submitError, setSubmitError] = useState<string | null>(null);
     const {
+        control,
         formState: { errors },
         handleSubmit,
         register,
         reset,
         setValue,
-        watch,
     } = useForm<ReviewFormValues>({
         resolver: zodResolver(reviewSchema),
         defaultValues: {
@@ -63,20 +64,14 @@ export function LeaveReviewModal({
         },
     });
 
-    const rating = watch('rating');
-
-    useEffect(() => {
-        if (isOpen) {
-            setSubmitError(null);
-            reset({
-                name: initialValues?.name ?? '',
-                phone: initialValues?.phone ?? '',
-                foodName: '',
-                rating: 0,
-                message: '',
+    const phoneField = register('phone', {
+        onChange: (event) => {
+            setValue('phone', formatUsPhone(event.target.value), {
+                shouldDirty: true,
+                shouldValidate: true,
             });
-        }
-    }, [initialValues?.name, initialValues?.phone, isOpen, reset]);
+        },
+    });
 
     const content = (
         <form
@@ -100,12 +95,20 @@ export function LeaveReviewModal({
             })}
         >
             <Input autoComplete="name" error={errors.name?.message} label="Full name" placeholder="Enter your full name" {...register('name')} />
-            <Input autoComplete="tel" error={errors.phone?.message} label="Phone number" placeholder="Enter your phone number" {...register('phone')} />
+            <Input
+                autoComplete="tel-national"
+                error={errors.phone?.message}
+                inputMode="tel"
+                label="Phone number"
+                maxLength={14}
+                placeholder="(402) 555-1234"
+                {...phoneField}
+            />
 
             <label className="block space-y-2">
                 <span className="text-sm font-medium text-[color:var(--text-950)]">Food ordered</span>
                 <select
-                    className="w-full rounded-[1.5rem] border border-white/10 bg-white/7 px-4 py-3 text-[color:var(--text-950)] outline-none transition focus:border-[color:var(--accent-500)]/40 focus:bg-white/10"
+                    className="theme-field w-full rounded-[1.5rem] px-4 py-3"
                     {...register('foodName')}
                 >
                     <option value="">Select a grill item</option>
@@ -117,7 +120,11 @@ export function LeaveReviewModal({
                 </select>
             </label>
 
-            <StarRatingInput onChange={(nextRating) => setValue('rating', nextRating, { shouldValidate: true })} value={rating} />
+            <Controller
+                control={control}
+                name="rating"
+                render={({ field }) => <StarRatingInput onChange={field.onChange} value={field.value} />}
+            />
             {errors.rating?.message ? <p className="text-sm text-[color:var(--primary-800)]">{errors.rating.message}</p> : null}
 
             <Textarea error={errors.message?.message} label="Review" placeholder="Share your pickup and grill experience" {...register('message')} />
@@ -141,6 +148,7 @@ export function LeaveReviewModal({
                 description="Your review will be submitted for approval before it appears publicly."
                 isOpen={isOpen}
                 onClose={onClose}
+                panelClassName="max-w-[min(100%,30rem)]"
                 title="Leave a review"
             >
                 {content}

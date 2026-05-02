@@ -1,5 +1,5 @@
 import { Clock3, HandCoins, MapPin, PackageCheck } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { BottomSheet } from '@/components/common/BottomSheet';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
@@ -7,6 +7,7 @@ import { Modal } from '@/components/common/Modal';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MoneyDisplay } from '@/components/ordering/MoneyDisplay';
 import { QuantitySelector } from '@/components/ordering/QuantitySelector';
+import { openDirectionsPrompt } from '@/utils/location';
 import type { Food } from '@/types';
 
 type FoodOrderModalProps = {
@@ -19,10 +20,7 @@ type FoodOrderModalProps = {
 export function FoodOrderModal({ food, isOpen, onClose, onPlaceOrder }: FoodOrderModalProps) {
     const isMobile = useMediaQuery('(max-width: 767px)');
     const [quantity, setQuantity] = useState(1);
-
-    useEffect(() => {
-        setQuantity(1);
-    }, [food?.id]);
+    const pickupAddress = '701 Golden Gate Circle, Papillion, NE 68046';
 
     if (! food) {
         return null;
@@ -34,7 +32,7 @@ export function FoodOrderModal({ food, isOpen, onClose, onPlaceOrder }: FoodOrde
         <div className="space-y-5">
             <img
                 alt={`${food.name} ready for pickup from Dri Africain Traditional Grill LLC`}
-                className="h-56 w-full rounded-[1.75rem] object-cover sm:h-72"
+                className="h-44 w-full rounded-[1.75rem] object-cover sm:h-56"
                 src={food.image}
             />
 
@@ -47,7 +45,7 @@ export function FoodOrderModal({ food, isOpen, onClose, onPlaceOrder }: FoodOrde
                 <MoneyDisplay amount={food.price} className="text-2xl font-semibold text-[color:var(--primary-900)]" />
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2">
                 <Card className="p-4">
                     <div className="flex items-center gap-2 text-sm text-muted">
                         <Clock3 className="h-4 w-4" />
@@ -74,7 +72,13 @@ export function FoodOrderModal({ food, isOpen, onClose, onPlaceOrder }: FoodOrde
                         <MapPin className="h-4 w-4" />
                         Pickup
                     </div>
-                    <p className="mt-2 text-lg font-semibold">Papillion, NE</p>
+                    <button
+                        className="mt-2 text-left text-lg font-semibold text-[color:var(--text-950)] transition hover:text-[color:var(--primary-500)]"
+                        onClick={() => openDirectionsPrompt(pickupAddress)}
+                        type="button"
+                    >
+                        Papillion, NE
+                    </button>
                 </Card>
             </div>
 
@@ -93,7 +97,14 @@ export function FoodOrderModal({ food, isOpen, onClose, onPlaceOrder }: FoodOrde
 
             <div className="space-y-3 rounded-[1.75rem] border border-white/10 bg-white/6 p-4 text-sm leading-7 text-muted">
                 <p>Cash payment only. Pay when you pick up at the restaurant.</p>
-                <p>Pickup location: 701 Golden Gate Circle, Papillion, NE 68046.</p>
+                <button
+                    className="text-left text-[color:var(--text-900)] underline decoration-white/20 underline-offset-4 transition hover:text-[color:var(--primary-500)]"
+                    onClick={() => openDirectionsPrompt(pickupAddress)}
+                    type="button"
+                >
+                    Pickup location: {pickupAddress}.
+                </button>
+                <p>Pre-orders are accepted on Friday. Grill preparation and pickup happen on Saturday from 11:00 AM to 10:00 PM, with a final ordering cutoff at 9:00 PM.</p>
             </div>
 
             <Button className="w-full" onClick={() => onPlaceOrder(food, quantity)} type="button">
@@ -104,14 +115,26 @@ export function FoodOrderModal({ food, isOpen, onClose, onPlaceOrder }: FoodOrde
 
     if (isMobile) {
         return (
-            <BottomSheet description="Confirm quantity and place your pickup order." isOpen={isOpen} onClose={onClose} title="Order from the grill">
+            <BottomSheet
+                description="Confirm quantity and place your pickup order."
+                isOpen={isOpen}
+                onClose={onClose}
+                panelClassName="max-w-[min(100%,32rem)]"
+                title="Order from the grill"
+            >
                 {content}
             </BottomSheet>
         );
     }
 
     return (
-        <Modal description="Confirm quantity and place your pickup order." isOpen={isOpen} onClose={onClose} title="Order from the grill">
+        <Modal
+            description="Confirm quantity and place your pickup order."
+            isOpen={isOpen}
+            onClose={onClose}
+            panelClassName="max-w-3xl"
+            title="Order from the grill"
+        >
             {content}
         </Modal>
     );

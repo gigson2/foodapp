@@ -1,42 +1,23 @@
-import { createBrowserRouter, Link } from 'react-router-dom';
-import { Button } from '@/components/common/Button';
-import { Card } from '@/components/common/Card';
+import { createBrowserRouter } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
-
-function PlaceholderRoute({
-    description,
-    title,
-}: {
-    title: string;
-    description: string;
-}) {
-    return (
-        <div className="section-shell flex min-h-screen items-center justify-center py-16">
-            <Card className="max-w-2xl p-8 text-center sm:p-10">
-                <p className="section-eyebrow justify-center">Placeholder route</p>
-                <h1 className="mt-5 text-4xl font-semibold">{title}</h1>
-                <p className="mt-4 text-base leading-8 text-muted">{description}</p>
-                <Link className="mt-8 inline-flex" to="/">
-                    <Button>Return to public app</Button>
-                </Link>
-            </Card>
-        </div>
-    );
-}
+import { PlaceholderRoute } from '@/components/layout/PlaceholderRoute';
+import { RouteErrorBoundary } from '@/components/layout/RouteErrorBoundary';
 
 export const router = createBrowserRouter([
     {
         path: '/',
         element: <AppShell />,
+        errorElement: <RouteErrorBoundary />,
     },
     {
         path: '/customer',
         element: (
             <PlaceholderRoute
-                description="The full customer dashboard is intentionally deferred. The current phase focuses on the public ordering flow and account modal experience."
+                description="The full customer dashboard is intentionally deferred. The current phase focuses on the public ordering flow, pickup identity, and account modal."
                 title="Customer dashboard placeholder"
             />
         ),
+        errorElement: <RouteErrorBoundary />,
     },
     {
         path: '/admin',
@@ -46,5 +27,6 @@ export const router = createBrowserRouter([
                 title="Admin dashboard placeholder"
             />
         ),
+        errorElement: <RouteErrorBoundary />,
     },
 ]);

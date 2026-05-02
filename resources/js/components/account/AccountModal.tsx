@@ -8,6 +8,7 @@ import { IOSInstallHint } from '@/components/pwa/IOSInstallHint';
 import { PWAInstallButton } from '@/components/pwa/PWAInstallButton';
 import { ReviewCard } from '@/components/reviews/ReviewCard';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { formatUsPhone } from '@/utils/phone';
 import type { Customer, Order, Review } from '@/types';
 
 type AccountModalProps = {
@@ -36,7 +37,7 @@ export function AccountModal({
             <Card className="p-5">
                 <p className="text-sm text-muted">Pickup identity</p>
                 <h3 className="mt-2 text-2xl font-semibold">{customer.name}</h3>
-                <p className="mt-1 text-sm text-muted">{customer.phone}</p>
+                <p className="mt-1 text-sm text-muted">{formatUsPhone(customer.phone)}</p>
                 <p className="mt-4 text-sm leading-7 text-muted">
                     This local profile keeps your recent pickup orders and review submissions available on this device.
                 </p>

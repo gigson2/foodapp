@@ -1,4 +1,4 @@
-import { House, MenuSquare, UserRound } from 'lucide-react';
+import { House, MenuSquare, MessageSquareQuote, UserRound } from 'lucide-react';
 import { cn } from '@/utils/classNames';
 
 type MobileBottomNavProps = {
@@ -6,45 +6,41 @@ type MobileBottomNavProps = {
     onAccount: () => void;
     onHome: () => void;
     onMenu: () => void;
+    onReviews: () => void;
 };
 
-export function MobileBottomNav({ activeSection, onAccount, onHome, onMenu }: MobileBottomNavProps) {
+export function MobileBottomNav({ activeSection, onAccount, onHome, onMenu, onReviews }: MobileBottomNavProps) {
+    const items = [
+        { id: 'home', label: 'Home', icon: House, onClick: onHome },
+        { id: 'menu', label: 'Menu', icon: MenuSquare, onClick: onMenu },
+        { id: 'reviews', label: 'Reviews', icon: MessageSquareQuote, onClick: onReviews },
+        { id: 'account', label: 'Account', icon: UserRound, onClick: onAccount },
+    ];
+
     return (
-        <nav className="safe-bottom fixed inset-x-4 bottom-3 z-50 md:hidden" aria-label="Mobile primary navigation">
-            <div className="glass-card-strong grid grid-cols-3 px-3 py-2">
-                <button
-                    aria-label="Go to home section"
-                    className={cn(
-                        'flex h-14 items-center justify-center rounded-2xl transition',
-                        activeSection === 'home' ? 'bg-white/12 text-[color:var(--text-950)]' : 'text-muted',
-                    )}
-                    onClick={onHome}
-                    type="button"
-                >
-                    <House className="h-6 w-6" />
-                </button>
-                <button
-                    aria-label="Go to menu section"
-                    className={cn(
-                        'flex h-14 items-center justify-center rounded-2xl transition',
-                        activeSection === 'menu' ? 'bg-white/12 text-[color:var(--text-950)]' : 'text-muted',
-                    )}
-                    onClick={onMenu}
-                    type="button"
-                >
-                    <MenuSquare className="h-6 w-6" />
-                </button>
-                <button
-                    aria-label="Open account"
-                    className={cn(
-                        'flex h-14 items-center justify-center rounded-2xl transition',
-                        activeSection === 'account' ? 'bg-white/12 text-[color:var(--text-950)]' : 'text-muted',
-                    )}
-                    onClick={onAccount}
-                    type="button"
-                >
-                    <UserRound className="h-6 w-6" />
-                </button>
+        <nav className="safe-bottom fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[color:var(--background-100)]/96 px-4 py-3 backdrop-blur-xl md:hidden">
+            <div className="mx-auto grid max-w-md grid-cols-4 gap-2">
+                {items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeSection === item.id;
+
+                    return (
+                        <button
+                            aria-label={item.label}
+                            className={cn(
+                                'flex min-h-14 items-center justify-center rounded-full border transition duration-200',
+                                isActive
+                                    ? 'border-[color:var(--primary-500)] bg-[color:var(--primary-500)] text-white'
+                                    : 'border-white/8 bg-white/6 text-[color:var(--text-800)] hover:border-[color:var(--primary-500)]/24 hover:bg-[color:var(--primary-500)]/10 hover:text-[color:var(--primary-500)]',
+                            )}
+                            key={item.id}
+                            onClick={item.onClick}
+                            type="button"
+                        >
+                            <Icon className="h-5 w-5" />
+                        </button>
+                    );
+                })}
             </div>
         </nav>
     );

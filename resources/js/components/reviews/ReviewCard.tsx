@@ -10,11 +10,11 @@ type ReviewCardProps = {
 
 export function ReviewCard({ review, showStatus = false }: ReviewCardProps) {
     return (
-        <Card className="space-y-4 p-5">
+        <Card className="space-y-5 p-6">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h3 className="text-lg font-semibold">{review.customerName}</h3>
-                    <p className="mt-1 text-sm text-muted">{new Date(review.createdAt).toLocaleDateString()}</p>
+                    <h3 className="text-2xl">{review.customerName}</h3>
+                    <p className="mt-2 text-sm uppercase tracking-[0.14em] text-muted">{new Date(review.createdAt).toLocaleDateString()}</p>
                 </div>
                 {showStatus ? (
                     <Badge className="bg-white/10 text-[color:var(--text-950)] capitalize">{review.status}</Badge>
@@ -30,7 +30,7 @@ export function ReviewCard({ review, showStatus = false }: ReviewCardProps) {
                 ))}
             </div>
 
-            <p className="text-sm leading-7 text-muted">{review.message}</p>
+            <p className="text-base leading-8 text-muted">{review.message}</p>
 
             {review.foodName ? (
                 <p className="text-sm font-medium text-[color:var(--accent-900)]">Ordered: {review.foodName}</p>

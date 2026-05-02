@@ -111,7 +111,7 @@ export function Modal({
                 aria-labelledby={titleId}
                 aria-modal="true"
                 className={cn(
-                    'glass-card-strong relative w-full overflow-hidden p-5 text-left shadow-[0_32px_90px_rgba(0,0,0,0.35)] outline-none sm:p-6',
+                    'glass-card-strong relative flex max-h-[88vh] w-full flex-col overflow-hidden p-5 text-left shadow-[0_32px_90px_rgba(0,0,0,0.35)] outline-none sm:p-6',
                     position === 'center'
                         ? 'max-w-2xl'
                         : 'max-w-2xl rounded-b-none pb-[calc(1.5rem+env(safe-area-inset-bottom))]',
@@ -142,7 +142,7 @@ export function Modal({
                     ) : null}
                 </div>
 
-                <div className="mt-6">{children}</div>
+                <div className="mt-6 overflow-y-auto pr-1">{children}</div>
             </div>
         </div>,
         document.body,
