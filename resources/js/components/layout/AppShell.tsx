@@ -22,6 +22,8 @@ import { useScrollToSection } from '@/hooks/useScrollToSection';
 import { orderService } from '@/services/orderService';
 import type { Food, Order } from '@/types';
 
+const EMPTY_ORDERS: Order[] = [];
+
 function subscribeOrders(listener: () => void) {
     return orderService.subscribe(listener);
 }
@@ -43,8 +45,8 @@ export function AppShell() {
 
     const orders = useSyncExternalStore(
         subscribeOrders,
-        () => (customer ? orderService.getOrdersByCustomer(customer.phone) : []),
-        () => [],
+        () => (customer ? orderService.getOrdersByCustomer(customer.phone) : EMPTY_ORDERS),
+        () => EMPTY_ORDERS,
     );
 
     const categoryNames = useMemo(() => ['All', ...mockCategories.map((category) => category.name)], []);

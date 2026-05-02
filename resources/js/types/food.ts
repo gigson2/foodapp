@@ -15,6 +15,6 @@ export interface Food {
     price: number;
     preparationTimeMinutes: number;
     isAvailable: boolean;
-    isFeatured: boolean;
     isPopular: boolean;
+    tags: string[];
 }

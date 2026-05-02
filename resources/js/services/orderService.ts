@@ -5,22 +5,42 @@ import { readStorage, writeStorage } from '@/utils/storage';
 
 const ORDER_KEY = 'restaurant.orders';
 const listeners = new Set<() => void>();
+const ordersByPhoneCache = new Map<string, { source: Order[]; orders: Order[] }>();
+let ordersCache = readStorage<Order[]>(ORDER_KEY, []);
 
 function notify() {
     listeners.forEach((listener) => listener());
 }
 
 function persist(orders: Order[]) {
+    ordersCache = orders;
+    ordersByPhoneCache.clear();
     writeStorage(ORDER_KEY, orders);
     notify();
 }
 
 export const orderService = {
     getOrders() {
-        return readStorage<Order[]>(ORDER_KEY, []);
+        return ordersCache;
     },
     getOrdersByCustomer(phone: string) {
-        return this.getOrders().filter((order) => order.customerPhone === phone);
+        const orders = this.getOrders();
+        const cached = ordersByPhoneCache.get(phone);
+
+        if (cached && cached.source === orders) {
+            return cached.orders;
+        }
+
+        const filteredOrders = orders.filter((order) => order.customerPhone === phone);
+        ordersByPhoneCache.set(phone, {
+            source: orders,
+            orders: filteredOrders,
+        });
+
+        return filteredOrders;
+    },
+    hasOrderHistory(phone: string) {
+        return this.getOrders().some((order) => order.customerPhone === phone);
     },
     createPickupCashOrder(input: { customer: Customer; food: Food; quantity: number }) {
         const item: OrderItem = {

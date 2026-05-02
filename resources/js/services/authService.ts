@@ -4,6 +4,11 @@ import { readStorage, removeStorage, writeStorage } from '@/utils/storage';
 
 const CUSTOMER_KEY = 'restaurant.customer';
 const listeners = new Set<() => void>();
+let currentCustomer = readStorage<Customer | null>(CUSTOMER_KEY, null);
+
+function normalizePhone(phone: string) {
+    return phone.replace(/[^\d+]/g, '').trim();
+}
 
 function notify() {
     listeners.forEach((listener) => listener());
@@ -11,21 +16,25 @@ function notify() {
 
 export const authService = {
     getCurrentCustomer(): Customer | null {
-        return readStorage<Customer | null>(CUSTOMER_KEY, null);
+        return currentCustomer;
     },
     saveCustomer(input: Pick<Customer, 'name' | 'phone'>): Customer {
+        const normalizedPhone = normalizePhone(input.phone);
         const customer: Customer = {
             id: createId('customer'),
             name: input.name.trim(),
-            phone: input.phone.trim(),
+            phone: normalizedPhone,
+            createdAt: currentCustomer?.phone === normalizedPhone ? currentCustomer.createdAt : new Date().toISOString(),
         };
 
+        currentCustomer = customer;
         writeStorage(CUSTOMER_KEY, customer);
         notify();
 
         return customer;
     },
     logout() {
+        currentCustomer = null;
         removeStorage(CUSTOMER_KEY);
         notify();
     },
@@ -36,9 +45,10 @@ export const authService = {
     },
     async preparePhoneIdentity(phone: string) {
         return {
-            phone,
+            phone: normalizePhone(phone),
             authMode: 'simple_phone_identity' as const,
             upgradePath: 'otp_sms' as const,
         };
     },
+    normalizePhone,
 };

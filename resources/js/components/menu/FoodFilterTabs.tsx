@@ -1,21 +1,24 @@
+import { cn } from '@/utils/classNames';
+
 type FoodFilterTabsProps = {
-    activeCategory: string;
     categories: string[];
-    onChange: (category: string) => void;
+    activeCategory: string;
+    onCategoryChange: (category: string) => void;
 };
 
-export function FoodFilterTabs({ activeCategory, categories, onChange }: FoodFilterTabsProps) {
+export function FoodFilterTabs({ activeCategory, categories, onCategoryChange }: FoodFilterTabsProps) {
     return (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
             {categories.map((category) => (
                 <button
-                    className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition ${
+                    className={cn(
+                        'whitespace-nowrap rounded-full border px-4 py-2.5 text-sm font-semibold transition',
                         activeCategory === category
-                            ? 'border-transparent bg-[color:var(--accent-500)] text-[color:var(--accent-50)]'
-                            : 'border-white/10 bg-white/7 text-[color:var(--text-900)] hover:bg-white/12'
-                    }`}
+                            ? 'border-[color:var(--primary-500)] bg-[color:var(--primary-500)] text-white'
+                            : 'border-white/10 bg-white/7 text-[color:var(--text-900)] hover:bg-white/12',
+                    )}
                     key={category}
-                    onClick={() => onChange(category)}
+                    onClick={() => onCategoryChange(category)}
                     type="button"
                 >
                     {category}

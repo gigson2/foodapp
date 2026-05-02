@@ -1,18 +1,17 @@
-import { Share2 } from 'lucide-react';
-import { Badge } from '@/components/common/Badge';
+import { Card } from '@/components/common/Card';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 
 export function IOSInstallHint() {
-    const { canInstall, isIos, isStandalone } = useInstallPrompt();
+    const { isIos, isStandalone } = useInstallPrompt();
 
-    if (! isIos || isStandalone || canInstall) {
+    if (! isIos || isStandalone) {
         return null;
     }
 
     return (
-        <Badge className="bg-white/10 px-4 py-2 text-left text-[0.8rem] leading-6 text-muted">
-            <Share2 className="mr-2 h-4 w-4 shrink-0" />
-            Tap Share, then Add to Home Screen.
-        </Badge>
+        <Card className="p-4 text-sm leading-7 text-muted">
+            On iPhone or iPad, tap <span className="font-semibold text-[color:var(--text-950)]">Share</span>, then{' '}
+            <span className="font-semibold text-[color:var(--text-950)]">Add to Home Screen</span> to install Dri Grill.
+        </Card>
     );
 }

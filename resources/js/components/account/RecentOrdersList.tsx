@@ -1,5 +1,5 @@
-import { Card } from '@/components/common/Card';
 import { EmptyState } from '@/components/common/EmptyState';
+import { Card } from '@/components/common/Card';
 import { MoneyDisplay } from '@/components/ordering/MoneyDisplay';
 import { OrderStatusBadge } from '@/components/ordering/OrderStatusBadge';
 import type { Order } from '@/types';
@@ -12,7 +12,7 @@ export function RecentOrdersList({ orders }: RecentOrdersListProps) {
     if (orders.length === 0) {
         return (
             <EmptyState
-                description="Place a pickup order and it will appear here with status updates."
+                description="Your pickup orders will appear here after you place your first grill order."
                 title="No orders yet"
             />
         );
@@ -20,21 +20,22 @@ export function RecentOrdersList({ orders }: RecentOrdersListProps) {
 
     return (
         <div className="space-y-3">
-            {orders.map((order) => (
-                <Card className="p-4" key={order.id}>
-                    <div className="flex items-start justify-between gap-4">
+            {orders.slice(0, 5).map((order) => (
+                <Card className="space-y-4 p-4" key={order.id}>
+                    <div className="flex items-center justify-between gap-3">
                         <div>
-                            <p className="font-semibold">{order.orderNumber}</p>
-                            <p className="mt-1 text-sm text-muted">{order.items[0]?.foodName}</p>
-                            <p className="mt-2 text-xs text-muted">{new Date(order.createdAt).toLocaleString()}</p>
+                            <p className="text-sm text-muted">{order.orderNumber}</p>
+                            <h4 className="mt-1 text-lg font-semibold">{order.items[0]?.foodName}</h4>
                         </div>
-                        <div className="text-right">
-                            <MoneyDisplay amount={order.total} className="text-lg font-semibold" />
-                            <div className="mt-2">
-                                <OrderStatusBadge status={order.status} />
-                            </div>
-                        </div>
+                        <OrderStatusBadge status={order.status} />
                     </div>
+
+                    <div className="flex items-center justify-between gap-3 text-sm text-muted">
+                        <span>Qty {order.items[0]?.quantity}</span>
+                        <MoneyDisplay amount={order.total} className="font-semibold text-[color:var(--text-950)]" />
+                    </div>
+
+                    <p className="text-xs text-muted">{new Date(order.createdAt).toLocaleString()}</p>
                 </Card>
             ))}
         </div>

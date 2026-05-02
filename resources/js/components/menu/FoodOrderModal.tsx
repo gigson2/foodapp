@@ -1,12 +1,12 @@
-import { Clock3, HandCoins, MapPin } from 'lucide-react';
+import { Clock3, HandCoins, MapPin, PackageCheck } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { BottomSheet } from '@/components/common/BottomSheet';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { Modal } from '@/components/common/Modal';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MoneyDisplay } from '@/components/ordering/MoneyDisplay';
 import { QuantitySelector } from '@/components/ordering/QuantitySelector';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { useState, useEffect } from 'react';
 import type { Food } from '@/types';
 
 type FoodOrderModalProps = {
@@ -32,22 +32,26 @@ export function FoodOrderModal({ food, isOpen, onClose, onPlaceOrder }: FoodOrde
 
     const content = (
         <div className="space-y-5">
-            <img alt={`${food.name} food presentation`} className="h-56 w-full rounded-[1.75rem] object-cover sm:h-72" src={food.image} />
+            <img
+                alt={`${food.name} ready for pickup from Dri Africain Traditional Grill LLC`}
+                className="h-56 w-full rounded-[1.75rem] object-cover sm:h-72"
+                src={food.image}
+            />
 
             <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <p className="text-sm uppercase tracking-[0.18em] text-muted">{food.category}</p>
+                <div className="max-w-2xl">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-900)]">{food.category}</p>
                     <h3 className="mt-2 text-3xl font-semibold">{food.name}</h3>
-                    <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">{food.description}</p>
+                    <p className="mt-3 text-sm leading-7 text-muted">{food.description}</p>
                 </div>
-                <MoneyDisplay amount={food.price} className="text-2xl font-semibold" />
+                <MoneyDisplay amount={food.price} className="text-2xl font-semibold text-[color:var(--primary-900)]" />
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <Card className="p-4">
                     <div className="flex items-center gap-2 text-sm text-muted">
                         <Clock3 className="h-4 w-4" />
-                        Prep time
+                        Preparation
                     </div>
                     <p className="mt-2 text-lg font-semibold">{food.preparationTimeMinutes} min</p>
                 </Card>
@@ -60,10 +64,17 @@ export function FoodOrderModal({ food, isOpen, onClose, onPlaceOrder }: FoodOrde
                 </Card>
                 <Card className="p-4">
                     <div className="flex items-center gap-2 text-sm text-muted">
-                        <MapPin className="h-4 w-4" />
-                        Order type
+                        <PackageCheck className="h-4 w-4" />
+                        Packaging
                     </div>
-                    <p className="mt-2 text-lg font-semibold">Pickup</p>
+                    <p className="mt-2 text-lg font-semibold">Neatly packed</p>
+                </Card>
+                <Card className="p-4">
+                    <div className="flex items-center gap-2 text-sm text-muted">
+                        <MapPin className="h-4 w-4" />
+                        Pickup
+                    </div>
+                    <p className="mt-2 text-lg font-semibold">Papillion, NE</p>
                 </Card>
             </div>
 
@@ -81,30 +92,26 @@ export function FoodOrderModal({ food, isOpen, onClose, onPlaceOrder }: FoodOrde
             </div>
 
             <div className="space-y-3 rounded-[1.75rem] border border-white/10 bg-white/6 p-4 text-sm leading-7 text-muted">
-                <p>Payment is cash only. Please pay when you pick up your order at the restaurant.</p>
-                <p>This order is for pickup at the restaurant premises.</p>
+                <p>Cash payment only. Pay when you pick up at the restaurant.</p>
+                <p>Pickup location: 701 Golden Gate Circle, Papillion, NE 68046.</p>
             </div>
 
-            <Button
-                className="w-full"
-                onClick={() => onPlaceOrder(food, quantity)}
-                type="button"
-            >
-                Place Order
+            <Button className="w-full" onClick={() => onPlaceOrder(food, quantity)} type="button">
+                Place Pickup Order
             </Button>
         </div>
     );
 
     if (isMobile) {
         return (
-            <BottomSheet description="Choose quantity and confirm your pickup order." isOpen={isOpen} onClose={onClose} title="Order food">
+            <BottomSheet description="Confirm quantity and place your pickup order." isOpen={isOpen} onClose={onClose} title="Order from the grill">
                 {content}
             </BottomSheet>
         );
     }
 
     return (
-        <Modal description="Choose quantity and confirm your pickup order." isOpen={isOpen} onClose={onClose} title="Order food">
+        <Modal description="Confirm quantity and place your pickup order." isOpen={isOpen} onClose={onClose} title="Order from the grill">
             {content}
         </Modal>
     );

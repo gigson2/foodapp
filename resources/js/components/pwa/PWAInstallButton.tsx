@@ -4,9 +4,9 @@ import { Button } from '@/components/common/Button';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 
 export function PWAInstallButton() {
-    const { canInstall, isStandalone, promptInstall } = useInstallPrompt();
+    const { canInstall, isIos, isStandalone, promptInstall } = useInstallPrompt();
 
-    if (isStandalone || ! canInstall) {
+    if (isStandalone || ! canInstall || isIos) {
         return null;
     }
 
@@ -22,7 +22,7 @@ export function PWAInstallButton() {
             variant="secondary"
         >
             <Download className="h-4 w-4" />
-            Install App
+            Install PWA
         </Button>
     );
 }

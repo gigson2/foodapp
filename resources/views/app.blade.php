@@ -28,18 +28,19 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=sora:400,500,600,700,800|outfit:400,500,600,700,800" rel="stylesheet" />
         <title>{{ config('app.name') }}</title>
-        <script type="application/ld+json">
-            {
-                "@context": "https://schema.org",
-                "@type": "Restaurant",
-                "name": "Ember Table",
-                "servesCuisine": "Contemporary African Grill",
-                "description": "Pickup-first restaurant ordering experience with cash payment at the premises.",
-                "url": "{{ url('/') }}",
-                "paymentAccepted": "Cash",
-                "priceRange": "$$"
-            }
-        </script>
+        @php
+            $restaurantSchema = [
+                '@context' => 'https://schema.org',
+                '@type' => 'Restaurant',
+                'name' => 'Ember Table',
+                'servesCuisine' => 'Contemporary African Grill',
+                'description' => 'Pickup-first restaurant ordering experience with cash payment at the premises.',
+                'url' => url('/'),
+                'paymentAccepted' => 'Cash',
+                'priceRange' => '$$',
+            ];
+        @endphp
+        <script type="application/ld+json">@json($restaurantSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
 
         <script>
             (() => {
@@ -52,6 +53,10 @@
                 root.dataset.theme = theme;
             })();
         </script>
+
+        @if (file_exists(public_path('hot')))
+            @viteReactRefresh
+        @endif
 
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(['resources/css/app.css', 'resources/js/main.tsx'])

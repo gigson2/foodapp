@@ -1,9 +1,9 @@
 import type { Category } from '@/types';
 
 export const mockCategories: Category[] = [
-    { id: 'cat_rice', name: 'Rice Meals', slug: 'rice-meals' },
-    { id: 'cat_grills', name: 'Grills', slug: 'grills' },
-    { id: 'cat_soups', name: 'Soups', slug: 'soups' },
-    { id: 'cat_drinks', name: 'Drinks', slug: 'drinks' },
-    { id: 'cat_specials', name: 'Specials', slug: 'specials' },
+    { id: 'category_goat', name: 'Grilled Goat', slug: 'grilled-goat' },
+    { id: 'category_chicken', name: 'Grilled Chicken', slug: 'grilled-chicken' },
+    { id: 'category_mixed', name: 'Mixed Packs', slug: 'mixed-packs' },
+    { id: 'category_family', name: 'Family Packs', slug: 'family-packs' },
+    { id: 'category_extras', name: 'Extras', slug: 'extras' },
 ];

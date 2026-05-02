@@ -4,19 +4,21 @@ import { readStorage, writeStorage } from '@/utils/storage';
 
 const NOTIFICATION_KEY = 'restaurant.notifications';
 const listeners = new Set<() => void>();
+let notificationsCache = readStorage<AppNotification[]>(NOTIFICATION_KEY, []);
 
 function notify() {
     listeners.forEach((listener) => listener());
 }
 
 function persist(notifications: AppNotification[]) {
+    notificationsCache = notifications;
     writeStorage(NOTIFICATION_KEY, notifications);
     notify();
 }
 
 export const notificationService = {
     getNotifications() {
-        return readStorage<AppNotification[]>(NOTIFICATION_KEY, []);
+        return notificationsCache;
     },
     add(notification: Omit<AppNotification, 'id' | 'createdAt' | 'read'>) {
         const notifications = this.getNotifications();
@@ -42,12 +44,31 @@ export const notificationService = {
         });
 
         this.add({
-            title: 'New pickup order',
-            message: `${order.customerName} placed ${order.items[0]?.foodName} for pickup.`,
-            type: 'new_order',
+            title: 'New pickup order received',
+            message: `${order.customerName} placed ${order.items[0]?.foodName} for cash pickup.`,
+            type: 'system',
             targetRole: 'admin',
             orderId: order.id,
             orderStatus: 'received',
+        });
+    },
+    addReviewPendingNotification(input: { customerName: string; reviewId: string; foodName?: string }) {
+        this.add({
+            title: 'New customer review pending approval',
+            message: input.foodName
+                ? `${input.customerName} submitted a review for ${input.foodName}.`
+                : `${input.customerName} submitted a new customer review.`,
+            type: 'review_pending',
+            targetRole: 'admin',
+            reviewId: input.reviewId,
+        });
+    },
+    addSystemNotification(input: { title: string; message: string; targetRole: 'customer' | 'admin' }) {
+        this.add({
+            title: input.title,
+            message: input.message,
+            type: 'system',
+            targetRole: input.targetRole,
         });
     },
     markRead(id: string) {

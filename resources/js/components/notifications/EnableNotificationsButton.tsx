@@ -14,11 +14,11 @@ export function EnableNotificationsButton({ permission }: EnableNotificationsBut
         if (result === 'granted') {
             await createPushSubscriptionPlaceholder();
             toast.success('Notifications enabled', {
-                description: 'You are ready for pickup updates once backend push delivery is connected.',
+                description: 'You are ready for grill pickup updates once backend push delivery is connected.',
             });
         } else if (result === 'denied') {
             toast.error('Notifications blocked', {
-                description: 'Enable notifications in your browser settings when you are ready.',
+                description: 'Enable notifications in your browser settings when you want pickup alerts.',
             });
         } else if (result === 'unsupported') {
             toast.error('Notifications unavailable', {
