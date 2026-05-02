@@ -1,0 +1,10 @@
+import axios from 'axios';
+
+export const apiClient = axios.create({
+    baseURL: '/api',
+    headers: {
+        Accept: 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+    },
+    withCredentials: true,
+});

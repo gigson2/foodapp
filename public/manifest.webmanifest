@@ -1,0 +1,20 @@
+{
+    "name": "Ember Table Pickup Ordering",
+    "short_name": "Ember Table",
+    "description": "A premium restaurant pickup ordering PWA with cash payment at the restaurant.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#060118",
+    "theme_color": "#060118",
+    "orientation": "portrait-primary",
+    "categories": ["food", "business", "shopping"],
+    "icons": [
+        {
+            "src": "/icons/app-icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

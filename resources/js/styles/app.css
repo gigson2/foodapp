@@ -1,0 +1,104 @@
+@layer base {
+    * {
+        border-color: color-mix(in srgb, var(--background-900) 12%, transparent);
+    }
+
+    html,
+    body,
+    #app {
+        min-height: 100%;
+    }
+
+    html {
+        scroll-behavior: smooth;
+        background:
+            radial-gradient(circle at top left, color-mix(in srgb, var(--primary-600) 26%, transparent), transparent 32%),
+            radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--accent-500) 16%, transparent), transparent 18%),
+            linear-gradient(180deg, var(--background-50) 0%, var(--background-100) 100%);
+    }
+
+    body {
+        margin: 0;
+        color: var(--text-950);
+        background: transparent;
+        font-family: var(--font-sans);
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        margin: 0;
+        font-family: var(--font-display);
+        letter-spacing: -0.04em;
+    }
+
+    p {
+        margin: 0;
+    }
+
+    img {
+        display: block;
+        max-width: 100%;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+        font: inherit;
+    }
+
+    a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    ::selection {
+        background: color-mix(in srgb, var(--accent-500) 40%, transparent);
+        color: var(--text-950);
+    }
+}
+
+@layer components {
+    .section-shell {
+        @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    }
+
+    .app-surface {
+        background:
+            linear-gradient(180deg, color-mix(in srgb, var(--background-50) 88%, transparent), transparent),
+            linear-gradient(135deg, color-mix(in srgb, var(--background-200) 44%, transparent), transparent 52%);
+    }
+
+    .glass-card {
+        background: color-mix(in srgb, var(--background-100) 78%, white 4%);
+        box-shadow:
+            0 24px 80px color-mix(in srgb, var(--background-50) 52%, transparent),
+            inset 0 1px 0 color-mix(in srgb, var(--text-950) 8%, transparent);
+        @apply rounded-[2rem] border border-white/10 backdrop-blur-xl;
+    }
+
+    .glass-card-strong {
+        background: color-mix(in srgb, var(--background-200) 82%, white 8%);
+        @apply rounded-[2rem] border border-white/12 backdrop-blur-2xl;
+    }
+
+    .section-eyebrow {
+        color: color-mix(in srgb, var(--accent-900) 85%, white 15%);
+        background: color-mix(in srgb, var(--accent-200) 18%, transparent);
+        @apply inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.24em];
+    }
+
+    .text-muted {
+        color: color-mix(in srgb, var(--text-900) 72%, transparent);
+    }
+
+    .safe-bottom {
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    }
+}
