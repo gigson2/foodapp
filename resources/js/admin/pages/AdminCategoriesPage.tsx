@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Eye, Pencil } from 'lucide-react';
 import type { TableColumn } from 'react-data-table-component';
 import { toast } from 'sonner';
 import { AdminBadge } from '@/admin/components/common/AdminBadge';
@@ -14,7 +14,10 @@ import { adminCategoryService, type AdminCategoryFormInput, type AdminCategoryRe
 import { Button } from '@/components/common/Button';
 import { IconButton } from '@/components/common/IconButton';
 import { Input } from '@/components/common/Input';
+import { Modal } from '@/components/common/Modal';
 import { Textarea } from '@/components/common/Textarea';
+import { PUBLIC_CATEGORIES_QUERY_KEY, PUBLIC_FOODS_QUERY_KEY } from '@/services/publicService';
+import { publishPublicContentUpdate } from '@/services/publicContentSync';
 
 function emptyCategoryForm(): AdminCategoryFormInput {
     return {
@@ -34,12 +37,18 @@ export function AdminCategoriesPage() {
     const [search, setSearch] = useState('');
     const [active, setActive] = useState<boolean | ''>('');
     const [editingCategory, setEditingCategory] = useState<AdminCategoryRecord | null>(null);
+    const [viewingCategoryId, setViewingCategoryId] = useState<string | null>(null);
     const [form, setForm] = useState<AdminCategoryFormInput>(emptyCategoryForm());
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     const categoriesQuery = useQuery({
         queryKey: ['admin-app', 'categories', { page, perPage, search, active }],
         queryFn: () => adminCategoryService.getCategories({ page, perPage, search, isActive: active }),
+    });
+    const categoryDetailQuery = useQuery({
+        enabled: viewingCategoryId !== null,
+        queryKey: ['admin-app', 'category', viewingCategoryId],
+        queryFn: () => adminCategoryService.getCategory(viewingCategoryId ?? ''),
     });
 
     const saveMutation = useMutation({
@@ -48,22 +57,28 @@ export function AdminCategoriesPage() {
             toast.success(editingCategory ? 'Category updated' : 'Category created');
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ['admin-app', 'categories'] }),
-                queryClient.invalidateQueries({ queryKey: ['public-categories'] }),
+                queryClient.invalidateQueries({ queryKey: PUBLIC_CATEGORIES_QUERY_KEY }),
+                queryClient.invalidateQueries({ queryKey: PUBLIC_FOODS_QUERY_KEY }),
             ]);
+            publishPublicContentUpdate('categories');
+            publishPublicContentUpdate('foods');
             setEditingCategory(null);
             setForm(emptyCategoryForm());
             setImagePreview(null);
         },
     });
 
-    const deleteMutation = useMutation({
-        mutationFn: adminCategoryService.deleteCategory,
+    const toggleMutation = useMutation({
+        mutationFn: adminCategoryService.toggleCategoryActive,
         onSuccess: async () => {
-            toast.success('Category removed');
+            toast.success('Category status updated');
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ['admin-app', 'categories'] }),
-                queryClient.invalidateQueries({ queryKey: ['public-categories'] }),
+                queryClient.invalidateQueries({ queryKey: PUBLIC_CATEGORIES_QUERY_KEY }),
+                queryClient.invalidateQueries({ queryKey: PUBLIC_FOODS_QUERY_KEY }),
             ]);
+            publishPublicContentUpdate('categories');
+            publishPublicContentUpdate('foods');
         },
     });
 
@@ -93,11 +108,37 @@ export function AdminCategoriesPage() {
             cell: (category) => <span>{category.foodsCount}</span>,
         },
         {
-            name: 'State',
+            name: 'Status',
+            grow: 1.1,
             cell: (category) => (
-                <AdminBadge className={category.isActive ? 'border-emerald-500/30 bg-emerald-500/14 text-emerald-300' : 'border-rose-500/30 bg-rose-500/14 text-rose-300'}>
-                    {category.isActive ? 'Active' : 'Inactive'}
-                </AdminBadge>
+                <button
+                    aria-checked={category.isActive}
+                    aria-label={`${category.isActive ? 'Deactivate' : 'Activate'} ${category.name}`}
+                    className={`ui-focus-ring inline-flex items-center gap-3 whitespace-nowrap rounded-full border px-3 py-2 text-sm font-semibold transition ${
+                        category.isActive
+                            ? 'border-emerald-500/30 bg-emerald-500/14 text-emerald-300'
+                            : 'border-rose-500/30 bg-rose-500/14 text-rose-300'
+                    }`}
+                    disabled={toggleMutation.isPending}
+                    onClick={() => toggleMutation.mutate(category.id)}
+                    role="switch"
+                    type="button"
+                >
+                    <span
+                        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border transition ${
+                            category.isActive
+                                ? 'border-emerald-400/50 bg-emerald-500/22'
+                                : 'border-rose-400/40 bg-rose-500/14'
+                        }`}
+                    >
+                        <span
+                            className={`absolute top-0.5 h-4 w-4 rounded-full bg-current transition ${
+                                category.isActive ? 'left-[1.35rem]' : 'left-0.5'
+                            }`}
+                        />
+                    </span>
+                    <span>{category.isActive ? 'Active' : 'Inactive'}</span>
+                </button>
             ),
         },
         {
@@ -105,11 +146,11 @@ export function AdminCategoriesPage() {
             button: true,
             cell: (category) => (
                 <div className="flex gap-3">
-                    <IconButton aria-label={`Edit ${category.name}`} className="h-10 w-10" onClick={() => startEditing(category)}>
-                        <Pencil className="h-4 w-4" />
+                    <IconButton aria-label={`View ${category.name}`} className="h-10 w-10" disabled={saveMutation.isPending || toggleMutation.isPending} onClick={() => setViewingCategoryId(category.id)}>
+                        <Eye className="h-4 w-4" />
                     </IconButton>
-                    <IconButton aria-label={`Delete ${category.name}`} className="h-10 w-10 border-rose-500/30 text-rose-400 hover:border-rose-500/42 hover:bg-rose-500/12" onClick={() => deleteMutation.mutate(category.id)}>
-                        <Trash2 className="h-4 w-4" />
+                    <IconButton aria-label={`Edit ${category.name}`} className="h-10 w-10" disabled={saveMutation.isPending || toggleMutation.isPending} onClick={() => startEditing(category)}>
+                        <Pencil className="h-4 w-4" />
                     </IconButton>
                 </div>
             ),
@@ -142,7 +183,7 @@ export function AdminCategoriesPage() {
                     <div className="grid gap-4 border-b border-white/10 px-5 py-5 lg:grid-cols-[1.2fr_0.7fr]">
                         <AdminSearchInput label="Search" onChange={(value) => { setSearch(value); setPage(1); }} placeholder="Search categories by name or slug" value={search} />
                         <AdminFilterSelect
-                            label="State"
+                            label="Status"
                             onChange={(value) => { setActive(value === '' ? '' : value === 'true'); setPage(1); }}
                             options={[
                                 { label: 'All', value: '' },
@@ -193,11 +234,78 @@ export function AdminCategoriesPage() {
                         </label>
                     </div>
                     <div className="mt-5 flex flex-wrap gap-3">
-                        <Button onClick={() => saveMutation.mutate(form)} size="sm">{editingCategory ? 'Update category' : 'Create category'}</Button>
-                        {editingCategory ? <Button onClick={() => { setEditingCategory(null); setForm(emptyCategoryForm()); }} size="sm" variant="ghost">Cancel edit</Button> : null}
+                        <Button disabled={saveMutation.isPending} onClick={() => saveMutation.mutate(form)} size="sm">{editingCategory ? 'Update category' : 'Create category'}</Button>
+                        {editingCategory ? <Button disabled={saveMutation.isPending} onClick={() => { setEditingCategory(null); setForm(emptyCategoryForm()); setImagePreview(null); }} size="sm" variant="ghost">Cancel edit</Button> : null}
                     </div>
                 </AdminSectionCard>
             </div>
+
+            <Modal
+                description="Category details and storefront visibility information."
+                isOpen={viewingCategoryId !== null}
+                onClose={() => setViewingCategoryId(null)}
+                panelClassName="max-w-2xl"
+                title={categoryDetailQuery.data?.name ?? 'Category details'}
+            >
+                {categoryDetailQuery.isLoading ? (
+                    <p className="text-sm text-muted">Loading category details...</p>
+                ) : categoryDetailQuery.data ? (
+                    <div className="grid gap-5 md:grid-cols-[0.95fr_1.05fr]">
+                        <div className="overflow-hidden rounded-[1.5rem] border border-[color:var(--ui-divider)] bg-[color:var(--ui-surface-muted)]">
+                            {categoryDetailQuery.data.image ? (
+                                <img
+                                    alt={categoryDetailQuery.data.name}
+                                    className="aspect-[4/3] h-full w-full object-cover"
+                                    src={categoryDetailQuery.data.image}
+                                />
+                            ) : (
+                                <div className="flex aspect-[4/3] items-center justify-center text-sm text-muted">
+                                    No category image uploaded
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="grid gap-4">
+                            <div className="ui-surface-solid rounded-[1.35rem] p-4">
+                                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Slug</p>
+                                <p className="mt-2 text-sm text-[color:var(--text-950)]">{categoryDetailQuery.data.slug}</p>
+                            </div>
+                            <div className="ui-surface-solid rounded-[1.35rem] p-4">
+                                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Description</p>
+                                <p className="mt-2 text-sm leading-7 text-[color:var(--text-950)]">{categoryDetailQuery.data.description || 'No description added yet.'}</p>
+                            </div>
+                            <div className="grid gap-4 sm:grid-cols-3">
+                                <div className="ui-surface-solid rounded-[1.35rem] p-4">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Foods</p>
+                                    <p className="mt-2 text-xl">{categoryDetailQuery.data.foodsCount}</p>
+                                </div>
+                                <div className="ui-surface-solid rounded-[1.35rem] p-4">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Sort order</p>
+                                    <p className="mt-2 text-xl">{categoryDetailQuery.data.sortOrder}</p>
+                                </div>
+                                <div className="ui-surface-solid rounded-[1.35rem] p-4">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Status</p>
+                                    <div className="mt-2">
+                                        <AdminBadge className={categoryDetailQuery.data.isActive ? 'border-emerald-500/30 bg-emerald-500/14 text-emerald-300' : 'border-rose-500/30 bg-rose-500/14 text-rose-300'}>
+                                            {categoryDetailQuery.data.isActive ? 'Active' : 'Inactive'}
+                                        </AdminBadge>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="ui-surface-solid rounded-[1.35rem] p-4">
+                                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Storefront visibility</p>
+                                <p className="mt-2 text-sm leading-7 text-[color:var(--text-950)]">
+                                    {categoryDetailQuery.data.isActive
+                                        ? 'This category is visible to customers, and foods assigned to it can appear on the storefront when those foods are available and not archived.'
+                                        : 'This category is hidden from customers, and foods assigned to it are also kept off the storefront until the category is activated again.'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <p className="text-sm text-muted">Unable to load category details.</p>
+                )}
+            </Modal>
         </div>
     );
 }

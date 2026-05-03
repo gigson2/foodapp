@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Archive, Pencil } from 'lucide-react';
+import { Archive, Pencil, RotateCcw } from 'lucide-react';
 import type { TableColumn } from 'react-data-table-component';
 import { toast } from 'sonner';
 import { AdminBadge } from '@/admin/components/common/AdminBadge';
@@ -17,6 +17,8 @@ import { Button } from '@/components/common/Button';
 import { IconButton } from '@/components/common/IconButton';
 import { Input } from '@/components/common/Input';
 import { Textarea } from '@/components/common/Textarea';
+import { PUBLIC_FOODS_QUERY_KEY } from '@/services/publicService';
+import { publishPublicContentUpdate } from '@/services/publicContentSync';
 
 function buildInitialFoodForm(categoryId = 0): AdminFoodFormInput {
     return {
@@ -73,8 +75,9 @@ export function AdminMenuPage() {
             toast.success(editingFood ? 'Food updated' : 'Food created');
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ['admin-app', 'foods'] }),
-                queryClient.invalidateQueries({ queryKey: ['public-foods'] }),
+                queryClient.invalidateQueries({ queryKey: PUBLIC_FOODS_QUERY_KEY }),
             ]);
+            publishPublicContentUpdate('foods');
             setEditingFood(null);
             setForm(buildInitialFoodForm(categoryId));
             setIngredientsText('');
@@ -90,8 +93,20 @@ export function AdminMenuPage() {
             toast.success('Food archived');
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ['admin-app', 'foods'] }),
-                queryClient.invalidateQueries({ queryKey: ['public-foods'] }),
+                queryClient.invalidateQueries({ queryKey: PUBLIC_FOODS_QUERY_KEY }),
             ]);
+            publishPublicContentUpdate('foods');
+        },
+    });
+    const restoreMutation = useMutation({
+        mutationFn: adminFoodService.restoreFood,
+        onSuccess: async () => {
+            toast.success('Food restored');
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['admin-app', 'foods'] }),
+                queryClient.invalidateQueries({ queryKey: PUBLIC_FOODS_QUERY_KEY }),
+            ]);
+            publishPublicContentUpdate('foods');
         },
     });
 
@@ -166,6 +181,7 @@ export function AdminMenuPage() {
                     <AdminBadge className={food.isAvailable ? 'border-emerald-500/30 bg-emerald-500/14 text-emerald-300' : 'border-rose-500/30 bg-rose-500/14 text-rose-300'}>
                         {food.isAvailable ? 'Available' : 'Unavailable'}
                     </AdminBadge>
+                    {food.deletedAt ? <AdminBadge className="border-amber-500/30 bg-amber-500/14 text-amber-300">Archived</AdminBadge> : null}
                     {food.isPopular ? <AdminBadge className="border-amber-500/30 bg-amber-500/14 text-amber-300">Popular</AdminBadge> : null}
                     {food.isFeatured ? <AdminBadge className="border-[color:var(--primary-500)]/30 bg-[color:var(--primary-500)]/12 text-[color:var(--primary-500)]">Featured</AdminBadge> : null}
                 </div>
@@ -176,12 +192,18 @@ export function AdminMenuPage() {
             button: true,
             cell: (food) => (
                 <div className="flex gap-3">
-                    <IconButton aria-label={`Edit ${food.name}`} className="h-10 w-10" onClick={() => startEditing(food)}>
+                    <IconButton aria-label={`Edit ${food.name}`} className="h-10 w-10" disabled={saveMutation.isPending || archiveMutation.isPending || restoreMutation.isPending} onClick={() => startEditing(food)}>
                         <Pencil className="h-4 w-4" />
                     </IconButton>
-                    <IconButton aria-label={`Archive ${food.name}`} className="h-10 w-10 border-rose-500/30 text-rose-400 hover:border-rose-500/42 hover:bg-rose-500/12" onClick={() => archiveMutation.mutate(food.id)}>
-                        <Archive className="h-4 w-4" />
-                    </IconButton>
+                    {food.deletedAt ? (
+                        <IconButton aria-label={`Restore ${food.name}`} className="h-10 w-10 border-emerald-500/30 text-emerald-400 hover:border-emerald-500/42 hover:bg-emerald-500/12" disabled={saveMutation.isPending || archiveMutation.isPending || restoreMutation.isPending} onClick={() => restoreMutation.mutate(food.id)}>
+                            <RotateCcw className="h-4 w-4" />
+                        </IconButton>
+                    ) : (
+                        <IconButton aria-label={`Archive ${food.name}`} className="h-10 w-10 border-rose-500/30 text-rose-400 hover:border-rose-500/42 hover:bg-rose-500/12" disabled={saveMutation.isPending || archiveMutation.isPending || restoreMutation.isPending} onClick={() => archiveMutation.mutate(food.id)}>
+                            <Archive className="h-4 w-4" />
+                        </IconButton>
+                    )}
                 </div>
             ),
         },
@@ -280,6 +302,7 @@ export function AdminMenuPage() {
                     </div>
                     <div className="mt-5 flex flex-wrap gap-3">
                         <Button
+                            disabled={saveMutation.isPending}
                             onClick={() => saveMutation.mutate({
                                 ...form,
                                 ingredients: splitTags(ingredientsText),
@@ -290,7 +313,7 @@ export function AdminMenuPage() {
                         >
                             {editingFood ? 'Update food' : 'Create food'}
                         </Button>
-                        {editingFood ? <Button onClick={resetForm} size="sm" variant="ghost">Cancel edit</Button> : null}
+                        {editingFood ? <Button disabled={saveMutation.isPending} onClick={resetForm} size="sm" variant="ghost">Cancel edit</Button> : null}
                     </div>
                 </AdminSectionCard>
             </div>

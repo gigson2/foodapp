@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { type InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'sonner';
 import { getAuthToken } from '@/services/authTokenStorage';
 
@@ -104,6 +104,53 @@ export function notifyApiError(error: unknown): void {
     });
 }
 
+function readCookie(name: string): string | null {
+    if (typeof document === 'undefined') {
+        return null;
+    }
+
+    const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+
+    return match ? decodeURIComponent(match[1]) : null;
+}
+
+let csrfCookiePromise: Promise<void> | null = null;
+
+export async function ensureCsrfCookie(force = false): Promise<void> {
+    if (!force && readCookie('XSRF-TOKEN')) {
+        return;
+    }
+
+    if (!csrfCookiePromise || force) {
+        csrfCookiePromise = axios
+            .get('/sanctum/csrf-cookie', {
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                withCredentials: true,
+            })
+            .then(() => undefined)
+            .finally(() => {
+                csrfCookiePromise = null;
+            });
+    }
+
+    await csrfCookiePromise;
+}
+
+function isWriteMethod(method?: string): boolean {
+    if (!method) {
+        return false;
+    }
+
+    return ['post', 'put', 'patch', 'delete'].includes(method.toLowerCase());
+}
+
+type RetriableConfig = InternalAxiosRequestConfig & {
+    _retriedWithFreshCsrf?: boolean;
+};
+
 export const apiClient = axios.create({
     baseURL: '/api',
     headers: {
@@ -113,7 +160,11 @@ export const apiClient = axios.create({
     withCredentials: true,
 });
 
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use(async (config) => {
+    if (isWriteMethod(config.method)) {
+        await ensureCsrfCookie();
+    }
+
     const token = getAuthToken();
 
     if (token) {
@@ -127,7 +178,17 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
     (response) => response,
-    (error) => {
+    async (error) => {
+        const status = error.response?.status;
+        const originalConfig = error.config as RetriableConfig | undefined;
+
+        if (status === 419 && originalConfig && !originalConfig._retriedWithFreshCsrf) {
+            originalConfig._retriedWithFreshCsrf = true;
+            await ensureCsrfCookie(true);
+
+            return apiClient(originalConfig);
+        }
+
         notifyApiError(error);
 
         return Promise.reject(error);

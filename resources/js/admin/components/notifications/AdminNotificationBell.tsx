@@ -21,7 +21,7 @@ export function AdminNotificationBell({
     const navigate = useNavigate();
 
     return (
-        <div className="relative">
+        <div className="relative z-[91]">
             <button
                 aria-label="Open admin notifications"
                 className="ui-surface-solid ui-focus-ring relative inline-flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--text-950)] transition hover:border-[color:var(--ui-border-strong)] hover:bg-[color:var(--ui-surface-raised)]"

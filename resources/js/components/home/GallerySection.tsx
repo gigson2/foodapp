@@ -3,7 +3,7 @@ import { SectionContainer } from '@/components/layout/SectionContainer';
 const galleryItems = [
     {
         src: '/assets/images/image1.jpeg',
-        alt: 'Mixed grilled meat on an outdoor grill at Dri Africain Traditional Grill LLC',
+        alt: 'Mixed grilled meat on an outdoor grill prepared for pickup service',
         frameClassName: 'md:col-span-2 xl:col-span-2',
         imageClassName: 'aspect-[16/11] object-[center_42%]',
     },
@@ -14,7 +14,7 @@ const galleryItems = [
     },
     {
         src: '/assets/images/image3.jpeg',
-        alt: 'Grilled chicken plated with sliced onions from Dri Africain Traditional Grill LLC',
+        alt: 'Grilled chicken plated with sliced onions prepared for pickup service',
         imageClassName: 'aspect-[4/5] object-center md:aspect-[5/6]',
     },
     {
@@ -40,7 +40,7 @@ export function GallerySection() {
         <SectionContainer
             align="center"
             className="pb-12 lg:pb-16"
-            description="Real grill moments from the Dri Africain cooking process and packaged pickup presentation."
+            description="Real grill moments from the cooking process and packaged pickup presentation."
             eyebrow="Gallery"
             id="gallery"
             title="Real Images From The Grill And Pickup Packs"

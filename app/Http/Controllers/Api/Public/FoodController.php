@@ -15,6 +15,7 @@ class FoodController extends Controller
             Food::query()
                 ->with('category')
                 ->where('is_available', true)
+                ->whereHas('category', fn ($query) => $query->where('is_active', true))
                 ->orderByDesc('is_featured')
                 ->orderBy('sort_order')
                 ->get(),
@@ -27,6 +28,7 @@ class FoodController extends Controller
             ->with('category')
             ->where('slug', $slug)
             ->where('is_available', true)
+            ->whereHas('category', fn ($query) => $query->where('is_active', true))
             ->firstOrFail();
 
         return new FoodResource($food);

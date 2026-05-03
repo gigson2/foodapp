@@ -22,5 +22,13 @@ export interface Order {
     paymentMethod: PaymentMethod;
     orderType: OrderType;
     status: OrderStatus;
+    paymentStatus?: 'paid' | 'unpaid';
+    cashStatus?: 'cash_pending' | 'cash_collected';
+    customerNote?: string | null;
+    adminNote?: string | null;
+    acceptedAt?: string | null;
+    completedAt?: string | null;
+    cancelledAt?: string | null;
     createdAt: string;
+    updatedAt?: string | null;
 }

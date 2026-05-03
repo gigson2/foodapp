@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Notifications\Channels\WebPushChannel;
 use App\Services\WebPushService;
-use Illuminate\Notifications\ChannelManager;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
 

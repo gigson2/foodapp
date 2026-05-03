@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/common/Button';
 import type { AdminNotificationItem } from '@/admin/types/adminNotification';
 import { formatAdminDateTime } from '@/admin/utils/adminDates';
 import { AdminBadge } from '@/admin/components/common/AdminBadge';
@@ -15,38 +16,39 @@ export function AdminNotificationDropdown({
     onMarkAllRead,
     onMarkRead,
 }: AdminNotificationDropdownProps) {
+    const unreadNotifications = notifications.filter((notification) => !notification.read).slice(0, 3);
+
     return (
-        <div className="ui-surface-solid absolute right-0 top-[calc(100%+0.75rem)] z-30 hidden w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-[1.5rem] md:block">
+        <div
+            className="absolute right-0 top-[calc(100%+0.75rem)] z-[90] hidden w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-[1.5rem] border border-[color:var(--ui-border-strong)] shadow-[0_24px_60px_rgba(0,0,0,0.24)] md:block"
+            style={{ background: 'color-mix(in srgb, var(--background-100) 96%, black 4%)' }}
+        >
             <div className="flex items-center justify-between border-b px-5 py-4 ui-divider">
                 <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Notifications</p>
                     <h2 className="mt-1 text-2xl">Admin alerts</h2>
                 </div>
-                <button className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--primary-500)]" onClick={onMarkAllRead} type="button">
-                    Mark all read
-                </button>
+                <Button disabled={unreadNotifications.length === 0} onClick={onMarkAllRead} size="sm" variant="secondary">Mark all read</Button>
             </div>
 
-            {notifications.length === 0 ? (
-                <AdminEmptyState description="Alerts for new orders, reviews, and system activity will appear here." title="No alerts yet" />
+            {unreadNotifications.length === 0 ? (
+                <AdminEmptyState description="Only the latest unread admin alerts appear here. Open the full notification page for history." title="No unread alerts" />
             ) : (
                 <div className="max-h-[24rem] overflow-y-auto">
-                    {notifications.slice(0, 5).map((notification) => (
+                    {unreadNotifications.map((notification) => (
                         <div className="border-b px-5 py-4 ui-divider" key={notification.id}>
                             <div className="flex items-start justify-between gap-3">
                                 <div className="space-y-2">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <p className="font-semibold">{notification.title}</p>
-                                        {!notification.read ? <AdminBadge className="border-[color:var(--primary-500)]/30 bg-[color:var(--primary-500)]/12 text-[color:var(--primary-500)]">Unread</AdminBadge> : null}
+                                        <AdminBadge className="border-[color:var(--primary-500)]/30 bg-[color:var(--primary-500)]/12 text-[color:var(--primary-500)]">Unread</AdminBadge>
                                     </div>
                                     <p className="text-sm leading-7 text-muted">{notification.message}</p>
                                     <p className="text-xs text-muted">{formatAdminDateTime(notification.createdAt)}</p>
                                 </div>
-                                {!notification.read ? (
-                                    <button className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--primary-500)]" onClick={() => onMarkRead(notification.id)} type="button">
-                                        Read
-                                    </button>
-                                ) : null}
+                            </div>
+                            <div className="mt-3 flex justify-end">
+                                <Button onClick={() => onMarkRead(notification.id)} size="sm" variant="ghost">Mark read</Button>
                             </div>
                         </div>
                     ))}

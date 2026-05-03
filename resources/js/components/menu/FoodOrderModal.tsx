@@ -7,6 +7,7 @@ import { Modal } from '@/components/common/Modal';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MoneyDisplay } from '@/components/ordering/MoneyDisplay';
 import { QuantitySelector } from '@/components/ordering/QuantitySelector';
+import { getCompanyAddress, getCompanyLocationLabel, getCompanyName } from '@/utils/company';
 import { openDirectionsPrompt } from '@/utils/location';
 import type { CompanySettings, Food } from '@/types';
 
@@ -21,7 +22,9 @@ type FoodOrderModalProps = {
 export function FoodOrderModal({ companySettings, food, isOpen, onClose, onPlaceOrder }: FoodOrderModalProps) {
     const isMobile = useMediaQuery('(max-width: 767px)');
     const [quantity, setQuantity] = useState(1);
-    const pickupAddress = companySettings?.address ?? '701 Golden Gate Circle, Papillion, NE 68046';
+    const companyName = getCompanyName(companySettings);
+    const pickupAddress = getCompanyAddress(companySettings);
+    const pickupLocationLabel = getCompanyLocationLabel(companySettings);
     const fridayHours = companySettings?.opening_hours?.friday ?? 'Pre-orders open';
     const saturdayHours = companySettings?.opening_hours?.saturday ?? '11:00 AM to 10:00 PM';
     const orderingCutoff = companySettings?.opening_hours?.ordering_cutoff ?? 'Saturday 9:00 PM';
@@ -36,7 +39,7 @@ export function FoodOrderModal({ companySettings, food, isOpen, onClose, onPlace
         <div className="space-y-5">
             <div className="ui-surface-raised overflow-hidden rounded-[1.75rem]">
                 <img
-                    alt={`${food.name} ready for pickup from Dri Africain Traditional Grill LLC`}
+                    alt={`${food.name} ready for pickup from ${companyName}`}
                     className="h-44 w-full object-cover sm:h-56"
                     src={food.image}
                 />
@@ -83,7 +86,7 @@ export function FoodOrderModal({ companySettings, food, isOpen, onClose, onPlace
                         onClick={() => openDirectionsPrompt(pickupAddress)}
                         type="button"
                     >
-                        Papillion, NE
+                        {pickupLocationLabel}
                     </button>
                 </Card>
             </div>

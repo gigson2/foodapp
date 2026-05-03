@@ -20,7 +20,30 @@ class CustomerReviewModeratedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'webpush'];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toWebPush(object $notifiable): array
+    {
+        return [
+            'title' => 'Review updated',
+            'body' => sprintf('Your review is now %s.', $this->review->status->value),
+            'data' => [
+                'kind' => 'review_status',
+                'tag' => 'review-'.$this->review->id,
+                'review_id' => $this->review->id,
+                'status' => $this->review->status->value,
+                'url' => '/customer/reviews',
+                'renotify' => true,
+                'vibrate' => [180, 90, 180],
+                'actions' => [
+                    ['action' => 'open', 'title' => 'Open reviews'],
+                ],
+            ],
+        ];
     }
 
     /**

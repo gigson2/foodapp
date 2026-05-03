@@ -75,6 +75,11 @@ export const adminCategoryService = {
 
         return mapCategory(response.data.data as ApiCategory);
     },
+    async getCategory(categoryId: string | number) {
+        const response = await adminApiClient.get(`/admin/categories/${categoryId}`);
+
+        return mapCategory(response.data.data as ApiCategory);
+    },
     async updateCategory(categoryId: string | number, input: AdminCategoryFormInput) {
         const payload = toPayload(input);
         payload.append('_method', 'PUT');
@@ -84,6 +89,11 @@ export const adminCategoryService = {
         });
 
         return mapCategory(response.data.data as ApiCategory);
+    },
+    async toggleCategoryActive(categoryId: string | number) {
+        const response = await adminApiClient.patch(`/admin/categories/${categoryId}/toggle-active`);
+
+        return response.data as { message: string; is_active: boolean };
     },
     async deleteCategory(categoryId: string | number) {
         await adminApiClient.delete(`/admin/categories/${categoryId}`);

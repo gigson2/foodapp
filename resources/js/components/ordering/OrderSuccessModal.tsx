@@ -20,7 +20,7 @@ type OrderSuccessModalProps = {
 
 export function OrderSuccessModal({ companySettings, isOpen, onClose, onOpenAccount, order }: OrderSuccessModalProps) {
     const isMobile = useMediaQuery('(max-width: 767px)');
-    const pickupAddress = companySettings?.address ?? '701 Golden Gate Circle, Papillion, NE 68046';
+    const pickupAddress = companySettings?.address ?? 'Pickup address coming soon';
 
     if (! order) {
         return null;

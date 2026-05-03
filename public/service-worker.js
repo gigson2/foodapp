@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dri-africain-shell-v6';
+const CACHE_NAME = 'dri-africain-shell-v7';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = ['/', OFFLINE_URL, '/manifest.webmanifest', '/icons/app_ico.png', '/icons/apple-touch-icon.png', '/icons/app-icon-192.png', '/icons/app-icon-512.png'];
 
@@ -75,6 +75,11 @@ self.addEventListener('push', (event) => {
         icon: '/icons/app-icon-192.png',
         badge: '/icons/app_ico.png',
         tag: data.tag || data.kind || 'general',
+        renotify: typeof data.renotify === 'boolean' ? data.renotify : true,
+        silent: typeof data.silent === 'boolean' ? data.silent : false,
+        vibrate: Array.isArray(data.vibrate) ? data.vibrate : [180, 80, 220],
+        timestamp: typeof data.timestamp === 'number' ? data.timestamp : Date.now(),
+        actions: Array.isArray(data.actions) ? data.actions : [{ action: 'open', title: 'Open app' }],
         data: { url: data.url || '/customer', ...data },
         requireInteraction: false,
     };

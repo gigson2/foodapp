@@ -3,30 +3,48 @@ import { toast } from 'sonner';
 import { AdminPageHeader } from '@/admin/components/common/AdminPageHeader';
 import { AdminSectionCard } from '@/admin/components/common/AdminSectionCard';
 import { Button } from '@/components/common/Button';
+import { apiClient } from '@/services/apiClient';
+import { getExistingPushSubscription, requestNotificationAccess, subscribeToPush } from '@/services/pwaService';
 
 export function AdminPwaSettingsPage() {
-    const [permission, setPermission] = useState<NotificationPermission>(() => ('Notification' in window ? Notification.permission : 'default'));
+    const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(() => ('Notification' in window ? Notification.permission : 'unsupported'));
 
     const requestNotifications = async () => {
-        if (!('Notification' in window)) {
-            toast.error('Browser notifications are not available in this browser.');
+        const result = await requestNotificationAccess();
+        setPermission(result);
+
+        if (result !== 'granted') {
+            if (result === 'denied') {
+                toast.error('Browser notifications were denied for this admin device.');
+            } else {
+                toast.message(`Notification permission is now ${result}.`);
+            }
             return;
         }
 
-        const result = await Notification.requestPermission();
-        setPermission(result);
-        toast.success(`Notification permission is now ${result}.`);
+        const existing = await getExistingPushSubscription();
+        const subscription = existing ?? await subscribeToPush();
+
+        if (!subscription) {
+            toast.error('Notification permission was granted, but push registration could not be completed.');
+            return;
+        }
+
+        const subJson = subscription.toJSON();
+        await apiClient.post('/push-subscriptions', {
+            endpoint: subscription.endpoint,
+            public_key: subJson.keys?.p256dh ?? null,
+            auth_token: subJson.keys?.auth ?? null,
+            content_encoding: 'aes128gcm',
+            user_agent: navigator.userAgent,
+        });
+
+        toast.success('Admin notifications are enabled on this device.');
     };
 
     const sendTestNotification = async () => {
-        if (!('Notification' in window) || Notification.permission !== 'granted') {
-            toast.error('Grant notification permission before sending a test.');
-            return;
-        }
-
-        new Notification('Dri Africain Admin', {
-            body: 'Test notification from the admin PWA settings page.',
-        });
+        await apiClient.post('/push-notifications/test');
+        toast.success('A real push test was sent to this device.');
     };
 
     return (
@@ -56,7 +74,8 @@ export function AdminPwaSettingsPage() {
                     <ul className="mt-5 space-y-3 text-sm text-muted">
                         <li>Manifest is available at <code>/manifest.webmanifest</code>.</li>
                         <li>Offline fallback is available at <code>/offline.html</code>.</li>
-                        <li>Admin notifications rely on browser permission plus backend push delivery when configured.</li>
+                        <li>Admin notifications rely on browser permission, a saved subscription, and valid VAPID keys.</li>
+                        <li>Mobile browsers may use the system default alert sound when web push is delivered and the device/browser allows it.</li>
                     </ul>
                 </AdminSectionCard>
             </div>

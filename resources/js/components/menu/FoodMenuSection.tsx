@@ -33,7 +33,7 @@ export function FoodMenuSection({
                 <button className="group block w-full rounded-[1.5rem] text-left" key={food.id} onClick={() => onSelectFood(food)} type="button">
                     <div className="theme-divider flex flex-col gap-4 rounded-[1.5rem] border border-transparent px-3 py-4 transition duration-200 group-hover:border-[color:var(--primary-500)]/22 group-hover:bg-[color:var(--primary-500)]/10 group-hover:shadow-[0_18px_36px_rgba(0,0,0,0.08)] sm:flex-row sm:items-center">
                         <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl">
-                            <img alt={`${food.name} from Dri Africain Traditional Grill LLC`} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" src={food.image} />
+                            <img alt={`${food.name} prepared for pickup ordering`} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" src={food.image} />
                         </div>
                         <div className="flex-1 sm:pe-6">
                             <h3 className="text-2xl transition-colors group-hover:text-[color:var(--primary-500)]">{food.name}</h3>

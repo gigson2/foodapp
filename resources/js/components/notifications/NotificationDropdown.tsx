@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Bell, CheckCheck } from 'lucide-react';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
@@ -11,49 +12,61 @@ type NotificationDropdownProps = {
 };
 
 export function NotificationDropdown({ notifications, onMarkAllRead, onMarkRead }: NotificationDropdownProps) {
+    const unreadNotifications = notifications.filter((notification) => !notification.read).slice(0, 3);
+
     return (
-        <div className="ui-outline-strong absolute right-0 top-[calc(100%+0.75rem)] z-[80] w-[min(92vw,24rem)] rounded-[1.75rem] p-4 shadow-[var(--ui-shadow-soft)]" style={{ background: 'var(--background-100)' }}>
+        <div
+            className="absolute right-0 top-[calc(100%+0.75rem)] z-[90] w-[min(92vw,24rem)] rounded-[1.75rem] border border-[color:var(--ui-border-strong)] p-4 shadow-[0_24px_60px_rgba(0,0,0,0.24)]"
+            style={{ background: 'color-mix(in srgb, var(--background-100) 96%, black 4%)' }}
+        >
             <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                     <p className="text-sm font-semibold">Notifications</p>
                     <p className="mt-1 text-xs text-muted">Order updates, review events, and account alerts.</p>
                 </div>
-                <Button onClick={onMarkAllRead} size="sm" variant="ghost">
+                <Button disabled={unreadNotifications.length === 0} onClick={onMarkAllRead} size="sm" variant="secondary">
                     <CheckCheck className="h-4 w-4" />
-                    Read all
+                    Mark all read
                 </Button>
             </div>
 
-            {notifications.length === 0 ? (
-                <EmptyState description="Notifications appear after you place orders or interact with the app." title="No notifications yet" />
+            {unreadNotifications.length === 0 ? (
+                <EmptyState description="Only the latest unread account updates appear here. Open your notification page for history." title="No unread notifications" />
             ) : (
                 <div className="max-h-[24rem] space-y-3 overflow-y-auto pr-1">
-                    {notifications.map((notification) => (
-                        <button
+                    {unreadNotifications.map((notification) => (
+                        <div
                             className="ui-surface-solid ui-card-hover w-full rounded-[1.5rem] px-4 py-3 text-left"
                             key={notification.id}
-                            onClick={() => onMarkRead(notification.id)}
-                            type="button"
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <div>
                                     <p className="font-medium">{notification.title}</p>
                                     <p className="mt-1 text-sm leading-6 text-muted">{notification.message}</p>
                                 </div>
-                                {! notification.read ? (
-                                    <Badge className="shrink-0 bg-[color:var(--accent-500)]/16 text-[color:var(--accent-900)]">
-                                        New
-                                    </Badge>
-                                ) : null}
+                                <Badge className="shrink-0 bg-[color:var(--accent-500)]/16 text-[color:var(--accent-900)]">
+                                    New
+                                </Badge>
                             </div>
                             <div className="mt-3 flex items-center gap-2 text-xs text-muted">
                                 <Bell className="h-3.5 w-3.5" />
                                 {new Date(notification.createdAt).toLocaleString()}
                             </div>
-                        </button>
+                            <div className="mt-3 flex justify-end">
+                                <Button onClick={() => onMarkRead(notification.id)} size="sm" variant="ghost">
+                                    Mark read
+                                </Button>
+                            </div>
+                        </div>
                     ))}
                 </div>
             )}
+
+            <div className="mt-4 border-t border-[color:var(--ui-divider)] pt-4">
+                <Link className="text-sm font-semibold text-[color:var(--primary-500)]" to="/customer/notifications">
+                    Open full notification center
+                </Link>
+            </div>
         </div>
     );
 }

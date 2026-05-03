@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/common/Button';
+import { getCompanyLocationLabel, getCompanyName } from '@/utils/company';
 import type { CompanySettings } from '@/types';
 
 type HeroSectionProps = {
@@ -14,7 +15,7 @@ const defaultHeroSlides = [
         image: '/assets/images/image6.jpeg',
         title: 'Tender Grilled Chicken & Goat',
         description:
-            'Dri Africain Traditional Grill LLC prepares large-scale grilled chicken and goat with professional seasoning, neat packaging, and pickup-ready service.',
+            'Large-scale grilled chicken and goat prepared with professional seasoning, neat packaging, and pickup-ready service.',
     },
     {
         image: '/assets/images/image5.jpeg',
@@ -26,12 +27,14 @@ const defaultHeroSlides = [
         image: '/assets/images/image4.jpeg',
         title: 'Pickup Orders With Cash At Collection',
         description:
-            'Order online, come to 701 Golden Gate Circle, Papillion, NE 68046, and pay when your food is ready for pickup.',
+            'Order online, come to the pickup location, and pay when your food is ready for collection.',
     },
 ];
 
 export function HeroSection({ companySettings, onBrowseMenu, onOpenAccount }: HeroSectionProps) {
     const [activeIndex, setActiveIndex] = useState(0);
+    const companyName = getCompanyName(companySettings);
+    const locationLabel = getCompanyLocationLabel(companySettings);
     const heroSlides = [
         {
             image: '/assets/images/image6.jpeg',
@@ -63,7 +66,7 @@ export function HeroSection({ companySettings, onBrowseMenu, onOpenAccount }: He
         <section className="scroll-mt-28" id="home">
             <div className="relative min-h-[78vh] overflow-hidden border-b border-white/10 md:min-h-[86vh]">
                 <img
-                    alt={`${activeSlide.title} at Dri Africain Traditional Grill LLC`}
+                    alt={`${activeSlide.title} at ${companyName}`}
                     className="animate-hero-fade absolute inset-0 h-full w-full object-cover"
                     key={activeSlide.image}
                     src={activeSlide.image}
@@ -88,10 +91,9 @@ export function HeroSection({ companySettings, onBrowseMenu, onOpenAccount }: He
                                 Order Now
                             </Button>
                             <Button
-                                className="bg-white/10 text-white hover:bg-white/16"
                                 onClick={onBrowseMenu}
                                 size="lg"
-                                variant="secondary"
+                                variant="glass"
                             >
                                 Food Menu
                             </Button>
@@ -104,9 +106,7 @@ export function HeroSection({ companySettings, onBrowseMenu, onOpenAccount }: He
                             <span className="ui-outline-accent rounded-full bg-[rgba(255,255,255,0.08)] px-4 py-2">Cash at Pickup</span>
                             <span className="ui-outline-gold rounded-full bg-[rgba(255,255,255,0.08)] px-4 py-2">Freshly Grilled</span>
                             <span className="ui-outline-strong rounded-full bg-[rgba(255,255,255,0.08)] px-4 py-2">Pickup Only</span>
-                            <span className="ui-outline-strong rounded-full bg-[rgba(255,255,255,0.08)] px-4 py-2">
-                                {companySettings?.address?.includes('Papillion') ? 'Papillion, Nebraska' : 'Hospitality First'}
-                            </span>
+                            <span className="ui-outline-strong rounded-full bg-[rgba(255,255,255,0.08)] px-4 py-2">{locationLabel}</span>
                         </div>
                     </div>
 

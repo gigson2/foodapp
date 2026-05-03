@@ -11,6 +11,8 @@ const buttonVariants = cva(
                     'border border-[color:var(--ui-border-accent)] bg-[color:var(--primary-500)] text-white shadow-[0_16px_36px_rgba(203,69,56,0.28)] hover:bg-[color:var(--primary-600)] hover:shadow-[var(--ui-shadow-hover)]',
                 secondary:
                     'ui-surface-solid text-[color:var(--text-950)] hover:border-[color:var(--ui-border-strong)] hover:bg-[color:var(--ui-surface-raised)]',
+                glass:
+                    'border border-white/20 bg-white/10 text-white backdrop-blur-sm hover:border-white/30 hover:bg-white/16',
                 ghost:
                     'ui-outline bg-transparent text-[color:var(--text-950)] hover:border-[color:var(--ui-border-strong)] hover:bg-[color:var(--ui-surface-muted)]',
                 accent:

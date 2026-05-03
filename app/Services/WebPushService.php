@@ -32,9 +32,16 @@ class WebPushService
      * Send a push notification to all of a user's registered subscriptions.
      *
      * @param array<string, mixed> $data  Extra payload data (url, kind, order_id, etc.)
+     * @param array<string, mixed> $delivery Extra delivery hints (urgency, ttl, topic)
      */
-    public function sendToUser(User $user, string $title, string $body, array $data = []): void
+    public function sendToUser(User $user, string $title, string $body, array $data = [], array $delivery = []): void
     {
+        $user->loadMissing('notificationPreference', 'pushSubscriptions');
+
+        if ($user->notificationPreference && ! $user->notificationPreference->push_enabled) {
+            return;
+        }
+
         $subscriptions = $user->pushSubscriptions()->get();
 
         if ($subscriptions->isEmpty()) {
@@ -44,8 +51,18 @@ class WebPushService
         $payload = json_encode([
             'title' => $title,
             'body'  => $body,
+            'silent' => false,
+            'vibrate' => $data['vibrate'] ?? [180, 80, 220],
+            'renotify' => $data['renotify'] ?? true,
+            'timestamp' => now()->getTimestampMs(),
             ...$data,
         ]);
+
+        $options = array_filter([
+            'TTL' => (int) ($delivery['ttl'] ?? 300),
+            'urgency' => $delivery['urgency'] ?? 'high',
+            'topic' => $delivery['topic'] ?? ($data['tag'] ?? $data['kind'] ?? null),
+        ], static fn (mixed $value): bool => $value !== null);
 
         $stale = [];
 
@@ -58,7 +75,7 @@ class WebPushService
             );
 
             try {
-                $report = $this->webPush->sendOneNotification($subscription, $payload);
+                $report = $this->webPush->sendOneNotification($subscription, $payload, $options);
 
                 if (! $report->isSuccess()) {
                     // 410 Gone means the subscription has been removed by the browser
@@ -75,5 +92,17 @@ class WebPushService
         if (! empty($stale)) {
             PushSubscription::query()->whereIn('id', $stale)->delete();
         }
+    }
+
+    public function hasPushEnabled(User $user): bool
+    {
+        $user->loadMissing('notificationPreference');
+
+        return $user->notificationPreference?->push_enabled ?? true;
+    }
+
+    public function hasSubscriptions(User $user): bool
+    {
+        return $user->pushSubscriptions()->exists();
     }
 }

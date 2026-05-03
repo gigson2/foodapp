@@ -141,4 +141,7 @@ export const adminFoodService = {
     async archiveFood(foodId: string | number) {
         await adminApiClient.delete(`/admin/foods/${foodId}`);
     },
+    async restoreFood(foodId: string | number) {
+        await adminApiClient.post(`/admin/foods/${foodId}/restore`);
+    },
 };

@@ -1,5 +1,6 @@
 import { Button } from '@/components/common/Button';
 import { SectionContainer } from '@/components/layout/SectionContainer';
+import { getCompanyAbout, getCompanyName, getCompanyTagline } from '@/utils/company';
 import type { CompanySettings } from '@/types';
 
 type AboutSectionProps = {
@@ -7,6 +8,10 @@ type AboutSectionProps = {
 };
 
 export function AboutSection({ companySettings }: AboutSectionProps) {
+    const companyName = getCompanyName(companySettings);
+    const aboutText = getCompanyAbout(companySettings) ?? 'This restaurant focuses on professionally grilled chicken and goat prepared in large scale without losing tenderness, flavor, or quality. Every pack is neatly arranged in takeaway containers, making pickup simple, clean, and satisfying.';
+    const taglineText = getCompanyTagline(companySettings) ?? 'The brand is built around trust, professional preparation, smoky flavor, and clean packaging that customers can rely on.';
+
     return (
         <div className="relative overflow-hidden">
             <SectionContainer className="relative" contentClassName="relative" id="about">
@@ -23,7 +28,7 @@ export function AboutSection({ companySettings }: AboutSectionProps) {
                 <div className="relative grid gap-8 lg:grid-cols-[0.35fr_0.32fr_0.23fr] lg:items-start">
                     <div className="overflow-hidden rounded-[1.75rem]">
                         <img
-                            alt="Grilled chicken served with onions from Dri Africain Traditional Grill LLC"
+                            alt={`Grilled chicken served with onions from ${companyName}`}
                             className="h-[22rem] w-full object-cover lg:h-[34rem]"
                             src="/assets/images/image3.jpeg"
                         />
@@ -31,10 +36,10 @@ export function AboutSection({ companySettings }: AboutSectionProps) {
 
                     <div className="lg:pt-10">
                         <p className="text-base leading-8 text-muted">
-                            {companySettings?.about ?? 'Dri Africain Traditional Grill LLC focuses on professionally grilled chicken and goat prepared in large scale without losing tenderness, flavor, or quality. Every pack is neatly arranged in takeaway containers, making pickup simple, clean, and satisfying.'}
+                            {aboutText}
                         </p>
                         <p className="mt-5 text-base leading-8 text-muted">
-                            {companySettings?.tagline ?? 'The brand is built around trust, professional preparation, smoky flavor, and clean packaging that customers can rely on.'}
+                            {taglineText}
                         </p>
                         <Button className="mt-10" size="lg">
                             More About
@@ -43,7 +48,7 @@ export function AboutSection({ companySettings }: AboutSectionProps) {
 
                     <div className="overflow-hidden rounded-[1.75rem] lg:-mt-32">
                         <img
-                            alt="Packaged grilled goat ready for pickup from Dri Africain Traditional Grill LLC"
+                            alt={`Packaged grilled goat ready for pickup from ${companyName}`}
                             className="h-[18rem] w-full object-cover lg:h-[26rem]"
                             src="/assets/images/image4.jpeg"
                         />

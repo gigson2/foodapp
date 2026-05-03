@@ -15,7 +15,7 @@ export function FoodCard({ food, onSelectFood }: FoodCardProps) {
             <button className="block w-full text-left" onClick={() => onSelectFood(food)} type="button">
                 <div className="relative h-52 overflow-hidden border-b ui-divider">
                     <img
-                        alt={`${food.name} from Dri Africain Traditional Grill LLC`}
+                        alt={`${food.name} prepared for pickup ordering`}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                         src={food.image}
                     />

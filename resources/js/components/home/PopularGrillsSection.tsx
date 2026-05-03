@@ -34,7 +34,7 @@ export function PopularGrillsSection({ foods, onSelectFood }: PopularGrillsSecti
                             type="button"
                         >
                             <img
-                                alt={`${food.name} from Dri Africain Traditional Grill LLC`}
+                                alt={`${food.name} prepared for pickup ordering`}
                                 className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-110"
                                 src={food.image}
                             />

@@ -1,9 +1,9 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { adminRoutes } from '@/admin/routes/adminRoutes';
+import { customerRoutes } from '@/customer/routes/customerRoutes';
 import { AppShell } from '@/components/layout/AppShell';
 import { RouteErrorBoundary } from '@/components/layout/RouteErrorBoundary';
 import { AdminLoginPage } from '@/pages/admin/AdminLoginPage';
-import { CustomerDashboardPage } from '@/pages/customer/CustomerDashboardPage';
 
 export const router = createBrowserRouter([
     {
@@ -12,8 +12,7 @@ export const router = createBrowserRouter([
         errorElement: <RouteErrorBoundary />,
     },
     {
-        path: '/customer',
-        element: <CustomerDashboardPage />,
+        ...customerRoutes,
         errorElement: <RouteErrorBoundary />,
     },
     {

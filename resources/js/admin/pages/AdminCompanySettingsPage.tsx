@@ -8,6 +8,8 @@ import { adminSettingsService, type AdminCompanySettingsInput } from '@/admin/se
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Textarea } from '@/components/common/Textarea';
+import { PUBLIC_COMPANY_SETTINGS_QUERY_KEY } from '@/services/publicService';
+import { publishPublicContentUpdate } from '@/services/publicContentSync';
 
 const emptyCompanySettingsForm: AdminCompanySettingsInput = {
     companyName: '',
@@ -64,8 +66,9 @@ export function AdminCompanySettingsPage() {
             setFaviconPreview(null);
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ['admin-app', 'company-settings'] }),
-                queryClient.invalidateQueries({ queryKey: ['public-company-settings'] }),
+                queryClient.invalidateQueries({ queryKey: PUBLIC_COMPANY_SETTINGS_QUERY_KEY }),
             ]);
+            publishPublicContentUpdate('company-settings');
         },
     });
 
@@ -141,7 +144,7 @@ export function AdminCompanySettingsPage() {
                         />
                 </div>
                 <div className="mt-5">
-                    <Button onClick={() => updateMutation.mutate(form)} size="sm">
+                    <Button disabled={updateMutation.isPending} onClick={() => updateMutation.mutate(form)} size="sm">
                         Save company settings
                     </Button>
                 </div>

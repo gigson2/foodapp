@@ -16,12 +16,24 @@ export function AdminFoodsPage() {
         queryFn: adminService.getFoods,
     });
 
+    const invalidate = async () => {
+        await queryClient.invalidateQueries({ queryKey: ['admin', 'foods'] });
+        await queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+    };
+
     const deleteMutation = useMutation({
         mutationFn: adminService.deleteFood,
         onSuccess: async (message) => {
             toast.success(message);
-            await queryClient.invalidateQueries({ queryKey: ['admin', 'foods'] });
-            await queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+            await invalidate();
+        },
+    });
+
+    const restoreMutation = useMutation({
+        mutationFn: adminService.restoreFood,
+        onSuccess: async (message) => {
+            toast.success(message);
+            await invalidate();
         },
     });
 
@@ -77,11 +89,23 @@ export function AdminFoodsPage() {
                                             <Link to={`/admin/foods/${food.id}/edit`}>
                                                 <Button size="sm" variant="secondary">Edit</Button>
                                             </Link>
-                                            {!food.deleted_at ? (
-                                                <Button onClick={() => deleteMutation.mutate(food.id)} size="sm" variant="ghost">
+                                            {food.deleted_at ? (
+                                                <Button
+                                                    onClick={() => restoreMutation.mutate(food.id)}
+                                                    size="sm"
+                                                    variant="secondary"
+                                                >
+                                                    Restore
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    onClick={() => deleteMutation.mutate(food.id)}
+                                                    size="sm"
+                                                    variant="ghost"
+                                                >
                                                     Archive
                                                 </Button>
-                                            ) : null}
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

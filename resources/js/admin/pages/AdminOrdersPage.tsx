@@ -136,7 +136,11 @@ export function AdminOrdersPage() {
             allowOverflow: true,
             button: true,
             cell: (order) => (
-                <IconButton aria-label={`View ${order.orderNumber}`} className="h-10 w-10" onClick={() => setSelectedOrderId(order.id)}>
+                <IconButton
+                    aria-label={`View ${order.orderNumber}`}
+                    className={order.status === 'processing' ? 'h-10 w-10 border-rose-500/30 text-rose-400 hover:border-rose-500/42 hover:bg-rose-500/12' : 'h-10 w-10'}
+                    onClick={() => setSelectedOrderId(order.id)}
+                >
                     <Eye className="h-4 w-4" />
                 </IconButton>
             ),

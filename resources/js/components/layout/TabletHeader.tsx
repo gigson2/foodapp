@@ -11,6 +11,7 @@ type TabletHeaderProps = {
     brandName: string;
     customerName?: string;
     isLoggedIn: boolean;
+    locationLabel: string;
     notifications: AppNotification[];
     onAccount: () => void;
     onGoContact: () => void;
@@ -28,6 +29,7 @@ export function TabletHeader({
     brandName,
     customerName,
     isLoggedIn,
+    locationLabel,
     notifications,
     onAccount,
     onGoContact,
@@ -51,7 +53,7 @@ export function TabletHeader({
                 <div className="section-shell flex items-center justify-between gap-4">
                     <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
                         <MapPin className="h-3.5 w-3.5 text-[color:var(--primary-500)]" />
-                        Papillion, Nebraska
+                        {locationLabel}
                     </div>
                     <div className="flex items-center gap-2">
                         {isLoggedIn ? (

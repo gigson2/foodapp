@@ -21,19 +21,18 @@
             $faviconUrl = $resolveBrandAsset($companySettings?->favicon, $appIconUrl);
             $logoUrl = $resolveBrandAsset($companySettings?->logo, $appIconUrl);
             $appleTouchIconUrl = asset('icons/apple-touch-icon.png');
+            $companyName = filled($companySettings?->company_name) ? $companySettings->company_name : config('app.name', 'Dri Foods');
+            $companyAddress = filled($companySettings?->address) ? $companySettings->address : 'Pickup address coming soon';
+            $companyDescription = filled($companySettings?->about)
+                ? $companySettings->about
+                : (filled($companySettings?->tagline) ? $companySettings->tagline : 'Pickup-only traditional African grill ordering PWA with cash payment at pickup.');
         @endphp
         <meta name="theme-color" content="#060118">
         <meta name="application-name" content="Dri Foods">
         <meta name="format-detection" content="telephone=no">
-        <meta
-            name="description"
-            content="Order tender grilled chicken and goat from Dri Africain Traditional Grill LLC in Papillion, Nebraska. Pickup-only, cash-at-pickup traditional African grill."
-        >
-        <meta property="og:title" content="Dri Africain Traditional Grill LLC | Grilled Chicken & Goat in Papillion, NE">
-        <meta
-            property="og:description"
-            content="Pickup-only African grill in Papillion, Nebraska serving tender grilled chicken and goat with cash payment at pickup."
-        >
+        <meta name="description" content="{{ $companyDescription }}">
+        <meta property="og:title" content="{{ $companyName }}">
+        <meta property="og:description" content="{{ $companyDescription }}">
         <meta property="og:type" content="website">
         <meta property="og:url" content="{{ url()->current() }}">
         <meta property="og:image" content="{{ $logoUrl }}">
@@ -52,21 +51,18 @@
         <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('icons/app-icon-512.png') }}">
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=josefin-sans:300,400,500,600,700|oswald:300,400,500,600,700" rel="stylesheet" />
-        <title>Dri Africain Traditional Grill LLC | Grilled Chicken &amp; Goat in Papillion, NE</title>
+        <title>{{ $companyName }}</title>
         @php
             $restaurantSchema = [
                 '@context' => 'https://schema.org',
                 '@type' => ['Restaurant', 'FoodEstablishment', 'LocalBusiness'],
-                'name' => 'Dri Africain Traditional Grill LLC',
+                'name' => $companyName,
                 'servesCuisine' => 'Traditional African Grill',
-                'description' => 'Pickup-only traditional African grilled chicken and grilled goat in Papillion, Nebraska.',
+                'description' => $companyDescription,
                 'url' => url('/'),
                 'address' => [
                     '@type' => 'PostalAddress',
-                    'streetAddress' => '701 Golden Gate Circle',
-                    'addressLocality' => 'Papillion',
-                    'addressRegion' => 'NE',
-                    'postalCode' => '68046',
+                    'streetAddress' => $companyAddress,
                     'addressCountry' => 'US',
                 ],
                 'paymentAccepted' => 'Cash',

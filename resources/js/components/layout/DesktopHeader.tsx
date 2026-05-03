@@ -52,7 +52,7 @@ export function DesktopHeader({
                 <div className="section-shell flex items-center justify-between gap-6">
                     <div className="flex items-center gap-3 text-sm text-muted">
                         <MapPin className="h-4 w-4 text-[color:var(--primary-500)]" />
-                        <span>Welcome to Dri Africain Traditional Grill LLC</span>
+                        <span>Welcome to {brandName}</span>
                     </div>
                     <div className="flex items-center gap-3">
                         {isLoggedIn ? (

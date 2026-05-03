@@ -1,6 +1,7 @@
 import { MapPin, WalletCards } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { SectionContainer } from '@/components/layout/SectionContainer';
+import { getCompanyAddress, getCompanyName, getCompanyTagline, getCompanyLocationLabel } from '@/utils/company';
 import { openDirectionsPrompt } from '@/utils/location';
 import type { CompanySettings } from '@/types';
 
@@ -10,11 +11,14 @@ type ContactSectionProps = {
 };
 
 export function ContactSection({ companySettings, onOrderNow }: ContactSectionProps) {
-    const locationLabel = companySettings?.address ?? '701 Golden Gate Circle, Papillion, NE 68046';
+    const companyName = getCompanyName(companySettings);
+    const locationLabel = getCompanyAddress(companySettings);
+    const locationShortLabel = getCompanyLocationLabel(companySettings);
     const fridayHours = companySettings?.opening_hours?.friday ?? 'Pre-orders open';
     const saturdayHours = companySettings?.opening_hours?.saturday ?? '11:00 AM - 10:00 PM';
     const orderingCutoff = companySettings?.opening_hours?.ordering_cutoff ?? 'Saturday 9:00 PM';
     const phoneLabel = companySettings?.phone ?? 'Phone number coming soon';
+    const tagline = getCompanyTagline(companySettings);
 
     return (
         <div className="relative">
@@ -24,10 +28,11 @@ export function ContactSection({ companySettings, onOrderNow }: ContactSectionPr
                     <img alt="" className="absolute bottom-[-5.5rem] left-0 hidden max-w-[34%] opacity-90 lg:block" src="/assets/theme/reservation_imgs.png" />
 
                     <div className="relative z-10 mx-auto max-w-4xl text-center">
-                        <h2 className="text-5xl sm:text-6xl lg:text-[5rem]">Pickup From Our Papillion Location</h2>
+                        <h2 className="text-5xl sm:text-6xl lg:text-[5rem]">Pickup From Our Grill Location</h2>
                         <p className="mt-5 text-base leading-8 text-muted">
-                            Dri Africain Traditional Grill LLC serves pickup-only grilled chicken and goat from {locationLabel}.
+                            {companyName} serves pickup-only grilled chicken and goat from {locationLabel}.
                         </p>
+                        {tagline ? <p className="mt-3 text-sm leading-7 text-muted">{tagline}</p> : null}
 
                         <div className="mt-10 grid gap-4 md:grid-cols-3">
                             <div className="ui-surface-solid ui-outline-accent rounded-2xl p-5">
@@ -55,7 +60,7 @@ export function ContactSection({ companySettings, onOrderNow }: ContactSectionPr
                                 Get Directions
                             </Button>
                         </div>
-                        <p className="mt-4 text-sm text-muted">{locationLabel} - {phoneLabel}</p>
+                        <p className="mt-4 text-sm text-muted">{locationShortLabel} - {phoneLabel}</p>
                     </div>
                 </div>
             </SectionContainer>

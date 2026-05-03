@@ -105,7 +105,7 @@ export function CustomerDetailsModal({
     const title = mode === 'order' ? 'Your pickup details' : 'Enter your account details';
     const description =
         mode === 'order'
-            ? 'Save your name and phone so Dri Africain can prepare this pickup order.'
+            ? 'Save your name and phone so the restaurant can prepare this pickup order.'
             : 'This simple identity flow is ready to upgrade to OTP or SMS verification later.';
 
     if (isMobile) {

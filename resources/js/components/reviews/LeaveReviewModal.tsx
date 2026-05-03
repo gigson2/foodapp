@@ -130,7 +130,7 @@ export function LeaveReviewModal({
             <Textarea error={errors.message?.message} label="Review" placeholder="Share your pickup and grill experience" {...register('message')} />
 
             <div className="ui-surface-solid ui-outline-gold rounded-[1.5rem] p-4 text-sm leading-7 text-muted">
-                Only customers who have ordered from Dri Africain Traditional Grill LLC can leave a review.
+                Only customers who have already placed pickup orders can leave a review.
             </div>
 
             {submitError ? <p className="text-sm text-[color:var(--primary-800)]">{submitError}</p> : null}

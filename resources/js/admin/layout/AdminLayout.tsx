@@ -1,9 +1,12 @@
 import { Outlet, useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import type { AdminUser } from '@/types/admin';
 import { AUTH_SESSION_QUERY_KEY } from '@/hooks/useAuthSession';
 import { adminService } from '@/services/adminService';
+import { publicService, PUBLIC_COMPANY_SETTINGS_QUERY_KEY } from '@/services/publicService';
+import { getCompanyName } from '@/utils/company';
 import { AdminContentShell } from '@/admin/layout/AdminContentShell';
 import { AdminHeader } from '@/admin/layout/AdminHeader';
 import { AdminMobileBottomNav } from '@/admin/layout/AdminMobileBottomNav';
@@ -20,9 +23,15 @@ export function AdminLayout({ currentUser }: AdminLayoutProps) {
     const queryClient = useQueryClient();
     const [drawerOpen, setDrawerOpen] = useState(false);
     const { notifications, unreadCount, markRead, markAllRead } = useAdminNotifications();
+    const { data: companySettings = null } = useQuery({
+        queryKey: PUBLIC_COMPANY_SETTINGS_QUERY_KEY,
+        queryFn: publicService.getCompanySettings,
+    });
+    const companyName = useMemo(() => getCompanyName(companySettings), [companySettings]);
     const logoutMutation = useMutation({
         mutationFn: adminService.logout,
         onSuccess: async () => {
+            toast.success('Logged out successfully');
             queryClient.setQueryData(AUTH_SESSION_QUERY_KEY, null);
             await queryClient.clear();
             navigate('/admin/login', { replace: true });
@@ -41,7 +50,11 @@ export function AdminLayout({ currentUser }: AdminLayoutProps) {
             />
 
             <div className="mx-auto flex max-w-[1700px] gap-6 px-0 md:px-6 lg:px-8">
-                <AdminSidebar onLogout={() => logoutMutation.mutate()} />
+                <AdminSidebar
+                    companyLogoUrl={companySettings?.logo ?? null}
+                    companyName={companyName}
+                    onLogout={() => logoutMutation.mutate()}
+                />
                 <AdminContentShell>
                     <Outlet />
                 </AdminContentShell>

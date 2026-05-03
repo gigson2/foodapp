@@ -42,4 +42,9 @@ export const adminNotificationService = {
     async markAllRead() {
         await adminApiClient.patch('/admin/notifications/read-all');
     },
+    async broadcastToCustomers(input: { title: string; message: string; url?: string }) {
+        const response = await adminApiClient.post<{ message: string; recipients: number }>('/admin/notifications/broadcast', input);
+
+        return response.data;
+    },
 };

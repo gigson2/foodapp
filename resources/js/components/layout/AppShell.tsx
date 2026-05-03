@@ -29,17 +29,26 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { AUTH_SESSION_QUERY_KEY, useAuthSession } from '@/hooks/useAuthSession';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { useLocalCustomer } from '@/hooks/useLocalCustomer';
-import { useLocalReviews } from '@/hooks/useLocalReviews';
-import { useNotifications } from '@/hooks/useNotifications';
 import { useScrollToSection } from '@/hooks/useScrollToSection';
+import { customerPortalService } from '@/customer/services/customerPortalService';
+import { markAllCustomerNotificationsReadInCache, markCustomerNotificationReadInCache } from '@/admin/utils/notificationCache';
 import { apiClient } from '@/services/apiClient';
 import { orderService } from '@/services/orderService';
-import { subscribeToPush, requestNotificationAccess } from '@/services/pwaService';
-import { publicService } from '@/services/publicService';
+import { getNotificationPermission, subscribeToPush, requestNotificationAccess } from '@/services/pwaService';
+import {
+    publicService,
+    PUBLIC_CATEGORIES_QUERY_KEY,
+    PUBLIC_COMPANY_SETTINGS_QUERY_KEY,
+    PUBLIC_FOODS_QUERY_KEY,
+    PUBLIC_REVIEWS_QUERY_KEY,
+} from '@/services/publicService';
+import { subscribeToPublicContentUpdates } from '@/services/publicContentSync';
 import { reviewService } from '@/services/reviewService';
 import { adminService } from '@/services/adminService';
+import { sessionService } from '@/services/sessionService';
 import { normalizeUsPhone } from '@/utils/phone';
 import { readStorage, writeStorage } from '@/utils/storage';
+import { getCompanyLocationLabel, getCompanyName } from '@/utils/company';
 import type { Food, Order } from '@/types';
 
 const NOTIFICATION_PROMPT_KEY = 'restaurant.prompts.notifications.dismissed';
@@ -85,7 +94,7 @@ export function AppShell() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { customer, preparePhoneIdentity, saveCustomer } = useLocalCustomer();
-    const { markAllRead, markRead, notifications, permission, unreadCount } = useNotifications('customer');
+    const [permission, setPermission] = useState(() => getNotificationPermission());
     const scrollToSection = useScrollToSection();
     const { canInstall, isIos, isStandalone, promptInstall } = useInstallPrompt();
     const [activeCategory, setActiveCategory] = useState('All');
@@ -108,15 +117,15 @@ export function AppShell() {
 
     const { user: sessionUser = null } = useAuthSession();
     const { data: categories = [] } = useQuery({
-        queryKey: ['public-categories'],
+        queryKey: PUBLIC_CATEGORIES_QUERY_KEY,
         queryFn: publicService.getCategories,
     });
     const { data: foods = [] } = useQuery({
-        queryKey: ['public-foods'],
+        queryKey: PUBLIC_FOODS_QUERY_KEY,
         queryFn: publicService.getFoods,
     });
     const { data: companySettings = null } = useQuery({
-        queryKey: ['public-company-settings'],
+        queryKey: PUBLIC_COMPANY_SETTINGS_QUERY_KEY,
         queryFn: publicService.getCompanySettings,
     });
 
@@ -137,10 +146,38 @@ export function AppShell() {
         return null;
     }, [customer, sessionUser]);
 
-    const { approvedReviews } = useLocalReviews(effectiveCustomer?.phone);
+    const { data: approvedReviews = [] } = useQuery({
+        queryKey: PUBLIC_REVIEWS_QUERY_KEY,
+        queryFn: publicService.getApprovedReviews,
+    });
+    const customerNotificationsQuery = useQuery({
+        enabled: sessionUser?.role === 'customer',
+        queryKey: ['customer-portal', 'notifications'],
+        queryFn: customerPortalService.getNotifications,
+        refetchInterval: 15_000,
+        refetchOnWindowFocus: true,
+    });
+    const customerNotifications = customerNotificationsQuery.data ?? [];
+    const unreadCount = customerNotifications.filter((notification) => !notification.read).length;
+    const markNotificationReadMutation = useMutation({
+        mutationFn: customerPortalService.markNotificationRead,
+        onSuccess: (notification) => {
+            markCustomerNotificationReadInCache(queryClient, notification.id);
+        },
+    });
+    const markAllNotificationsMutation = useMutation({
+        mutationFn: customerPortalService.markAllNotificationsRead,
+        onSuccess: () => {
+            toast.success('Notifications marked as read');
+            markAllCustomerNotificationsReadInCache(queryClient);
+        },
+    });
 
     const sessionLoginMutation = useMutation({
         mutationFn: adminService.login,
+    });
+    const sessionRegisterMutation = useMutation({
+        mutationFn: (input: { name: string; phone: string; password: string; passwordConfirmation: string }) => sessionService.register(input),
     });
 
     const categoryNames = useMemo(() => ['All', ...categories.map((category) => category.name)], [categories]);
@@ -163,6 +200,19 @@ export function AppShell() {
 
     const hasAccountIdentity = Boolean(sessionUser || effectiveCustomer);
     const accountName = sessionUser?.name ?? effectiveCustomer?.name;
+
+    useEffect(() => {
+        const updatePermission = () => setPermission(getNotificationPermission());
+
+        updatePermission();
+        window.addEventListener('focus', updatePermission);
+        window.addEventListener('notification-permission-change', updatePermission as EventListener);
+
+        return () => {
+            window.removeEventListener('focus', updatePermission);
+            window.removeEventListener('notification-permission-change', updatePermission as EventListener);
+        };
+    }, []);
 
     useEffect(() => {
         const sectionIds = ['home', 'popular', 'menu', 'about', 'pickup', 'gallery', 'reviews', 'contact', 'account'];
@@ -225,6 +275,29 @@ export function AppShell() {
     }, []);
 
     useEffect(() => {
+        return subscribeToPublicContentUpdates((payload) => {
+            if (payload.scope === 'foods') {
+                void queryClient.invalidateQueries({ queryKey: PUBLIC_FOODS_QUERY_KEY });
+                return;
+            }
+
+            if (payload.scope === 'categories') {
+                void queryClient.invalidateQueries({ queryKey: PUBLIC_CATEGORIES_QUERY_KEY });
+                return;
+            }
+
+            if (payload.scope === 'company-settings') {
+                void queryClient.invalidateQueries({ queryKey: PUBLIC_COMPANY_SETTINGS_QUERY_KEY });
+                return;
+            }
+
+            if (payload.scope === 'reviews') {
+                void queryClient.invalidateQueries({ queryKey: PUBLIC_REVIEWS_QUERY_KEY });
+            }
+        });
+    }, [queryClient]);
+
+    useEffect(() => {
         if (permission !== 'default' || notificationPromptDismissed || notificationPromptReady) {
             return;
         }
@@ -263,7 +336,7 @@ export function AppShell() {
         }
 
         if (sessionUser?.role === 'customer' || effectiveCustomer) {
-            navigate('/customer');
+            navigate('/customer/dashboard');
             return;
         }
 
@@ -290,16 +363,7 @@ export function AppShell() {
             const subscription = await subscribeToPush();
 
             if (subscription && sessionUser) {
-                const subJson = subscription.toJSON();
-                await apiClient
-                    .post('/customer/push-subscriptions', {
-                        endpoint: subscription.endpoint,
-                        public_key: subJson.keys?.p256dh ?? null,
-                        auth_token: subJson.keys?.auth ?? null,
-                        content_encoding: 'aes128gcm',
-                        user_agent: navigator.userAgent,
-                    })
-                    .catch(() => undefined);
+                await customerPortalService.savePushSubscription(subscription).catch(() => undefined);
             }
 
             toast.success('Notifications enabled', {
@@ -372,7 +436,8 @@ export function AppShell() {
 
                 setSelectedFood(null);
                 setOrderSuccess(order);
-                void queryClient.invalidateQueries({ queryKey: ['customer-dashboard', 'orders'] });
+                void queryClient.invalidateQueries({ queryKey: ['customer-portal', 'orders'] });
+                void queryClient.invalidateQueries({ queryKey: ['customer-portal', 'dashboard'] });
                 toast.success('Pickup order received', {
                     description: `${order.orderNumber} was sent to the restaurant.`,
                 });
@@ -429,7 +494,7 @@ export function AppShell() {
                 });
             } else {
                 setDetailsOpen(false);
-                navigate('/customer');
+                navigate('/customer/dashboard');
                 toast.success('Account saved', {
                     description: 'Your phone number now identifies your orders on this device.',
                 });
@@ -475,7 +540,8 @@ export function AppShell() {
                 setSelectedFood(null);
                 setDetailsOpen(false);
                 setOrderSuccess(order);
-                void queryClient.invalidateQueries({ queryKey: ['customer-dashboard', 'orders'] });
+                void queryClient.invalidateQueries({ queryKey: ['customer-portal', 'orders'] });
+                void queryClient.invalidateQueries({ queryKey: ['customer-portal', 'dashboard'] });
                 toast.success('Pickup order received', {
                     description: `${order.orderNumber} was sent to the restaurant.`,
                 });
@@ -501,20 +567,37 @@ export function AppShell() {
         setLoadingReview(true);
 
         try {
-            if (! reviewService.canSubmitReview({ name: values.name, phone: values.phone })) {
-                return {
-                    success: false,
-                    error: 'Only customers who have ordered from Dri Africain Traditional Grill LLC can leave a review.',
-                };
-            }
+            if (sessionUser?.role === 'customer') {
+                await customerPortalService.createReview({
+                    rating: values.rating,
+                    message: values.message,
+                    foodName: values.foodName,
+                });
 
-            reviewService.addPendingReview({
-                customerName: values.name,
-                customerPhone: values.phone,
-                rating: values.rating,
-                message: values.message,
-                foodName: values.foodName,
-            });
+                await Promise.all([
+                    queryClient.invalidateQueries({ queryKey: ['customer-portal', 'reviews'] }),
+                    queryClient.invalidateQueries({ queryKey: ['customer-portal', 'dashboard'] }),
+                    queryClient.invalidateQueries({ queryKey: ['customer-portal', 'notifications'] }),
+                    queryClient.invalidateQueries({ queryKey: ['admin-app', 'reviews'] }),
+                    queryClient.invalidateQueries({ queryKey: ['admin-app', 'dashboard'] }),
+                    queryClient.invalidateQueries({ queryKey: ['admin-app', 'notifications'] }),
+                ]);
+            } else {
+                if (! reviewService.canSubmitReview({ name: values.name, phone: values.phone })) {
+                    return {
+                        success: false,
+                        error: 'Only customers who have ordered from this restaurant can leave a review.',
+                    };
+                }
+
+                reviewService.addPendingReview({
+                    customerName: values.name,
+                    customerPhone: values.phone,
+                    rating: values.rating,
+                    message: values.message,
+                    foodName: values.foodName,
+                });
+            }
 
             toast.success('Review submitted', {
                 description: 'Thank you. Your review has been submitted and will appear after approval.',
@@ -522,6 +605,18 @@ export function AppShell() {
             setReviewOpen(false);
 
             return { success: true };
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                return {
+                    success: false,
+                    error: (error.response?.data?.message as string | undefined) ?? 'Unable to submit review.',
+                };
+            }
+
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Unable to submit review.',
+            };
         } finally {
             setLoadingReview(false);
         }
@@ -529,53 +624,55 @@ export function AppShell() {
 
     const desktopActiveSection = getDesktopActiveSection(activeSection === 'popular' ? 'home' : activeSection);
     const mobileActiveSection = getMobileActiveSection(activeSection === 'popular' ? 'home' : activeSection);
-    const brandName = companySettings?.company_name?.trim() || 'Dri Africain';
+    const brandName = getCompanyName(companySettings);
     const brandLogoUrl = companySettings?.logo ?? null;
+    const locationLabel = getCompanyLocationLabel(companySettings);
     const showNotificationPrompt = notificationPromptReady && permission === 'default' && !notificationPromptDismissed;
     const showInstallPrompt = installPromptReady && !showNotificationPrompt && !isStandalone && (canInstall || isIos) && !installPromptDismissed;
 
     return (
         <div className="app-surface min-h-screen pb-28 md:pb-10">
             <div className="sticky top-0 z-40 bg-[color:var(--background-50)]/92 backdrop-blur-xl">
-                <DesktopHeader
-                    activeSection={desktopActiveSection}
-                    brandLogoUrl={brandLogoUrl}
-                    brandName={brandName}
-                    customerName={accountName}
-                    isLoggedIn={hasAccountIdentity}
-                    notifications={notifications}
-                    onAccount={openAccountFlow}
-                    onGoContact={() => scrollToSection('contact')}
-                    onGoHome={() => scrollToSection('home')}
-                    onGoMenu={() => scrollToSection('menu')}
-                    onGoReviews={() => scrollToSection('reviews')}
-                    onMarkAllRead={markAllRead}
-                    onMarkRead={markRead}
-                    unreadCount={unreadCount}
-                />
-                <TabletHeader
+                    <DesktopHeader
+                        activeSection={desktopActiveSection}
+                        brandLogoUrl={brandLogoUrl}
+                        brandName={brandName}
+                        customerName={accountName}
+                        isLoggedIn={hasAccountIdentity}
+                        notifications={customerNotifications}
+                        onAccount={openAccountFlow}
+                        onGoContact={() => scrollToSection('contact')}
+                        onGoHome={() => scrollToSection('home')}
+                        onGoMenu={() => scrollToSection('menu')}
+                        onGoReviews={() => scrollToSection('reviews')}
+                        onMarkAllRead={() => markAllNotificationsMutation.mutate()}
+                        onMarkRead={(notificationId) => markNotificationReadMutation.mutate(notificationId)}
+                        unreadCount={unreadCount}
+                    />
+                    <TabletHeader
                     activeSection={desktopActiveSection === 'account' ? 'contact' : desktopActiveSection}
                     brandLogoUrl={brandLogoUrl}
                     brandName={brandName}
-                    customerName={accountName}
-                    isLoggedIn={hasAccountIdentity}
-                    notifications={notifications}
-                    onAccount={openAccountFlow}
+                        customerName={accountName}
+                        isLoggedIn={hasAccountIdentity}
+                        locationLabel={locationLabel}
+                        notifications={customerNotifications}
+                        onAccount={openAccountFlow}
                     onGoContact={() => scrollToSection('contact')}
                     onGoHome={() => scrollToSection('home')}
                     onGoMenu={() => scrollToSection('menu')}
                     onGoReviews={() => scrollToSection('reviews')}
-                    onMarkAllRead={markAllRead}
-                    onMarkRead={markRead}
-                    unreadCount={unreadCount}
-                />
+                        onMarkAllRead={() => markAllNotificationsMutation.mutate()}
+                        onMarkRead={(notificationId) => markNotificationReadMutation.mutate(notificationId)}
+                        unreadCount={unreadCount}
+                    />
                 <div className="top-utility relative z-20 md:hidden">
                     <div className="section-shell flex items-center justify-end gap-2 py-3">
                         {hasAccountIdentity ? (
                             <NotificationBell
-                                notifications={notifications}
-                                onMarkAllRead={markAllRead}
-                                onMarkRead={markRead}
+                                notifications={customerNotifications}
+                                onMarkAllRead={() => markAllNotificationsMutation.mutate()}
+                                onMarkRead={(notificationId) => markNotificationReadMutation.mutate(notificationId)}
                                 unreadCount={unreadCount}
                             />
                         ) : (
@@ -619,7 +716,7 @@ export function AppShell() {
                     searchTerm={searchTerm}
                 />
                 <AboutSection companySettings={companySettings} />
-                <PickupHowItWorksSection />
+                <PickupHowItWorksSection companySettings={companySettings} />
                 <GallerySection />
                 <ReviewsSection onLeaveReview={() => setReviewOpen(true)} reviews={approvedReviews} />
                 <ContactSection companySettings={companySettings} onOrderNow={() => scrollToSection('menu')} />
@@ -685,7 +782,7 @@ export function AppShell() {
                 onClose={() => setOrderSuccess(null)}
                 onOpenAccount={() => {
                     setOrderSuccess(null);
-                    navigate('/customer');
+                    navigate('/customer/dashboard');
                 }}
                 order={orderSuccess}
             />
@@ -706,12 +803,12 @@ export function AppShell() {
             <FrontendLoginModal
                 errorMessage={loginError}
                 isOpen={loginOpen}
-                loading={sessionLoginMutation.isPending}
+                loading={sessionLoginMutation.isPending || sessionRegisterMutation.isPending}
                 onClose={() => {
                     setLoginOpen(false);
                     setLoginError(null);
                 }}
-                onSubmit={async (values) => {
+                onLogin={async (values) => {
                     try {
                         setLoginError(null);
                         const payload = await sessionLoginMutation.mutateAsync({
@@ -743,10 +840,39 @@ export function AppShell() {
                         setLoginError(error instanceof Error ? error.message : 'Unable to sign in.');
                     }
                 }}
+                onRegister={async (values) => {
+                    try {
+                        setLoginError(null);
+                        const payload = await sessionRegisterMutation.mutateAsync({
+                            name: values.name,
+                            phone: normalizeUsPhone(values.phone),
+                            password: values.password,
+                            passwordConfirmation: values.passwordConfirmation,
+                        });
+                        queryClient.setQueryData(AUTH_SESSION_QUERY_KEY, payload.user);
+
+                        if (payload.user.phone) {
+                            saveCustomer({
+                                name: payload.user.name,
+                                phone: payload.user.phone,
+                            });
+                        }
+
+                        setLoginOpen(false);
+                        toast.success('Account created successfully');
+                    } catch (error) {
+                        if (axios.isAxiosError(error)) {
+                            setLoginError((error.response?.data?.message as string | undefined) ?? 'Unable to create account.');
+                            return;
+                        }
+
+                        setLoginError(error instanceof Error ? error.message : 'Unable to create account.');
+                    }
+                }}
             />
 
             <FirstVisitPromptModal
-                description="Enable notifications so Dri Africain can send real-time pickup alerts when your grilled order is received, being prepared, or ready for collection."
+                description={`Enable notifications so ${brandName} can send real-time pickup alerts when your grilled order is received, being prepared, or ready for collection.`}
                 icon={<BellRing className="h-5 w-5" />}
                 isOpen={showNotificationPrompt}
                 onPrimary={handleEnableNotifications}
@@ -758,8 +884,8 @@ export function AppShell() {
             <FirstVisitPromptModal
                 description={
                     isIos
-                        ? 'Install Dri Africain Traditional Grill to your home screen. On iPhone or iPad, tap Share and choose Add to Home Screen.'
-                        : 'Install Dri Africain Traditional Grill for faster access, a more app-like pickup experience, and future push updates.'
+                        ? `Install ${brandName} to your home screen. On iPhone or iPad, tap Share and choose Add to Home Screen.`
+                        : `Install ${brandName} for faster access, a more app-like pickup experience, and future push updates.`
                 }
                 icon={<Download className="h-5 w-5" />}
                 isOpen={showInstallPrompt}

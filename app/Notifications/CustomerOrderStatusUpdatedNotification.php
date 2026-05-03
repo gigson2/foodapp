@@ -33,10 +33,16 @@ class CustomerOrderStatusUpdatedNotification extends Notification
             'body'  => sprintf('Your pickup order %s is now %s.', $this->order->order_number, str_replace('_', ' ', $this->order->status->value)),
             'data'  => [
                 'kind'         => 'order_status',
+                'tag'          => 'order-'.$this->order->id,
                 'order_id'     => $this->order->id,
                 'order_number' => $this->order->order_number,
                 'status'       => $this->order->status->value,
-                'url'          => '/customer',
+                'url'          => '/customer/orders',
+                'renotify'     => true,
+                'vibrate'      => [220, 120, 220, 120, 320],
+                'actions'      => [
+                    ['action' => 'open', 'title' => 'View orders'],
+                ],
             ],
         ];
     }

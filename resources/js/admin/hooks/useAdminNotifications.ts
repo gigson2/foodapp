@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminNotificationService } from '@/admin/services/adminNotificationService';
+import { markAdminNotificationReadInCache, markAllAdminNotificationsReadInCache } from '@/admin/utils/notificationCache';
 
 export function useAdminNotifications() {
     const queryClient = useQueryClient();
@@ -16,17 +17,15 @@ export function useAdminNotifications() {
 
     const markReadMutation = useMutation({
         mutationFn: adminNotificationService.markRead,
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['admin-app', 'notifications'] });
-            await queryClient.invalidateQueries({ queryKey: ['admin-app', 'dashboard'] });
+        onSuccess: (notification) => {
+            markAdminNotificationReadInCache(queryClient, notification.id);
         },
     });
 
     const markAllReadMutation = useMutation({
         mutationFn: adminNotificationService.markAllRead,
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['admin-app', 'notifications'] });
-            await queryClient.invalidateQueries({ queryKey: ['admin-app', 'dashboard'] });
+        onSuccess: () => {
+            markAllAdminNotificationsReadInCache(queryClient);
         },
     });
 

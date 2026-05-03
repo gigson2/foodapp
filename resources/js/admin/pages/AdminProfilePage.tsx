@@ -97,6 +97,7 @@ export function AdminProfilePage() {
                     </div>
                     <div className="mt-5">
                         <Button
+                            disabled={updateProfileMutation.isPending}
                             onClick={() => updateProfileMutation.mutate(profileForm)}
                             size="sm"
                         >
@@ -114,6 +115,7 @@ export function AdminProfilePage() {
                     </div>
                     <div className="mt-5">
                         <Button
+                            disabled={updatePasswordMutation.isPending}
                             onClick={() => updatePasswordMutation.mutate(passwordForm)}
                             size="sm"
                             variant="accent"

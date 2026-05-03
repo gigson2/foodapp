@@ -131,7 +131,7 @@ export function AdminSeoSettingsPage() {
             <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
                 <AdminSectionCard className="overflow-hidden">
                     <div className="border-b border-white/10 px-5 py-5">
-                        <AdminSearchInput onChange={(value) => { setSearch(value); setPage(1); }} placeholder="Search by page key, title, or description" value={search} />
+                        <AdminSearchInput label="Search" onChange={(value) => { setSearch(value); setPage(1); }} placeholder="Search by page key, title, or description" value={search} />
                     </div>
                     {meta ? (
                         <AdminDataTable
@@ -170,10 +170,10 @@ export function AdminSeoSettingsPage() {
                         />
                     </div>
                     <div className="mt-5 flex flex-wrap gap-3">
-                        <Button onClick={handleSave} size="sm">
+                        <Button disabled={saveMutation.isPending} onClick={handleSave} size="sm">
                             {editingRecord ? 'Update SEO setting' : 'Create SEO setting'}
                         </Button>
-                        {editingRecord ? <Button onClick={() => { setEditingRecord(null); setForm(emptySeoForm()); setSchemaJsonText('{}'); setImagePreview(null); }} size="sm" variant="ghost">Cancel edit</Button> : null}
+                        {editingRecord ? <Button disabled={saveMutation.isPending} onClick={() => { setEditingRecord(null); setForm(emptySeoForm()); setSchemaJsonText('{}'); setImagePreview(null); }} size="sm" variant="ghost">Cancel edit</Button> : null}
                     </div>
                 </AdminSectionCard>
             </div>

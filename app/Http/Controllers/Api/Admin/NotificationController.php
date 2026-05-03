@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\BroadcastCustomerNotificationRequest;
 use App\Http\Resources\DatabaseNotificationResource;
+use App\Models\User;
+use App\Notifications\CustomerBroadcastMessageNotification;
 use App\Support\AdminPagination;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -42,6 +45,32 @@ class NotificationController extends Controller
 
         return response()->json([
             'message' => 'Admin notifications marked as read.',
+        ]);
+    }
+
+    public function broadcastToCustomers(BroadcastCustomerNotificationRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $title = trim((string) $validated['title']);
+        $message = trim((string) $validated['message']);
+        $url = trim((string) ($validated['url'] ?? '/customer/notifications'));
+
+        $count = 0;
+
+        User::query()
+            ->where('role', 'customer')
+            ->where('status', 'active')
+            ->with('notificationPreference')
+            ->chunkById(200, function ($users) use (&$count, $title, $message, $url): void {
+                foreach ($users as $user) {
+                    $user->notify(new CustomerBroadcastMessageNotification($title, $message, $url));
+                    $count++;
+                }
+            });
+
+        return response()->json([
+            'message' => sprintf('Live customer notification sent to %d customer account(s).', $count),
+            'recipients' => $count,
         ]);
     }
 }

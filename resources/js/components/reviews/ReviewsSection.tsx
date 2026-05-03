@@ -32,7 +32,7 @@ export function ReviewsSection({ onLeaveReview, reviews }: ReviewsSectionProps) 
                 <div className="space-y-6 text-left">
                     <h3 className="text-4xl">Trusted by grill customers who value flavor, tenderness, and neat packaging.</h3>
                     <p className="text-base leading-8 text-muted">
-                        Public reviews below are approved comments from customers who placed pickup orders through Dri Africain Traditional Grill LLC.
+                        Public reviews below are approved comments from customers who placed pickup orders through this restaurant.
                     </p>
                     <div className="flex flex-wrap gap-3">
                         <Button onClick={onLeaveReview} size="lg">

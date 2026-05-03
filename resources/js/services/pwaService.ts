@@ -31,6 +31,24 @@ export async function registerServiceWorker() {
     return null;
 }
 
+async function ensureServiceWorkerReady(): Promise<ServiceWorkerRegistration | null> {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+        return null;
+    }
+
+    const existing = await navigator.serviceWorker.getRegistration();
+
+    if (!existing) {
+        await navigator.serviceWorker.register('/service-worker.js').catch(() => undefined);
+    }
+
+    try {
+        return await navigator.serviceWorker.ready;
+    } catch {
+        return null;
+    }
+}
+
 export function getNotificationPermission() {
     if (typeof window === 'undefined' || !('Notification' in window)) {
         return 'unsupported' as const;
@@ -70,7 +88,12 @@ export async function subscribeToPush(): Promise<PushSubscription | null> {
     }
 
     try {
-        const registration = await navigator.serviceWorker.ready;
+        const registration = await ensureServiceWorkerReady();
+
+        if (!registration) {
+            return null;
+        }
+
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
@@ -91,7 +114,12 @@ export async function getExistingPushSubscription(): Promise<PushSubscription | 
     }
 
     try {
-        const registration = await navigator.serviceWorker.ready;
+        const registration = await ensureServiceWorkerReady();
+
+        if (!registration) {
+            return null;
+        }
+
         return await registration.pushManager.getSubscription();
     } catch {
         return null;

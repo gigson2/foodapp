@@ -13,6 +13,8 @@ import { AdminSectionCard } from '@/admin/components/common/AdminSectionCard';
 import { adminReviewService } from '@/admin/services/adminReviewService';
 import type { AdminReviewStatus, AdminReviewSummary } from '@/admin/types/adminReview';
 import { formatRelativeDayLabel } from '@/admin/utils/adminDates';
+import { PUBLIC_REVIEWS_QUERY_KEY } from '@/services/publicService';
+import { publishPublicContentUpdate } from '@/services/publicContentSync';
 
 function getReviewStatusClass(status: AdminReviewStatus) {
     switch (status) {
@@ -45,7 +47,9 @@ export function AdminReviewsPage() {
                 queryClient.invalidateQueries({ queryKey: ['admin-app', 'reviews'] }),
                 queryClient.invalidateQueries({ queryKey: ['admin-app', 'dashboard'] }),
                 queryClient.invalidateQueries({ queryKey: ['admin-app', 'notifications'] }),
+                queryClient.invalidateQueries({ queryKey: PUBLIC_REVIEWS_QUERY_KEY }),
             ]);
+            publishPublicContentUpdate('reviews');
         },
     });
 

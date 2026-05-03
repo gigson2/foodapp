@@ -10,6 +10,7 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { AUTH_SESSION_QUERY_KEY, useAuthSession } from '@/hooks/useAuthSession';
 import { adminService } from '@/services/adminService';
 import { formatUsPhone, normalizeUsPhone } from '@/utils/phone';
+import { toast } from 'sonner';
 
 export function AdminLoginPage() {
     const queryClient = useQueryClient();
@@ -22,6 +23,7 @@ export function AdminLoginPage() {
         mutationFn: adminService.login,
         onSuccess: async (payload) => {
             queryClient.setQueryData(AUTH_SESSION_QUERY_KEY, payload.user);
+            toast.success('Signed in successfully');
             if (payload.user.role !== 'admin') {
                 navigate('/customer', { replace: true });
                 return;

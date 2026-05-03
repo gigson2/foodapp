@@ -34,9 +34,15 @@ class AdminOrderPlacedNotification extends Notification
             'body'  => sprintf('%s placed order %s for pickup.', $this->order->customer_name, $this->order->order_number),
             'data'  => [
                 'kind'         => 'new_order',
+                'tag'          => 'order-'.$this->order->id,
                 'order_id'     => $this->order->id,
                 'order_number' => $this->order->order_number,
                 'url'          => '/admin/orders',
+                'renotify'     => true,
+                'vibrate'      => [220, 120, 220, 120, 320],
+                'actions'      => [
+                    ['action' => 'open', 'title' => 'Open orders'],
+                ],
             ],
         ];
     }

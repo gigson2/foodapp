@@ -1,30 +1,40 @@
 import { PackageSearch, UserRoundPen, Wallet } from 'lucide-react';
 import { SectionContainer } from '@/components/layout/SectionContainer';
+import { getCompanyAddress } from '@/utils/company';
+import type { CompanySettings } from '@/types';
 
-const steps = [
-    {
-        title: 'Choose Your Grill',
-        description: 'Browse grilled goat, grilled chicken, or mixed packs.',
-        icon: PackageSearch,
-    },
-    {
-        title: 'Place Pickup Order',
-        description: 'Enter your name and USA phone number if it is your first order, or pre-order on Friday for Saturday pickup.',
-        icon: UserRoundPen,
-    },
-    {
-        title: 'Pay Cash at Pickup',
-        description: 'Come to 701 Golden Gate Circle, Papillion, NE 68046 on Saturday between 11:00 AM and 10:00 PM and pay when you collect your food.',
-        icon: Wallet,
-    },
-];
+type PickupHowItWorksSectionProps = {
+    companySettings: CompanySettings | null;
+};
 
-export function PickupHowItWorksSection() {
+export function PickupHowItWorksSection({ companySettings }: PickupHowItWorksSectionProps) {
+    const pickupAddress = getCompanyAddress(companySettings);
+    const fridayHours = companySettings?.opening_hours?.friday ?? 'Pre-orders open';
+    const saturdayHours = companySettings?.opening_hours?.saturday ?? '11:00 AM - 10:00 PM';
+    const orderingCutoff = companySettings?.opening_hours?.ordering_cutoff ?? 'Saturday 9:00 PM';
+    const steps = [
+        {
+            title: 'Choose Your Grill',
+            description: 'Browse grilled goat, grilled chicken, or mixed packs.',
+            icon: PackageSearch,
+        },
+        {
+            title: 'Place Pickup Order',
+            description: 'Enter your name and USA phone number if it is your first order, or pre-order on Friday for Saturday pickup.',
+            icon: UserRoundPen,
+        },
+        {
+            title: 'Pay Cash at Pickup',
+            description: `Come to ${pickupAddress} on Saturday during ${saturdayHours} and pay when you collect your food.`,
+            icon: Wallet,
+        },
+    ];
+
     return (
         <SectionContainer
             align="center"
             className="pb-12 lg:pb-16"
-            description="Pre-orders open on Friday, and Saturday grill preparation plus pickup run from 11:00 AM to 10:00 PM with a 9:00 PM ordering cutoff."
+            description={`Pre-orders open Friday (${fridayHours}), and Saturday grill preparation plus pickup run ${saturdayHours} with a ${orderingCutoff} ordering cutoff.`}
             eyebrow="How Pickup Works"
             id="pickup"
             title="Three Clear Steps From Grill Selection To Collection"

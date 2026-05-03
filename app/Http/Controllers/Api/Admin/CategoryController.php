@@ -87,4 +87,14 @@ class CategoryController extends Controller
             'message' => 'Category deleted successfully.',
         ]);
     }
+
+    public function toggleActive(Category $category): JsonResponse
+    {
+        $category->update(['is_active' => ! $category->is_active]);
+
+        return response()->json([
+            'message' => $category->is_active ? 'Category activated.' : 'Category deactivated.',
+            'is_active' => $category->is_active,
+        ]);
+    }
 }

@@ -87,6 +87,11 @@ export const adminService = {
 
         return response.data.message;
     },
+    async restoreFood(foodId: number) {
+        const response = await apiClient.post<{ message: string }>(`/admin/foods/${foodId}/restore`);
+
+        return response.data.message;
+    },
     async getCategories() {
         const response = await apiClient.get<ApiCollection<AdminCategory>>('/admin/categories');
 
@@ -111,6 +116,13 @@ export const adminService = {
         const response = await apiClient.delete<{ message: string }>(`/admin/categories/${categoryId}`);
 
         return response.data.message;
+    },
+    async toggleCategoryActive(categoryId: number) {
+        const response = await apiClient.patch<{ message: string; is_active: boolean }>(
+            `/admin/categories/${categoryId}/toggle-active`,
+        );
+
+        return response.data;
     },
     async getCustomers() {
         const response = await apiClient.get<ApiCollection<AdminCustomer>>('/admin/customers');

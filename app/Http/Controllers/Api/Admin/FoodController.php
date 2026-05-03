@@ -85,4 +85,14 @@ class FoodController extends Controller
             'message' => 'Food archived successfully.',
         ]);
     }
+
+    public function restore(int $id): JsonResponse
+    {
+        $food = Food::withTrashed()->findOrFail($id);
+        $food->restore();
+
+        return response()->json([
+            'message' => 'Food restored successfully.',
+        ]);
+    }
 }
