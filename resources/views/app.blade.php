@@ -50,6 +50,13 @@
             ];
         @endphp
         <script type="application/ld+json">@json($restaurantSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
+        <style>
+            :root {
+                --theme-body-bg-url: url('{{ asset('assets/theme/body_bg.png') }}');
+                --theme-noise-url: url('{{ asset('assets/theme/noise.png') }}');
+                --theme-vec1-url: url('{{ asset('assets/theme/vec1.svg') }}');
+            }
+        </style>
 
         <script>
             (() => {

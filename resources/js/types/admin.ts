@@ -7,6 +7,18 @@ export type AdminOrderStatus =
     | 'completed'
     | 'cancelled';
 
+export interface AdminUser {
+    id: number;
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    role: string;
+    avatar?: string | null;
+    status: string;
+    last_login_at?: string | null;
+    email_verified_at?: string | null;
+}
+
 export interface AdminDashboardMetrics {
     total_orders: number;
     pending_orders: number;

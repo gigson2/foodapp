@@ -36,12 +36,14 @@ Route::get('/categories', [PublicCategoryController::class, 'index'])->name('api
 Route::get('/company-settings', PublicCompanySettingController::class)->name('api.public.company-settings.show');
 Route::post('/visitor-events', [PublicVisitorEventController::class, 'store'])->name('api.public.visitor-events.store');
 
-Route::post('/register', RegisterController::class)->name('api.register');
-Route::post('/login', LoginController::class)->name('api.login');
-
-Route::middleware('auth:sanctum')->group(function (): void {
+Route::middleware('web')->group(function (): void {
+    Route::post('/register', RegisterController::class)->name('api.register');
+    Route::post('/login', LoginController::class)->name('api.login');
     Route::get('/me', CurrentUserController::class)->name('api.me');
-    Route::post('/logout', LogoutController::class)->name('api.logout');
+    Route::post('/logout', LogoutController::class)->middleware('auth:sanctum')->name('api.logout');
+});
+
+Route::middleware(['web', 'auth:sanctum'])->group(function (): void {
 
     Route::prefix('customer')->middleware('role:'.UserRole::Customer->value.','.UserRole::Admin->value)->group(function (): void {
         Route::get('/orders', [CustomerOrderController::class, 'index'])->name('api.customer.orders.index');

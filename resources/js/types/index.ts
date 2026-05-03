@@ -4,3 +4,4 @@ export * from '@/types/food';
 export * from '@/types/notification';
 export * from '@/types/order';
 export * from '@/types/review';
+export * from '@/types/session';

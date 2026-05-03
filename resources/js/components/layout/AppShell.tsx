@@ -1,8 +1,10 @@
 import { BellRing, Download } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { AccountModal } from '@/components/account/AccountModal';
+import { FrontendLoginModal } from '@/components/auth/FrontendLoginModal';
 import { AboutSection } from '@/components/home/AboutSection';
 import { ContactSection } from '@/components/home/ContactSection';
 import { GallerySection } from '@/components/home/GallerySection';
@@ -21,9 +23,9 @@ import { OrderSuccessModal } from '@/components/ordering/OrderSuccessModal';
 import { FirstVisitPromptModal } from '@/components/pwa/FirstVisitPromptModal';
 import { ReviewsSection } from '@/components/reviews/ReviewsSection';
 import { LeaveReviewModal } from '@/components/reviews/LeaveReviewModal';
+import { AUTH_SESSION_QUERY_KEY, useAuthSession } from '@/hooks/useAuthSession';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { useLocalCustomer } from '@/hooks/useLocalCustomer';
-import { useLocalOrders } from '@/hooks/useLocalOrders';
 import { useLocalReviews } from '@/hooks/useLocalReviews';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useScrollToSection } from '@/hooks/useScrollToSection';
@@ -31,6 +33,8 @@ import { orderService } from '@/services/orderService';
 import { createPushSubscriptionPlaceholder, requestNotificationAccess } from '@/services/pwaService';
 import { publicService } from '@/services/publicService';
 import { reviewService } from '@/services/reviewService';
+import { adminService } from '@/services/adminService';
+import { normalizeUsPhone } from '@/utils/phone';
 import { readStorage, writeStorage } from '@/utils/storage';
 import type { Food, Order } from '@/types';
 
@@ -74,21 +78,22 @@ function getMobileActiveSection(section: string): 'home' | 'menu' | 'reviews' | 
 }
 
 export function AppShell() {
-    const { customer, isLoggedIn, logout, preparePhoneIdentity, saveCustomer } = useLocalCustomer();
-    const orders = useLocalOrders(customer?.phone);
-    const { approvedReviews, customerReviews } = useLocalReviews(customer?.phone);
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const { customer, preparePhoneIdentity, saveCustomer } = useLocalCustomer();
     const { markAllRead, markRead, notifications, permission, unreadCount } = useNotifications('customer');
     const scrollToSection = useScrollToSection();
     const { canInstall, isIos, isStandalone, promptInstall } = useInstallPrompt();
     const [activeCategory, setActiveCategory] = useState('All');
     const [activeSection, setActiveSection] = useState('home');
-    const [accountOpen, setAccountOpen] = useState(false);
     const [customerModalMode, setCustomerModalMode] = useState<'order' | 'account'>('order');
     const [detailsOpen, setDetailsOpen] = useState(false);
-    const [loadingCustomer, setLoadingCustomer] = useState(false);
-    const [loadingReview, setLoadingReview] = useState(false);
     const [installPromptDismissed, setInstallPromptDismissed] = useState(() => readStorage(INSTALL_PROMPT_KEY, false));
     const [installPromptReady, setInstallPromptReady] = useState(false);
+    const [loadingCustomer, setLoadingCustomer] = useState(false);
+    const [loadingReview, setLoadingReview] = useState(false);
+    const [loginError, setLoginError] = useState<string | null>(null);
+    const [loginOpen, setLoginOpen] = useState(false);
     const [notificationPromptDismissed, setNotificationPromptDismissed] = useState(() => readStorage(NOTIFICATION_PROMPT_KEY, false));
     const [notificationPromptReady, setNotificationPromptReady] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState<Order | null>(null);
@@ -97,6 +102,7 @@ export function AppShell() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
 
+    const { user: sessionUser = null } = useAuthSession();
     const { data: categories = [] } = useQuery({
         queryKey: ['public-categories'],
         queryFn: publicService.getCategories,
@@ -110,9 +116,31 @@ export function AppShell() {
         queryFn: publicService.getCompanySettings,
     });
 
+    const effectiveCustomer = useMemo(() => {
+        if (customer) {
+            return customer;
+        }
+
+        if (sessionUser?.role === 'customer' && sessionUser.phone) {
+            return {
+                id: String(sessionUser.id),
+                name: sessionUser.name,
+                phone: sessionUser.phone,
+                createdAt: sessionUser.last_login_at ?? new Date().toISOString(),
+            };
+        }
+
+        return null;
+    }, [customer, sessionUser]);
+
+    const { approvedReviews } = useLocalReviews(effectiveCustomer?.phone);
+
+    const sessionLoginMutation = useMutation({
+        mutationFn: adminService.login,
+    });
+
     const categoryNames = useMemo(() => ['All', ...categories.map((category) => category.name)], [categories]);
     const popularFoods = useMemo(() => foods.filter((food) => food.isPopular).slice(0, 4), [foods]);
-
     const filteredFoods = useMemo(() => {
         const term = searchTerm.trim().toLowerCase();
 
@@ -128,6 +156,9 @@ export function AppShell() {
             return categoryMatch && searchMatch && food.isAvailable;
         });
     }, [activeCategory, foods, searchTerm]);
+
+    const hasAccountIdentity = Boolean(sessionUser || effectiveCustomer);
+    const accountName = sessionUser?.name ?? effectiveCustomer?.name;
 
     useEffect(() => {
         const sectionIds = ['home', 'popular', 'menu', 'about', 'pickup', 'gallery', 'reviews', 'contact', 'account'];
@@ -222,13 +253,18 @@ export function AppShell() {
     }, [canInstall, installPromptDismissed, installPromptReady, isIos, isStandalone, notificationPromptDismissed, notificationPromptReady, permission]);
 
     const openAccountFlow = () => {
-        if (isLoggedIn) {
-            setAccountOpen(true);
+        if (sessionUser?.role === 'admin') {
+            navigate('/admin');
             return;
         }
 
-        setCustomerModalMode('account');
-        setDetailsOpen(true);
+        if (sessionUser?.role === 'customer' || effectiveCustomer) {
+            navigate('/customer');
+            return;
+        }
+
+        setLoginError(null);
+        setLoginOpen(true);
     };
 
     const dismissNotificationPrompt = () => {
@@ -287,9 +323,9 @@ export function AppShell() {
     };
 
     const handlePlaceOrder = (food: Food, quantity: number) => {
-        if (customer) {
+        if (effectiveCustomer) {
             const order = orderService.createPickupCashOrder({
-                customer,
+                customer: effectiveCustomer,
                 food,
                 quantity,
             });
@@ -331,7 +367,7 @@ export function AppShell() {
                 });
             } else {
                 setDetailsOpen(false);
-                setAccountOpen(true);
+                navigate('/customer');
                 toast.success('Account saved', {
                     description: 'Your phone number now identifies your orders on this device.',
                 });
@@ -387,8 +423,8 @@ export function AppShell() {
             <div className="sticky top-0 z-40 bg-[color:var(--background-50)]/92 backdrop-blur-xl">
                 <DesktopHeader
                     activeSection={desktopActiveSection}
-                    customerName={customer?.name}
-                    isLoggedIn={isLoggedIn}
+                    customerName={accountName}
+                    isLoggedIn={hasAccountIdentity}
                     notifications={notifications}
                     onAccount={openAccountFlow}
                     onGoContact={() => scrollToSection('contact')}
@@ -401,8 +437,8 @@ export function AppShell() {
                 />
                 <TabletHeader
                     activeSection={desktopActiveSection === 'account' ? 'contact' : desktopActiveSection}
-                    customerName={customer?.name}
-                    isLoggedIn={isLoggedIn}
+                    customerName={accountName}
+                    isLoggedIn={hasAccountIdentity}
                     notifications={notifications}
                     onAccount={openAccountFlow}
                     onGoContact={() => scrollToSection('contact')}
@@ -415,21 +451,21 @@ export function AppShell() {
                 />
                 <div className="top-utility md:hidden">
                     <div className="section-shell flex items-center justify-between gap-4 py-4">
-                    <button className="flex items-center gap-3" onClick={() => scrollToSection('home')} type="button">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[color:var(--primary-500)] text-sm font-semibold text-white">DG</div>
-                        <div className="text-left">
-                            <p className="font-display text-2xl leading-none">Dri Africain</p>
-                            <p className="mt-1 text-[0.68rem] uppercase tracking-[0.18em] text-muted">Traditional Grill LLC</p>
+                        <button className="flex items-center gap-3" onClick={() => scrollToSection('home')} type="button">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[color:var(--primary-500)] text-sm font-semibold text-white">DG</div>
+                            <div className="text-left">
+                                <p className="font-display text-2xl leading-none">Dri Africain</p>
+                                <p className="mt-1 text-[0.68rem] uppercase tracking-[0.18em] text-muted">Traditional Grill LLC</p>
+                            </div>
+                        </button>
+                        <div className="flex items-center gap-2">
+                            <Button onClick={() => scrollToSection('menu')} size="sm" variant="ghost">
+                                Order
+                            </Button>
+                            <Button onClick={openAccountFlow} size="sm" variant="secondary">
+                                {hasAccountIdentity ? 'Account' : 'Login'}
+                            </Button>
                         </div>
-                    </button>
-                    <div className="flex items-center gap-2">
-                        <Button onClick={() => scrollToSection('menu')} size="sm" variant="ghost">
-                            Order
-                        </Button>
-                        <Button onClick={openAccountFlow} size="sm" variant="secondary">
-                            {isLoggedIn ? 'Account' : 'Login'}
-                        </Button>
-                    </div>
                     </div>
                 </div>
             </div>
@@ -456,15 +492,15 @@ export function AppShell() {
                     <Card className="theme-panel theme-dark-block overflow-hidden p-6 sm:p-8 lg:p-10">
                         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                             <div>
-                                <p className="section-eyebrow">Account placeholder</p>
-                                <h2 className="mt-4 text-4xl sm:text-5xl">Keep your pickup identity ready</h2>
+                                <p className="section-eyebrow">Account access</p>
+                                <h2 className="mt-4 text-4xl sm:text-5xl">Sign in from the storefront</h2>
                                 <p className="mt-4 max-w-2xl text-base leading-8 text-muted">
-                                    Save your name and phone locally so your pickup orders and review submissions stay available on this device.
+                                    Admin users are sent directly to the operations dashboard. Customer users stay on the public app and can open their dashboard whenever they want.
                                 </p>
                             </div>
                             <div className="flex flex-col gap-3 sm:flex-row">
                                 <Button onClick={openAccountFlow} size="lg">
-                                    {isLoggedIn ? 'Open account' : 'Sign in with phone'}
+                                    {hasAccountIdentity ? 'Open dashboard' : 'Sign in with phone'}
                                 </Button>
                                 <Button onClick={() => setReviewOpen(true)} size="lg" variant="secondary">
                                     Leave a review
@@ -494,8 +530,8 @@ export function AppShell() {
 
             <CustomerDetailsModal
                 initialValues={{
-                    name: customer?.name,
-                    phone: customer?.phone,
+                    name: effectiveCustomer?.name,
+                    phone: effectiveCustomer?.phone,
                 }}
                 isOpen={detailsOpen}
                 loading={loadingCustomer}
@@ -513,7 +549,7 @@ export function AppShell() {
                 onClose={() => setOrderSuccess(null)}
                 onOpenAccount={() => {
                     setOrderSuccess(null);
-                    setAccountOpen(true);
+                    navigate('/customer');
                 }}
                 order={orderSuccess}
             />
@@ -521,31 +557,57 @@ export function AppShell() {
             <LeaveReviewModal
                 foods={foods}
                 initialValues={{
-                    name: customer?.name,
-                    phone: customer?.phone,
+                    name: effectiveCustomer?.name,
+                    phone: effectiveCustomer?.phone,
                 }}
                 isOpen={reviewOpen}
-                key={`${customer?.phone ?? 'guest'}-${reviewOpen ? 'open' : 'closed'}`}
+                key={`${effectiveCustomer?.phone ?? 'guest'}-${reviewOpen ? 'open' : 'closed'}`}
                 loading={loadingReview}
                 onClose={() => setReviewOpen(false)}
                 onSubmit={handleReviewSubmit}
             />
 
-            {customer ? (
-                <AccountModal
-                    customer={customer}
-                    customerReviews={customerReviews}
-                    isOpen={accountOpen}
-                    notificationPermission={permission}
-                    onClose={() => setAccountOpen(false)}
-                    onLogout={() => {
-                        logout();
-                        setAccountOpen(false);
-                        toast.success('Logged out');
-                    }}
-                    orders={orders}
-                />
-            ) : null}
+            <FrontendLoginModal
+                errorMessage={loginError}
+                isOpen={loginOpen}
+                loading={sessionLoginMutation.isPending}
+                onClose={() => {
+                    setLoginOpen(false);
+                    setLoginError(null);
+                }}
+                onSubmit={async (values) => {
+                    try {
+                        setLoginError(null);
+                        const payload = await sessionLoginMutation.mutateAsync({
+                            login: normalizeUsPhone(values.phone),
+                            password: values.password,
+                        });
+                        queryClient.setQueryData(AUTH_SESSION_QUERY_KEY, payload.user);
+
+                        if (payload.user.role === 'admin') {
+                            navigate('/admin');
+                            return;
+                        }
+
+                        if (payload.user.phone) {
+                            saveCustomer({
+                                name: payload.user.name,
+                                phone: payload.user.phone,
+                            });
+                        }
+
+                        setLoginOpen(false);
+                        toast.success('Signed in successfully');
+                    } catch (error) {
+                        if (axios.isAxiosError(error)) {
+                            setLoginError((error.response?.data?.message as string | undefined) ?? 'Unable to sign in.');
+                            return;
+                        }
+
+                        setLoginError(error instanceof Error ? error.message : 'Unable to sign in.');
+                    }
+                }}
+            />
 
             <FirstVisitPromptModal
                 description="Enable notifications so Dri Africain can send real-time pickup alerts when your grilled order is received, being prepared, or ready for collection."
