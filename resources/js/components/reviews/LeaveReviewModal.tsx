@@ -108,7 +108,7 @@ export function LeaveReviewModal({
             <label className="block space-y-2">
                 <span className="text-sm font-medium text-[color:var(--text-950)]">Food ordered</span>
                 <select
-                    className="theme-field w-full rounded-[1.5rem] px-4 py-3"
+                    className="theme-field ui-focus-ring w-full rounded-[1.5rem] px-4 py-3"
                     {...register('foodName')}
                 >
                     <option value="">Select a grill item</option>
@@ -129,7 +129,7 @@ export function LeaveReviewModal({
 
             <Textarea error={errors.message?.message} label="Review" placeholder="Share your pickup and grill experience" {...register('message')} />
 
-            <div className="rounded-[1.5rem] border border-white/10 bg-white/6 p-4 text-sm leading-7 text-muted">
+            <div className="ui-surface-solid ui-outline-gold rounded-[1.5rem] p-4 text-sm leading-7 text-muted">
                 Only customers who have ordered from Dri Africain Traditional Grill LLC can leave a review.
             </div>
 

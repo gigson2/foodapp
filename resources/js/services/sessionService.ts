@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { apiClient } from '@/services/apiClient';
+import { clearAuthToken, setAuthToken } from '@/services/authTokenStorage';
 import type { AuthenticatedUser } from '@/types';
 
 type ApiItem<T> = {
@@ -23,29 +24,42 @@ export const sessionService = {
     async login(credentials: { login: string; password: string }) {
         await this.ensureCsrfCookie();
         const response = await apiClient.post('/login', credentials);
-        const payload = response.data as { message: string; user: AuthenticatedUser };
+        const payload = response.data as { message: string; token: string; user: AuthenticatedUser };
+        setAuthToken(payload.token);
         const retryDelays = [0, 120, 260, 420];
 
-        for (const delay of retryDelays) {
-            if (delay > 0) {
-                await wait(delay);
-            }
+        try {
+            for (const delay of retryDelays) {
+                if (delay > 0) {
+                    await wait(delay);
+                }
 
-            const currentUser = await this.getCurrentUser();
+                const currentUser = await this.getCurrentUser();
 
-            if (currentUser) {
-                return {
-                    ...payload,
-                    user: currentUser,
-                };
+                if (currentUser) {
+                    return {
+                        ...payload,
+                        user: currentUser,
+                    };
+                }
             }
+        } catch (error) {
+            clearAuthToken();
+            throw error;
         }
+
+        clearAuthToken();
 
         throw new Error('The session was not established after login.');
     },
     async logout() {
         await this.ensureCsrfCookie();
-        await apiClient.post('/logout');
+        try {
+            await apiClient.post('/logout');
+        } finally {
+            clearAuthToken();
+        }
+
         const retryDelays = [0, 120, 260, 420];
 
         for (const delay of retryDelays) {

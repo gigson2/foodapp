@@ -12,7 +12,7 @@ type NotificationDropdownProps = {
 
 export function NotificationDropdown({ notifications, onMarkAllRead, onMarkRead }: NotificationDropdownProps) {
     return (
-        <div className="glass-card-strong absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[min(92vw,24rem)] p-4">
+        <div className="ui-outline-strong absolute right-0 top-[calc(100%+0.75rem)] z-[80] w-[min(92vw,24rem)] rounded-[1.75rem] p-4 shadow-[var(--ui-shadow-soft)]" style={{ background: 'var(--background-100)' }}>
             <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                     <p className="text-sm font-semibold">Notifications</p>
@@ -30,7 +30,7 @@ export function NotificationDropdown({ notifications, onMarkAllRead, onMarkRead 
                 <div className="max-h-[24rem] space-y-3 overflow-y-auto pr-1">
                     {notifications.map((notification) => (
                         <button
-                            className="w-full rounded-[1.5rem] border border-white/10 bg-white/7 px-4 py-3 text-left transition hover:bg-white/10"
+                            className="ui-surface-solid ui-card-hover w-full rounded-[1.5rem] px-4 py-3 text-left"
                             key={notification.id}
                             onClick={() => onMarkRead(notification.id)}
                             type="button"

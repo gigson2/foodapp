@@ -35,6 +35,7 @@ class SessionAuthenticationTest extends TestCase
 
         $loginResponse
             ->assertOk()
+            ->assertJsonStructure(['token'])
             ->assertJsonPath('user.role', UserRole::Admin->value)
             ->assertJsonPath('user.phone', '+14025550100');
 
@@ -92,5 +93,24 @@ class SessionAuthenticationTest extends TestCase
             ->assertExactJson([
                 'data' => null,
             ]);
+    }
+
+    public function test_login_token_can_access_me_without_session_reauthentication(): void
+    {
+        $this->seed(RestaurantPlatformSeeder::class);
+
+        $token = $this->withSession([])->postJson('/api/login', [
+            'login' => '+14025550100',
+            'password' => 'password',
+        ])->assertOk()->json('token');
+
+        $this->flushSession();
+        Auth::forgetGuards();
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('data.role', UserRole::Admin->value)
+            ->assertJsonPath('data.phone', '+14025550100');
     }
 }

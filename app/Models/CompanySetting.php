@@ -16,6 +16,8 @@ class CompanySetting extends Model
         'phone',
         'email',
         'address',
+        'pickup_instructions',
+        'cash_only_notice',
         'opening_hours',
         'logo',
         'favicon',

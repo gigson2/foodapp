@@ -18,7 +18,7 @@ export function MobileBottomNav({ activeSection, onAccount, onHome, onMenu, onRe
     ];
 
     return (
-        <nav className="safe-bottom fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[color:var(--background-100)]/96 px-4 py-3 backdrop-blur-xl md:hidden">
+        <nav className="safe-bottom fixed inset-x-0 bottom-0 z-50 border-t ui-divider bg-[color:var(--ui-surface-solid)]/96 px-4 py-3 backdrop-blur-xl md:hidden">
             <div className="mx-auto grid max-w-md grid-cols-4 gap-2">
                 {items.map((item) => {
                     const Icon = item.icon;
@@ -30,8 +30,8 @@ export function MobileBottomNav({ activeSection, onAccount, onHome, onMenu, onRe
                             className={cn(
                                 'flex min-h-14 items-center justify-center rounded-full border transition duration-200',
                                 isActive
-                                    ? 'border-[color:var(--primary-500)] bg-[color:var(--primary-500)] text-white'
-                                    : 'border-white/8 bg-white/6 text-[color:var(--text-800)] hover:border-[color:var(--primary-500)]/24 hover:bg-[color:var(--primary-500)]/10 hover:text-[color:var(--primary-500)]',
+                                    ? 'ui-active-nav text-[color:var(--primary-500)]'
+                                    : 'ui-surface-solid text-[color:var(--text-800)] hover:border-[color:var(--ui-border-strong)] hover:bg-[color:var(--ui-surface-raised)] hover:text-[color:var(--primary-500)]',
                             )}
                             key={item.id}
                             onClick={item.onClick}

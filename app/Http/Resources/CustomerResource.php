@@ -26,8 +26,10 @@ class CustomerResource extends JsonResource
                 'notes' => $this->customerProfile->notes,
             ] : null),
             'orders_count' => $this->when(isset($this->orders_count), $this->orders_count),
+            'reviews_count' => $this->when(isset($this->reviews_count), $this->reviews_count),
             'lifetime_value' => (float) ($this->lifetime_value ?? 0),
             'last_order_at' => $this->last_order_at ?? null,
+            'last_visit_at' => $this->last_visit_at ?? null,
             'created_at' => $this->created_at,
         ];
     }

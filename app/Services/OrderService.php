@@ -10,6 +10,8 @@ use App\Models\Food;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
+use App\Notifications\AdminOrderPlacedNotification;
+use App\Notifications\CustomerOrderStatusUpdatedNotification;
 
 class OrderService
 {
@@ -51,7 +53,14 @@ class OrderService
             'customer_note' => $input['customer_note'] ?? null,
         ]);
 
-        return $order->load('items');
+        $order->load('items');
+
+        User::query()
+            ->where('role', 'admin')
+            ->get()
+            ->each(fn (User $admin) => $admin->notify(new AdminOrderPlacedNotification($order)));
+
+        return $order;
     }
 
     public function updateStatus(Order $order, OrderStatus $status, ?string $adminNote = null): Order
@@ -75,6 +84,28 @@ class OrderService
         }
 
         $order->forceFill($attributes)->save();
+
+        if ($order->user) {
+            $order->user->notify(new CustomerOrderStatusUpdatedNotification($order));
+        }
+
+        return $order->refresh()->load(['items', 'user']);
+    }
+
+    public function updatePaymentStatus(Order $order, PaymentStatus $paymentStatus): Order
+    {
+        $order->forceFill([
+            'payment_status' => $paymentStatus,
+        ])->save();
+
+        return $order->refresh()->load(['items', 'user']);
+    }
+
+    public function updateAdminNote(Order $order, ?string $adminNote): Order
+    {
+        $order->forceFill([
+            'admin_note' => $adminNote,
+        ])->save();
 
         return $order->refresh()->load(['items', 'user']);
     }

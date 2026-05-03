@@ -1,20 +1,37 @@
 {
-    "name": "Dri Africain Traditional Grill",
-    "short_name": "Dri Grill",
+    "id": "/",
+    "lang": "en-US",
+    "dir": "ltr",
+    "name": "Dri Foods",
+    "short_name": "Dri Foods",
     "description": "Pickup-only traditional African grill ordering PWA with cash payment at pickup.",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
+    "display_override": ["window-controls-overlay", "standalone", "browser"],
     "background_color": "#060118",
     "theme_color": "#060118",
     "orientation": "portrait-primary",
+    "prefer_related_applications": false,
     "categories": ["food", "business", "shopping"],
     "icons": [
         {
-            "src": "/icons/app-icon.svg",
-            "sizes": "any",
-            "type": "image/svg+xml",
-            "purpose": "any maskable"
+            "src": "/icons/app-icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/app-icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/app_ico.png",
+            "sizes": "948x1074",
+            "type": "image/png",
+            "purpose": "any"
         }
     ]
 }

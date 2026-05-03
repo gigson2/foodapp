@@ -7,24 +7,51 @@ use App\Http\Requests\Admin\StoreCategoryRequest;
 use App\Http\Requests\Admin\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
+use App\Support\AdminPagination;
+use App\Support\FileUploadService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CategoryController extends Controller
 {
-    public function index(): AnonymousResourceCollection
+    public function __construct(
+        protected FileUploadService $fileUploadService,
+    ) {
+    }
+
+    public function index(Request $request): AnonymousResourceCollection
     {
+        $perPage = AdminPagination::resolvePerPage($request);
+        $search = $request->string('search')->trim()->toString();
+        $active = $request->query('is_active');
+
         return CategoryResource::collection(
             Category::query()
                 ->withCount('foods')
+                ->when($search !== '', function ($query) use ($search): void {
+                    $query->where(function ($nested) use ($search): void {
+                        $nested
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('slug', 'like', "%{$search}%")
+                            ->orWhere('description', 'like', "%{$search}%");
+                    });
+                })
+                ->when($active !== null && $active !== '', fn ($query) => $query->where('is_active', filter_var($active, FILTER_VALIDATE_BOOL)))
                 ->orderBy('sort_order')
-                ->get(),
+                ->paginate($perPage)
+                ->appends($request->query()),
         );
     }
 
     public function store(StoreCategoryRequest $request): CategoryResource
     {
-        $category = Category::query()->create($request->validated());
+        $validated = $request->validated();
+        if ($request->hasFile('image')) {
+            $validated['image'] = $this->fileUploadService->storePublic($request->file('image'), 'categories');
+        }
+
+        $category = Category::query()->create($validated);
 
         return new CategoryResource($category);
     }
@@ -36,7 +63,12 @@ class CategoryController extends Controller
 
     public function update(UpdateCategoryRequest $request, Category $category): CategoryResource
     {
-        $category->fill($request->validated())->save();
+        $validated = $request->validated();
+        if ($request->hasFile('image')) {
+            $validated['image'] = $this->fileUploadService->replacePublic($category->image, $request->file('image'), 'categories');
+        }
+
+        $category->fill($validated)->save();
 
         return new CategoryResource($category->refresh()->loadCount('foods'));
     }

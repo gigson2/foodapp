@@ -11,9 +11,9 @@ type FoodCardProps = {
 
 export function FoodCard({ food, onSelectFood }: FoodCardProps) {
     return (
-        <Card className="group overflow-hidden rounded-[1.25rem]">
+        <Card className="group overflow-hidden rounded-[1.25rem] ui-card-hover">
             <button className="block w-full text-left" onClick={() => onSelectFood(food)} type="button">
-                <div className="relative h-52 overflow-hidden">
+                <div className="relative h-52 overflow-hidden border-b ui-divider">
                     <img
                         alt={`${food.name} from Dri Africain Traditional Grill LLC`}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
@@ -23,7 +23,7 @@ export function FoodCard({ food, onSelectFood }: FoodCardProps) {
                     <div className="absolute left-4 top-4 flex flex-wrap gap-2">
                         {food.tags.slice(0, 2).map((tag) => (
                             <span
-                                className="rounded-full border border-white/15 bg-[rgba(17,16,15,0.7)] px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--text-950)]"
+                                className="ui-outline-strong rounded-full bg-[rgba(17,16,15,0.7)] px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--text-950)]"
                                 key={tag}
                             >
                                 {tag}
@@ -50,7 +50,7 @@ export function FoodCard({ food, onSelectFood }: FoodCardProps) {
                             <Clock3 className="h-4 w-4" />
                             {food.preparationTimeMinutes} min
                         </div>
-                        <span className="rounded-full bg-[color:var(--secondary-500)]/14 px-3 py-1 text-xs font-semibold text-[color:var(--secondary-900)]">
+                        <span className="ui-outline-gold rounded-full bg-[color:var(--secondary-500)]/14 px-3 py-1 text-xs font-semibold text-[color:var(--secondary-900)]">
                             Available
                         </span>
                     </div>

@@ -34,11 +34,13 @@ export function FoodOrderModal({ companySettings, food, isOpen, onClose, onPlace
 
     const content = (
         <div className="space-y-5">
-            <img
-                alt={`${food.name} ready for pickup from Dri Africain Traditional Grill LLC`}
-                className="h-44 w-full rounded-[1.75rem] object-cover sm:h-56"
-                src={food.image}
-            />
+            <div className="ui-surface-raised overflow-hidden rounded-[1.75rem]">
+                <img
+                    alt={`${food.name} ready for pickup from Dri Africain Traditional Grill LLC`}
+                    className="h-44 w-full object-cover sm:h-56"
+                    src={food.image}
+                />
+            </div>
 
             <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-2xl">
@@ -50,28 +52,28 @@ export function FoodOrderModal({ companySettings, food, isOpen, onClose, onPlace
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-                <Card className="p-4">
+                <Card className="p-4 ui-surface-raised">
                     <div className="flex items-center gap-2 text-sm text-muted">
                         <Clock3 className="h-4 w-4" />
                         Preparation
                     </div>
                     <p className="mt-2 text-lg font-semibold">{food.preparationTimeMinutes} min</p>
                 </Card>
-                <Card className="p-4">
+                <Card className="p-4 ui-surface-raised">
                     <div className="flex items-center gap-2 text-sm text-muted">
                         <HandCoins className="h-4 w-4" />
                         Payment
                     </div>
                     <p className="mt-2 text-lg font-semibold">Cash only</p>
                 </Card>
-                <Card className="p-4">
+                <Card className="p-4 ui-surface-raised">
                     <div className="flex items-center gap-2 text-sm text-muted">
                         <PackageCheck className="h-4 w-4" />
                         Packaging
                     </div>
                     <p className="mt-2 text-lg font-semibold">Neatly packed</p>
                 </Card>
-                <Card className="p-4">
+                <Card className="p-4 ui-surface-raised">
                     <div className="flex items-center gap-2 text-sm text-muted">
                         <MapPin className="h-4 w-4" />
                         Pickup
@@ -86,7 +88,7 @@ export function FoodOrderModal({ companySettings, food, isOpen, onClose, onPlace
                 </Card>
             </div>
 
-            <div className="flex flex-col gap-5 rounded-[1.75rem] border border-white/10 bg-white/6 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="ui-surface-solid flex flex-col gap-5 rounded-[1.75rem] p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <p className="text-sm text-muted">Quantity</p>
                     <div className="mt-3">
@@ -99,7 +101,7 @@ export function FoodOrderModal({ companySettings, food, isOpen, onClose, onPlace
                 </div>
             </div>
 
-            <div className="space-y-3 rounded-[1.75rem] border border-white/10 bg-white/6 p-4 text-sm leading-7 text-muted">
+            <div className="ui-surface-solid ui-outline-accent space-y-3 rounded-[1.75rem] p-4 text-sm leading-7 text-muted">
                 <p>Cash payment only. Pay when you pick up at the restaurant.</p>
                 <button
                     className="text-left text-[color:var(--text-900)] underline decoration-white/20 underline-offset-4 transition hover:text-[color:var(--primary-500)]"

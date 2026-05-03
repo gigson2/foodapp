@@ -3,33 +3,30 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreCompanySettingRequest;
 use App\Http\Resources\CompanySettingResource;
 use App\Models\CompanySetting;
-use Illuminate\Http\Request;
+use App\Support\FileUploadService;
 
 class CompanySettingController extends Controller
 {
+    public function __construct(
+        protected FileUploadService $fileUploadService,
+    ) {
+    }
+
     public function show(): CompanySettingResource
     {
         return new CompanySettingResource(CompanySetting::query()->firstOrFail());
     }
 
-    public function update(Request $request): CompanySettingResource
+    public function update(StoreCompanySettingRequest $request): CompanySettingResource
     {
-        $validated = $request->validate([
-            'company_name' => ['required', 'string', 'max:255'],
-            'tagline' => ['nullable', 'string', 'max:255'],
-            'about' => ['nullable', 'string'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'address' => ['nullable', 'string', 'max:255'],
-            'opening_hours' => ['nullable', 'array'],
-            'logo' => ['nullable', 'string', 'max:255'],
-            'favicon' => ['nullable', 'string', 'max:255'],
-            'social_links' => ['nullable', 'array'],
-        ]);
+        $validated = $request->validated();
 
         $settings = CompanySetting::query()->firstOrFail();
+        $validated['logo'] = $this->fileUploadService->replacePublic($settings->logo, $request->file('logo'), 'company');
+        $validated['favicon'] = $this->fileUploadService->replacePublic($settings->favicon, $request->file('favicon'), 'company');
         $settings->fill($validated)->save();
 
         return new CompanySettingResource($settings);

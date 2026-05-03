@@ -25,7 +25,11 @@ class UpdateFoodRequest extends FormRequest
             'slug' => ['required', 'string', 'max:255', Rule::unique('foods', 'slug')->ignore($foodId)],
             'description' => ['required', 'string'],
             'short_description' => ['nullable', 'string', 'max:255'],
-            'image' => ['nullable', 'string', 'max:255'],
+            'image' => [
+                'nullable',
+                Rule::when($this->hasFile('image'), ['image', 'max:4096']),
+                Rule::when(! $this->hasFile('image'), ['string', 'max:255']),
+            ],
             'price' => ['required', 'numeric', 'min:0'],
             'preparation_time_minutes' => ['required', 'integer', 'min:0', 'max:240'],
             'ingredients' => ['nullable', 'array'],

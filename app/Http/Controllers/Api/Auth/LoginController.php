@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -44,11 +45,20 @@ class LoginController extends Controller
         }
 
         $user->forceFill(['last_login_at' => now()])->save();
+        $token = $user->createToken($this->tokenName($request))->plainTextToken;
 
         return response()->json([
             'message' => 'Login successful.',
+            'token' => $token,
             'user' => new UserResource($user->load('customerProfile')),
         ]);
+    }
+
+    private function tokenName(Request $request): string
+    {
+        $segment = $request->userAgent() ? substr(md5($request->userAgent()), 0, 8) : 'unknown';
+
+        return sprintf('spa-%s-%s', now()->timestamp, $segment);
     }
 
     private function normalizePhone(string $value): ?string

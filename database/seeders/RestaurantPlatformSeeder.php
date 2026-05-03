@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\OrderType;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Enums\ReviewStatus;
 use App\Enums\UserRole;
 use App\Enums\VisitorEventType;
 use App\Models\Category;
@@ -17,6 +18,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\SeoSetting;
 use App\Models\User;
+use App\Models\Review;
 use App\Models\VisitorEvent;
 use App\Models\VisitorSession;
 use Illuminate\Database\Seeder;
@@ -62,6 +64,8 @@ class RestaurantPlatformSeeder extends Seeder
                 'phone' => null,
                 'email' => 'hello@driafricain.test',
                 'address' => '701 Golden Gate Circle, Papillion, NE 68046',
+                'pickup_instructions' => 'Pickup only. Collect your order at 701 Golden Gate Circle, Papillion, NE 68046 and pay cash when you arrive.',
+                'cash_only_notice' => 'Cash only. No online or card payments are accepted.',
                 'opening_hours' => [
                     'friday' => 'Pre-orders open',
                     'saturday' => '11:00 AM - 10:00 PM',
@@ -342,6 +346,29 @@ class RestaurantPlatformSeeder extends Seeder
                 'line_total' => $subtotal,
                 'customer_note' => $index % 4 === 0 ? 'Extra onions please.' : null,
             ]);
+
+            if ($index < 4) {
+                Review::query()->updateOrCreate(
+                    ['order_id' => $order->id],
+                    [
+                        'user_id' => $customer->id,
+                        'food_id' => $food->id,
+                        'customer_name' => $customer->name,
+                        'customer_phone' => $customer->phone,
+                        'rating' => max(3, 5 - ($index % 3)),
+                        'message' => [
+                            'Tender meat, neat packaging, and very respectful pickup service.',
+                            'The grilled chicken was juicy and the presentation looked professional.',
+                            'Good hospitality, clean packaging, and worth the drive.',
+                            'Submitted for moderation before public display.',
+                        ][$index],
+                        'food_name' => $food->name,
+                        'status' => $index === 3 ? ReviewStatus::Pending : ReviewStatus::Approved,
+                        'approved_at' => $index === 3 ? null : now()->subDays($index),
+                        'rejected_at' => null,
+                    ],
+                );
+            }
         }
 
         $visitorSources = [

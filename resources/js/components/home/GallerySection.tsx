@@ -48,7 +48,7 @@ export function GallerySection() {
             <div className="grid auto-rows-fr gap-4 md:grid-cols-2 xl:grid-cols-4">
                 {galleryItems.map((item) => (
                     <div
-                        className={`group relative overflow-hidden rounded-[1.5rem] border border-white/10 ${item.frameClassName ?? ''}`}
+                        className={`group ui-surface ui-card-hover relative overflow-hidden rounded-[1.5rem] ${item.frameClassName ?? ''}`}
                         key={item.src}
                     >
                         <img

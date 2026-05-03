@@ -10,7 +10,7 @@ type ReviewCardProps = {
 
 export function ReviewCard({ review, showStatus = false }: ReviewCardProps) {
     return (
-        <Card className="space-y-5 p-6">
+        <Card className="space-y-5 p-6 ui-card-hover ui-outline-gold">
             <div className="flex items-start justify-between gap-4">
                 <div>
                     <h3 className="text-2xl">{review.customerName}</h3>

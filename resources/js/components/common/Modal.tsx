@@ -111,7 +111,7 @@ export function Modal({
                 aria-labelledby={titleId}
                 aria-modal="true"
                 className={cn(
-                    'glass-card-strong relative flex max-h-[88vh] w-full flex-col overflow-hidden p-5 text-left shadow-[0_32px_90px_rgba(0,0,0,0.35)] outline-none sm:p-6',
+                    'glass-card-strong ui-outline-strong relative flex max-h-[88vh] w-full flex-col overflow-hidden p-5 text-left shadow-[0_32px_90px_rgba(0,0,0,0.35)] outline-none sm:p-6',
                     position === 'center'
                         ? 'max-w-2xl'
                         : 'max-w-2xl rounded-b-none pb-[calc(1.5rem+env(safe-area-inset-bottom))]',
@@ -124,7 +124,7 @@ export function Modal({
             >
                 <button
                     aria-label="Close dialog"
-                    className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-[color:var(--text-950)] transition hover:bg-white/16"
+                    className="ui-surface-solid ui-focus-ring absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-[color:var(--text-950)] transition hover:border-[color:var(--ui-border-strong)] hover:bg-[color:var(--ui-surface-raised)]"
                     onClick={onClose}
                     type="button"
                 >

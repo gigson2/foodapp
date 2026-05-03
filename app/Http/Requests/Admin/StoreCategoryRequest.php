@@ -21,7 +21,11 @@ class StoreCategoryRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'unique:categories,slug'],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'string', 'max:255'],
+            'image' => [
+                'nullable',
+                Rule::when($this->hasFile('image'), ['image', 'max:4096']),
+                Rule::when(! $this->hasFile('image'), ['string', 'max:255']),
+            ],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
         ];

@@ -32,11 +32,15 @@ export function CustomerDashboardPage() {
         queryKey: ['customer-dashboard', 'orders'],
         queryFn: customerDashboardService.getOrders,
         enabled: sessionUser?.role === 'customer',
+        refetchInterval: 30_000,
+        refetchOnWindowFocus: true,
     });
     const backendNotificationsQuery = useQuery({
         queryKey: ['customer-dashboard', 'notifications'],
         queryFn: customerDashboardService.getNotifications,
         enabled: sessionUser?.role === 'customer',
+        refetchInterval: 15_000,
+        refetchOnWindowFocus: true,
     });
 
     const markNotificationReadMutation = useMutation({

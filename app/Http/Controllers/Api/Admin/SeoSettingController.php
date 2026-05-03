@@ -3,30 +3,48 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreSeoSettingRequest;
+use App\Http\Requests\Admin\UpdateSeoSettingRequest;
 use App\Http\Resources\SeoSettingResource;
 use App\Models\SeoSetting;
-use Illuminate\Http\Request;
+use App\Support\AdminPagination;
+use App\Support\FileUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Validation\Rule;
+use Illuminate\Http\Request;
 
 class SeoSettingController extends Controller
 {
-    public function index(): AnonymousResourceCollection
-    {
-        return SeoSettingResource::collection(SeoSetting::query()->orderBy('page_key')->get());
+    public function __construct(
+        protected FileUploadService $fileUploadService,
+    ) {
     }
 
-    public function store(Request $request): SeoSettingResource
+    public function index(Request $request): AnonymousResourceCollection
     {
-        $validated = $request->validate([
-            'page_key' => ['required', 'string', 'max:120', 'unique:seo_settings,page_key'],
-            'title' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'keywords' => ['nullable', 'string'],
-            'og_image' => ['nullable', 'string', 'max:255'],
-            'schema_json' => ['nullable', 'array'],
-        ]);
+        $perPage = AdminPagination::resolvePerPage($request);
+        $search = $request->string('search')->trim()->toString();
+
+        return SeoSettingResource::collection(
+            SeoSetting::query()
+                ->when($search !== '', function ($query) use ($search): void {
+                    $query->where(function ($nested) use ($search): void {
+                        $nested
+                            ->where('page_key', 'like', "%{$search}%")
+                            ->orWhere('title', 'like', "%{$search}%")
+                            ->orWhere('description', 'like', "%{$search}%");
+                    });
+                })
+                ->orderBy('page_key')
+                ->paginate($perPage)
+                ->appends($request->query()),
+        );
+    }
+
+    public function store(StoreSeoSettingRequest $request): SeoSettingResource
+    {
+        $validated = $request->validated();
+        $validated['og_image'] = $this->fileUploadService->storePublic($request->file('og_image'), 'seo');
 
         return new SeoSettingResource(SeoSetting::query()->create($validated));
     }
@@ -36,16 +54,10 @@ class SeoSettingController extends Controller
         return new SeoSettingResource($seoSetting);
     }
 
-    public function update(Request $request, SeoSetting $seoSetting): SeoSettingResource
+    public function update(UpdateSeoSettingRequest $request, SeoSetting $seoSetting): SeoSettingResource
     {
-        $validated = $request->validate([
-            'page_key' => ['required', 'string', 'max:120', Rule::unique('seo_settings', 'page_key')->ignore($seoSetting->id)],
-            'title' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'keywords' => ['nullable', 'string'],
-            'og_image' => ['nullable', 'string', 'max:255'],
-            'schema_json' => ['nullable', 'array'],
-        ]);
+        $validated = $request->validated();
+        $validated['og_image'] = $this->fileUploadService->replacePublic($seoSetting->og_image, $request->file('og_image'), 'seo');
 
         $seoSetting->fill($validated)->save();
 

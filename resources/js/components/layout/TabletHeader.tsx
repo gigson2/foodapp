@@ -7,6 +7,8 @@ import type { AppNotification } from '@/types';
 
 type TabletHeaderProps = {
     activeSection: 'home' | 'menu' | 'reviews' | 'contact';
+    brandLogoUrl?: string | null;
+    brandName: string;
     customerName?: string;
     isLoggedIn: boolean;
     notifications: AppNotification[];
@@ -22,6 +24,8 @@ type TabletHeaderProps = {
 
 export function TabletHeader({
     activeSection,
+    brandLogoUrl,
+    brandName,
     customerName,
     isLoggedIn,
     notifications,
@@ -43,7 +47,7 @@ export function TabletHeader({
 
     return (
         <div className="hidden md:block lg:hidden">
-            <div className="top-utility">
+            <div className="top-utility relative z-20">
                 <div className="section-shell flex items-center justify-between gap-4">
                     <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
                         <MapPin className="h-3.5 w-3.5 text-[color:var(--primary-500)]" />
@@ -67,16 +71,13 @@ export function TabletHeader({
                 </div>
             </div>
 
-            <header className="brand-nav py-4">
+            <header className="brand-nav relative z-10 py-4">
                 <div className="section-shell flex flex-col gap-4">
                     <div className="flex items-center justify-between gap-4">
                         <button className="flex items-center gap-3" onClick={onGoHome} type="button">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-[color:var(--primary-500)] text-white">
-                                <FlameKindling className="h-4 w-4" />
-                            </div>
-                            <div className="text-left">
-                                <p className="font-display text-2xl leading-none">Dri Africain</p>
-                                <p className="mt-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-muted">Traditional Grill LLC</p>
+                            {brandLogoUrl ? <img alt={`${brandName} logo`} className="h-12 w-auto shrink-0 object-contain" src={brandLogoUrl} /> : <FlameKindling className="h-7 w-7 shrink-0 text-[color:var(--primary-500)]" />}
+                            <div className="max-w-[16rem] text-left">
+                                <p className="font-display text-2xl leading-none">{brandName}</p>
                             </div>
                         </button>
 

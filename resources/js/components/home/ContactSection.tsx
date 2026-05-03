@@ -30,17 +30,17 @@ export function ContactSection({ companySettings, onOrderNow }: ContactSectionPr
                         </p>
 
                         <div className="mt-10 grid gap-4 md:grid-cols-3">
-                            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                            <div className="ui-surface-solid ui-outline-accent rounded-2xl p-5">
                                 <MapPin className="mx-auto h-5 w-5 text-[color:var(--primary-500)]" />
                                 <h3 className="mt-4 text-2xl">Pickup Only</h3>
                                 <p className="mt-3 text-sm leading-7 text-muted">Customers place orders online, then collect them at the restaurant premises on pickup day.</p>
                             </div>
-                            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                            <div className="ui-surface-solid ui-outline-accent rounded-2xl p-5">
                                 <WalletCards className="mx-auto h-5 w-5 text-[color:var(--primary-500)]" />
                                 <h3 className="mt-4 text-2xl">Cash Payment</h3>
                                 <p className="mt-3 text-sm leading-7 text-muted">No online checkout. Payment is completed when the customer arrives for pickup.</p>
                             </div>
-                            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                            <div className="ui-surface-solid ui-outline-gold rounded-2xl p-5">
                                 <MapPin className="mx-auto h-5 w-5 text-[color:var(--primary-500)]" />
                                 <h3 className="mt-4 text-2xl">Ordering Schedule</h3>
                                 <p className="mt-3 text-sm leading-7 text-muted">Friday: {fridayHours}. Saturday preparation and pickup run {saturdayHours}, with final ordering at {orderingCutoff}.</p>

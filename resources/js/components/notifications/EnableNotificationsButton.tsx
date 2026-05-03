@@ -1,7 +1,7 @@
 import { BellRing } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/common/Button';
-import { createPushSubscriptionPlaceholder, requestNotificationAccess } from '@/services/pwaService';
+import { subscribeToPush, requestNotificationAccess } from '@/services/pwaService';
 
 type EnableNotificationsButtonProps = {
     permission: NotificationPermission | 'unsupported';
@@ -12,9 +12,9 @@ export function EnableNotificationsButton({ permission }: EnableNotificationsBut
         const result = await requestNotificationAccess();
 
         if (result === 'granted') {
-            await createPushSubscriptionPlaceholder();
+            await subscribeToPush();
             toast.success('Notifications enabled', {
-                description: 'You are ready for grill pickup updates once backend push delivery is connected.',
+                description: 'You will receive real-time pickup alerts for your orders.',
             });
         } else if (result === 'denied') {
             toast.error('Notifications blocked', {

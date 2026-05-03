@@ -30,6 +30,7 @@ class OrderResource extends JsonResource
             'total' => (float) $this->total,
             'payment_method' => $this->payment_method?->value ?? $this->payment_method,
             'payment_status' => $this->payment_status?->value ?? $this->payment_status,
+            'cash_status' => ($this->payment_status?->value ?? $this->payment_status) === 'paid' ? 'cash_collected' : 'cash_pending',
             'customer_note' => $this->customer_note,
             'admin_note' => $this->admin_note,
             'placed_at' => $this->placed_at,

@@ -1,4 +1,4 @@
-import { BellRing, Download } from 'lucide-react';
+import { Bell, BellRing, Download } from 'lucide-react';
 import axios from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
@@ -13,6 +13,7 @@ import { PickupHowItWorksSection } from '@/components/home/PickupHowItWorksSecti
 import { PopularGrillsSection } from '@/components/home/PopularGrillsSection';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
+import { IconButton } from '@/components/common/IconButton';
 import { DesktopHeader } from '@/components/layout/DesktopHeader';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { TabletHeader } from '@/components/layout/TabletHeader';
@@ -21,16 +22,19 @@ import { FoodOrderModal } from '@/components/menu/FoodOrderModal';
 import { CustomerDetailsModal } from '@/components/ordering/CustomerDetailsModal';
 import { OrderSuccessModal } from '@/components/ordering/OrderSuccessModal';
 import { FirstVisitPromptModal } from '@/components/pwa/FirstVisitPromptModal';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { ReviewsSection } from '@/components/reviews/ReviewsSection';
 import { LeaveReviewModal } from '@/components/reviews/LeaveReviewModal';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { AUTH_SESSION_QUERY_KEY, useAuthSession } from '@/hooks/useAuthSession';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { useLocalCustomer } from '@/hooks/useLocalCustomer';
 import { useLocalReviews } from '@/hooks/useLocalReviews';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useScrollToSection } from '@/hooks/useScrollToSection';
+import { apiClient } from '@/services/apiClient';
 import { orderService } from '@/services/orderService';
-import { createPushSubscriptionPlaceholder, requestNotificationAccess } from '@/services/pwaService';
+import { subscribeToPush, requestNotificationAccess } from '@/services/pwaService';
 import { publicService } from '@/services/publicService';
 import { reviewService } from '@/services/reviewService';
 import { adminService } from '@/services/adminService';
@@ -283,9 +287,23 @@ export function AppShell() {
         const result = await requestNotificationAccess();
 
         if (result === 'granted') {
-            await createPushSubscriptionPlaceholder();
+            const subscription = await subscribeToPush();
+
+            if (subscription && sessionUser) {
+                const subJson = subscription.toJSON();
+                await apiClient
+                    .post('/customer/push-subscriptions', {
+                        endpoint: subscription.endpoint,
+                        public_key: subJson.keys?.p256dh ?? null,
+                        auth_token: subJson.keys?.auth ?? null,
+                        content_encoding: 'aes128gcm',
+                        user_agent: navigator.userAgent,
+                    })
+                    .catch(() => undefined);
+            }
+
             toast.success('Notifications enabled', {
-                description: 'You will be ready for real-time pickup alerts once backend push delivery is connected.',
+                description: 'You will receive real-time pickup alerts for your orders.',
             });
         } else if (result === 'denied') {
             toast.error('Notifications blocked', {
@@ -322,7 +340,51 @@ export function AppShell() {
         }
     };
 
-    const handlePlaceOrder = (food: Food, quantity: number) => {
+    const handlePlaceOrder = async (food: Food, quantity: number) => {
+        if (sessionUser?.role === 'customer') {
+            try {
+                const response = await apiClient.post<{ data: { id: number; order_number: string; customer_name: string; customer_phone: string; subtotal: number; total: number; payment_method: string; order_type: string; status: Order['status']; placed_at?: string | null; created_at: string; items: Array<{ id: number; food_id: number | null; food_name: string; unit_price: number; quantity: number; line_total: number }> } }>('/customer/orders', {
+                    food_id: food.id,
+                    quantity,
+                });
+
+                const apiOrder = response.data.data;
+                const order: Order = {
+                    id: String(apiOrder.id),
+                    orderNumber: apiOrder.order_number,
+                    customerName: apiOrder.customer_name,
+                    customerPhone: apiOrder.customer_phone,
+                    items: apiOrder.items.map((item) => ({
+                        id: String(item.id),
+                        foodId: String(item.food_id ?? ''),
+                        foodName: item.food_name,
+                        price: item.unit_price,
+                        quantity: item.quantity,
+                        total: item.line_total,
+                    })),
+                    subtotal: apiOrder.subtotal,
+                    total: apiOrder.total,
+                    paymentMethod: apiOrder.payment_method as Order['paymentMethod'],
+                    orderType: apiOrder.order_type as Order['orderType'],
+                    status: apiOrder.status,
+                    createdAt: apiOrder.placed_at ?? apiOrder.created_at,
+                };
+
+                setSelectedFood(null);
+                setOrderSuccess(order);
+                void queryClient.invalidateQueries({ queryKey: ['customer-dashboard', 'orders'] });
+                toast.success('Pickup order received', {
+                    description: `${order.orderNumber} was sent to the restaurant.`,
+                });
+            } catch {
+                toast.error('Failed to place order', {
+                    description: 'Please try again.',
+                });
+            }
+
+            return;
+        }
+
         if (effectiveCustomer) {
             const order = orderService.createPickupCashOrder({
                 customer: effectiveCustomer,
@@ -377,6 +439,58 @@ export function AppShell() {
         }
     };
 
+    const handleSessionOrderSubmit = async (values: { name: string; phone: string }) => {
+        setLoadingCustomer(true);
+
+        try {
+            if (pendingOrder && sessionUser?.role === 'customer') {
+                const response = await apiClient.post<{ data: { id: number; order_number: string; customer_name: string; customer_phone: string; subtotal: number; total: number; payment_method: string; order_type: string; status: Order['status']; placed_at?: string | null; created_at: string; items: Array<{ id: number; food_id: number | null; food_name: string; unit_price: number; quantity: number; line_total: number }> } }>('/customer/orders', {
+                    food_id: pendingOrder.food.id,
+                    quantity: pendingOrder.quantity,
+                });
+
+                const apiOrder = response.data.data;
+                const order: Order = {
+                    id: String(apiOrder.id),
+                    orderNumber: apiOrder.order_number,
+                    customerName: apiOrder.customer_name,
+                    customerPhone: apiOrder.customer_phone,
+                    items: apiOrder.items.map((item) => ({
+                        id: String(item.id),
+                        foodId: String(item.food_id ?? ''),
+                        foodName: item.food_name,
+                        price: item.unit_price,
+                        quantity: item.quantity,
+                        total: item.line_total,
+                    })),
+                    subtotal: apiOrder.subtotal,
+                    total: apiOrder.total,
+                    paymentMethod: apiOrder.payment_method as Order['paymentMethod'],
+                    orderType: apiOrder.order_type as Order['orderType'],
+                    status: apiOrder.status,
+                    createdAt: apiOrder.placed_at ?? apiOrder.created_at,
+                };
+
+                setPendingOrder(null);
+                setSelectedFood(null);
+                setDetailsOpen(false);
+                setOrderSuccess(order);
+                void queryClient.invalidateQueries({ queryKey: ['customer-dashboard', 'orders'] });
+                toast.success('Pickup order received', {
+                    description: `${order.orderNumber} was sent to the restaurant.`,
+                });
+
+                return;
+            }
+
+            await handleCustomerSubmit(values);
+        } catch {
+            toast.error('Failed to place order', { description: 'Please try again.' });
+        } finally {
+            setLoadingCustomer(false);
+        }
+    };
+
     const handleReviewSubmit = async (values: {
         foodName?: string;
         message: string;
@@ -415,6 +529,8 @@ export function AppShell() {
 
     const desktopActiveSection = getDesktopActiveSection(activeSection === 'popular' ? 'home' : activeSection);
     const mobileActiveSection = getMobileActiveSection(activeSection === 'popular' ? 'home' : activeSection);
+    const brandName = companySettings?.company_name?.trim() || 'Dri Africain';
+    const brandLogoUrl = companySettings?.logo ?? null;
     const showNotificationPrompt = notificationPromptReady && permission === 'default' && !notificationPromptDismissed;
     const showInstallPrompt = installPromptReady && !showNotificationPrompt && !isStandalone && (canInstall || isIos) && !installPromptDismissed;
 
@@ -423,6 +539,8 @@ export function AppShell() {
             <div className="sticky top-0 z-40 bg-[color:var(--background-50)]/92 backdrop-blur-xl">
                 <DesktopHeader
                     activeSection={desktopActiveSection}
+                    brandLogoUrl={brandLogoUrl}
+                    brandName={brandName}
                     customerName={accountName}
                     isLoggedIn={hasAccountIdentity}
                     notifications={notifications}
@@ -437,6 +555,8 @@ export function AppShell() {
                 />
                 <TabletHeader
                     activeSection={desktopActiveSection === 'account' ? 'contact' : desktopActiveSection}
+                    brandLogoUrl={brandLogoUrl}
+                    brandName={brandName}
                     customerName={accountName}
                     isLoggedIn={hasAccountIdentity}
                     notifications={notifications}
@@ -449,13 +569,29 @@ export function AppShell() {
                     onMarkRead={markRead}
                     unreadCount={unreadCount}
                 />
-                <div className="top-utility md:hidden">
+                <div className="top-utility relative z-20 md:hidden">
+                    <div className="section-shell flex items-center justify-end gap-2 py-3">
+                        {hasAccountIdentity ? (
+                            <NotificationBell
+                                notifications={notifications}
+                                onMarkAllRead={markAllRead}
+                                onMarkRead={markRead}
+                                unreadCount={unreadCount}
+                            />
+                        ) : (
+                            <IconButton aria-label="Notifications unavailable">
+                                <Bell className="h-5 w-5" />
+                            </IconButton>
+                        )}
+                        <ThemeToggle />
+                    </div>
+                </div>
+                <div className="top-utility relative z-10 md:hidden">
                     <div className="section-shell flex items-center justify-between gap-4 py-4">
                         <button className="flex items-center gap-3" onClick={() => scrollToSection('home')} type="button">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[color:var(--primary-500)] text-sm font-semibold text-white">DG</div>
-                            <div className="text-left">
-                                <p className="font-display text-2xl leading-none">Dri Africain</p>
-                                <p className="mt-1 text-[0.68rem] uppercase tracking-[0.18em] text-muted">Traditional Grill LLC</p>
+                            {brandLogoUrl ? <img alt={`${brandName} logo`} className="h-11 w-auto shrink-0 object-contain" src={brandLogoUrl} /> : <span className="shrink-0 text-sm font-semibold text-[color:var(--primary-500)]">DG</span>}
+                            <div className="max-w-[11rem] text-left">
+                                <p className="font-display text-2xl leading-none">{brandName}</p>
                             </div>
                         </button>
                         <div className="flex items-center gap-2">
@@ -540,7 +676,7 @@ export function AppShell() {
                     setDetailsOpen(false);
                     setPendingOrder(null);
                 }}
-                onSubmit={handleCustomerSubmit}
+                onSubmit={sessionUser?.role === 'customer' ? handleSessionOrderSubmit : handleCustomerSubmit}
             />
 
             <OrderSuccessModal

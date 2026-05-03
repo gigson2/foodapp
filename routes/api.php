@@ -4,10 +4,15 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\Admin\CompanySettingController as AdminCompanySettingController;
 use App\Http\Controllers\Api\Admin\CustomerController as AdminCustomerController;
+use App\Http\Controllers\Api\Admin\AnalyticsController as AdminAnalyticsController;
 use App\Http\Controllers\Api\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\Admin\FoodController as AdminFoodController;
 use App\Http\Controllers\Api\Admin\NotificationController as AdminNotificationController;
+use App\Http\Controllers\Api\Admin\OrderNoteController as AdminOrderNoteController;
+use App\Http\Controllers\Api\Admin\OrderPaymentStatusController as AdminOrderPaymentStatusController;
 use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Api\Admin\ProfileController as AdminProfileController;
+use App\Http\Controllers\Api\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Api\Admin\OrderStatusController as AdminOrderStatusController;
 use App\Http\Controllers\Api\Admin\SeoSettingController as AdminSeoSettingController;
 use App\Http\Controllers\Api\Admin\VisitorController as AdminVisitorController;
@@ -57,11 +62,17 @@ Route::middleware(['web', 'auth:sanctum'])->group(function (): void {
 
     Route::prefix('admin')->middleware('role:'.UserRole::Admin->value)->group(function (): void {
         Route::get('/dashboard', AdminDashboardController::class)->name('api.admin.dashboard');
+        Route::get('/dashboard/overview', AdminDashboardController::class)->name('api.admin.dashboard.overview');
         Route::get('/orders', [AdminOrderController::class, 'index'])->name('api.admin.orders.index');
         Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('api.admin.orders.show');
         Route::patch('/orders/{order}/status', AdminOrderStatusController::class)->name('api.admin.orders.status');
+        Route::patch('/orders/{order}/payment-status', AdminOrderPaymentStatusController::class)->name('api.admin.orders.payment-status');
+        Route::patch('/orders/{order}/note', AdminOrderNoteController::class)->name('api.admin.orders.note');
         Route::get('/customers', [AdminCustomerController::class, 'index'])->name('api.admin.customers.index');
         Route::get('/visitors', [AdminVisitorController::class, 'index'])->name('api.admin.visitors.index');
+        Route::get('/analytics', AdminAnalyticsController::class)->name('api.admin.analytics');
+        Route::get('/reviews', [AdminReviewController::class, 'index'])->name('api.admin.reviews.index');
+        Route::patch('/reviews/{review}/status', [AdminReviewController::class, 'updateStatus'])->name('api.admin.reviews.status');
         Route::apiResource('foods', AdminFoodController::class);
         Route::apiResource('categories', AdminCategoryController::class);
         Route::get('/company-settings', [AdminCompanySettingController::class, 'show'])->name('api.admin.company-settings.show');
@@ -70,5 +81,8 @@ Route::middleware(['web', 'auth:sanctum'])->group(function (): void {
         Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('api.admin.notifications.index');
         Route::patch('/notifications/{id}/read', [AdminNotificationController::class, 'markRead'])->name('api.admin.notifications.read');
         Route::patch('/notifications/read-all', [AdminNotificationController::class, 'markAllRead'])->name('api.admin.notifications.read-all');
+        Route::get('/profile', [AdminProfileController::class, 'show'])->name('api.admin.profile.show');
+        Route::put('/profile', [AdminProfileController::class, 'update'])->name('api.admin.profile.update');
+        Route::put('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('api.admin.profile.password');
     });
 });

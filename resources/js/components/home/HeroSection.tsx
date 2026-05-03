@@ -101,10 +101,10 @@ export function HeroSection({ companySettings, onBrowseMenu, onOpenAccount }: He
                         </div>
 
                         <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-white/90 sm:text-sm">
-                            <span className="rounded-full border border-white/14 bg-[rgba(255,255,255,0.06)] px-4 py-2">Cash at Pickup</span>
-                            <span className="rounded-full border border-white/14 bg-[rgba(255,255,255,0.06)] px-4 py-2">Freshly Grilled</span>
-                            <span className="rounded-full border border-white/14 bg-[rgba(255,255,255,0.06)] px-4 py-2">Pickup Only</span>
-                            <span className="rounded-full border border-white/14 bg-[rgba(255,255,255,0.06)] px-4 py-2">
+                            <span className="ui-outline-accent rounded-full bg-[rgba(255,255,255,0.08)] px-4 py-2">Cash at Pickup</span>
+                            <span className="ui-outline-gold rounded-full bg-[rgba(255,255,255,0.08)] px-4 py-2">Freshly Grilled</span>
+                            <span className="ui-outline-strong rounded-full bg-[rgba(255,255,255,0.08)] px-4 py-2">Pickup Only</span>
+                            <span className="ui-outline-strong rounded-full bg-[rgba(255,255,255,0.08)] px-4 py-2">
                                 {companySettings?.address?.includes('Papillion') ? 'Papillion, Nebraska' : 'Hospitality First'}
                             </span>
                         </div>
@@ -113,7 +113,7 @@ export function HeroSection({ companySettings, onBrowseMenu, onOpenAccount }: He
                     <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-4">
                         <button
                             aria-label="Previous hero slide"
-                            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-[rgba(255,255,255,0.06)] text-white transition hover:bg-[rgba(255,255,255,0.12)]"
+                            className="ui-outline-strong inline-flex h-11 w-11 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white transition hover:bg-[rgba(255,255,255,0.14)]"
                             onClick={() => setActiveIndex((current) => (current - 1 + slideCount) % slideCount)}
                             type="button"
                         >
@@ -134,7 +134,7 @@ export function HeroSection({ companySettings, onBrowseMenu, onOpenAccount }: He
 
                         <button
                             aria-label="Next hero slide"
-                            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-[rgba(255,255,255,0.06)] text-white transition hover:bg-[rgba(255,255,255,0.12)]"
+                            className="ui-outline-strong inline-flex h-11 w-11 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white transition hover:bg-[rgba(255,255,255,0.14)]"
                             onClick={() => setActiveIndex((current) => (current + 1) % slideCount)}
                             type="button"
                         >

@@ -4,7 +4,27 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        @php
+            $fallbackIconPath = 'icons/app_ico.png';
+            $appIconUrl = asset($fallbackIconPath);
+            $companySettings = null;
+
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('company_settings')) {
+                    $companySettings = \App\Models\CompanySetting::query()->first();
+                }
+            } catch (\Throwable $exception) {
+                $companySettings = null;
+            }
+
+            $resolveBrandAsset = static fn (?string $path, string $fallback) => filled($path) ? url($path) : $fallback;
+            $faviconUrl = $resolveBrandAsset($companySettings?->favicon, $appIconUrl);
+            $logoUrl = $resolveBrandAsset($companySettings?->logo, $appIconUrl);
+            $appleTouchIconUrl = asset('icons/apple-touch-icon.png');
+        @endphp
         <meta name="theme-color" content="#060118">
+        <meta name="application-name" content="Dri Foods">
+        <meta name="format-detection" content="telephone=no">
         <meta
             name="description"
             content="Order tender grilled chicken and goat from Dri Africain Traditional Grill LLC in Papillion, Nebraska. Pickup-only, cash-at-pickup traditional African grill."
@@ -16,15 +36,20 @@
         >
         <meta property="og:type" content="website">
         <meta property="og:url" content="{{ url()->current() }}">
+        <meta property="og:image" content="{{ $logoUrl }}">
         <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="{{ $logoUrl }}">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="apple-mobile-web-app-title" content="Dri Grill">
+        <meta name="apple-mobile-web-app-title" content="Dri Foods">
         <link rel="canonical" href="{{ url()->current() }}">
         <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
-        <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
-        <link rel="apple-touch-icon" href="{{ asset('icons/app-icon.svg') }}">
+        <link rel="icon" href="{{ $faviconUrl }}" sizes="any">
+        <link rel="shortcut icon" href="{{ $faviconUrl }}">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ $appleTouchIconUrl }}">
+        <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('icons/app-icon-192.png') }}">
+        <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('icons/app-icon-512.png') }}">
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=josefin-sans:300,400,500,600,700|oswald:300,400,500,600,700" rel="stylesheet" />
         <title>Dri Africain Traditional Grill LLC | Grilled Chicken &amp; Goat in Papillion, NE</title>

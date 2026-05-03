@@ -12,7 +12,7 @@ export function Input({ className, error, label, ...props }: InputProps) {
             {label ? <span className="text-sm font-medium text-[color:var(--text-950)]">{label}</span> : null}
             <input
                 className={cn(
-                    'theme-field w-full rounded-2xl px-4 py-3',
+                    'theme-field ui-focus-ring w-full rounded-2xl px-4 py-3',
                     error ? 'border-[color:var(--primary-500)]/45' : '',
                     className,
                 )}
