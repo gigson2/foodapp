@@ -8,19 +8,23 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MoneyDisplay } from '@/components/ordering/MoneyDisplay';
 import { QuantitySelector } from '@/components/ordering/QuantitySelector';
 import { openDirectionsPrompt } from '@/utils/location';
-import type { Food } from '@/types';
+import type { CompanySettings, Food } from '@/types';
 
 type FoodOrderModalProps = {
+    companySettings: CompanySettings | null;
     food: Food | null;
     isOpen: boolean;
     onClose: () => void;
     onPlaceOrder: (food: Food, quantity: number) => void;
 };
 
-export function FoodOrderModal({ food, isOpen, onClose, onPlaceOrder }: FoodOrderModalProps) {
+export function FoodOrderModal({ companySettings, food, isOpen, onClose, onPlaceOrder }: FoodOrderModalProps) {
     const isMobile = useMediaQuery('(max-width: 767px)');
     const [quantity, setQuantity] = useState(1);
-    const pickupAddress = '701 Golden Gate Circle, Papillion, NE 68046';
+    const pickupAddress = companySettings?.address ?? '701 Golden Gate Circle, Papillion, NE 68046';
+    const fridayHours = companySettings?.opening_hours?.friday ?? 'Pre-orders open';
+    const saturdayHours = companySettings?.opening_hours?.saturday ?? '11:00 AM to 10:00 PM';
+    const orderingCutoff = companySettings?.opening_hours?.ordering_cutoff ?? 'Saturday 9:00 PM';
 
     if (! food) {
         return null;
@@ -104,7 +108,7 @@ export function FoodOrderModal({ food, isOpen, onClose, onPlaceOrder }: FoodOrde
                 >
                     Pickup location: {pickupAddress}.
                 </button>
-                <p>Pre-orders are accepted on Friday. Grill preparation and pickup happen on Saturday from 11:00 AM to 10:00 PM, with a final ordering cutoff at 9:00 PM.</p>
+                <p>Friday: {fridayHours}. Grill preparation and pickup happen Saturday {saturdayHours}, with a final ordering cutoff at {orderingCutoff}.</p>
             </div>
 
             <Button className="w-full" onClick={() => onPlaceOrder(food, quantity)} type="button">

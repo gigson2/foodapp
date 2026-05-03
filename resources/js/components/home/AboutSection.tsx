@@ -1,7 +1,12 @@
 import { Button } from '@/components/common/Button';
 import { SectionContainer } from '@/components/layout/SectionContainer';
+import type { CompanySettings } from '@/types';
 
-export function AboutSection() {
+type AboutSectionProps = {
+    companySettings: CompanySettings | null;
+};
+
+export function AboutSection({ companySettings }: AboutSectionProps) {
     return (
         <div className="relative overflow-hidden">
             <SectionContainer className="relative" contentClassName="relative" id="about">
@@ -26,10 +31,10 @@ export function AboutSection() {
 
                     <div className="lg:pt-10">
                         <p className="text-base leading-8 text-muted">
-                            Dri Africain Traditional Grill LLC focuses on professionally grilled chicken and goat prepared in large scale without losing tenderness, flavor, or quality. Every pack is neatly arranged in takeaway containers, making pickup simple, clean, and satisfying.
+                            {companySettings?.about ?? 'Dri Africain Traditional Grill LLC focuses on professionally grilled chicken and goat prepared in large scale without losing tenderness, flavor, or quality. Every pack is neatly arranged in takeaway containers, making pickup simple, clean, and satisfying.'}
                         </p>
                         <p className="mt-5 text-base leading-8 text-muted">
-                            The brand is built around trust, professional preparation, smoky flavor, and clean packaging that customers can rely on.
+                            {companySettings?.tagline ?? 'The brand is built around trust, professional preparation, smoky flavor, and clean packaging that customers can rely on.'}
                         </p>
                         <Button className="mt-10" size="lg">
                             More About

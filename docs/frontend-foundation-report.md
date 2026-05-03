@@ -160,6 +160,35 @@ Applied:
 - made pickup locations open a confirmation prompt before launching map directions
 - updated ordering copy to reflect Friday pre-orders, Saturday preparation/pickup hours, and the 9:00 PM Saturday ordering cutoff
 
+## Live Data Connection Status
+
+Updated:
+- [resources/js/services/publicService.ts](/c:/xampp/htdocs/iddrissa/resources/js/services/publicService.ts:1)
+- [resources/js/types/company.ts](/c:/xampp/htdocs/iddrissa/resources/js/types/company.ts:1)
+- [resources/js/types/index.ts](/c:/xampp/htdocs/iddrissa/resources/js/types/index.ts:1)
+- [resources/js/components/layout/AppShell.tsx](/c:/xampp/htdocs/iddrissa/resources/js/components/layout/AppShell.tsx:1)
+- [resources/js/components/home/HeroSection.tsx](/c:/xampp/htdocs/iddrissa/resources/js/components/home/HeroSection.tsx:1)
+- [resources/js/components/home/AboutSection.tsx](/c:/xampp/htdocs/iddrissa/resources/js/components/home/AboutSection.tsx:1)
+- [resources/js/components/home/ContactSection.tsx](/c:/xampp/htdocs/iddrissa/resources/js/components/home/ContactSection.tsx:1)
+- [resources/js/components/menu/FoodOrderModal.tsx](/c:/xampp/htdocs/iddrissa/resources/js/components/menu/FoodOrderModal.tsx:1)
+- [resources/js/components/ordering/OrderSuccessModal.tsx](/c:/xampp/htdocs/iddrissa/resources/js/components/ordering/OrderSuccessModal.tsx:1)
+
+Connected to database-backed APIs:
+- public foods now come from `GET /api/foods`
+- public categories now come from `GET /api/categories`
+- company name, address, phone, about copy, tagline, and opening hours now come from `GET /api/company-settings`
+
+Still frontend-local or static for now:
+- approved/pending reviews are still from local mock/localStorage because there is no review schema yet
+- gallery composition is still static and not curated from the database
+- some hero/editorial fallback copy still exists in components when company settings are missing
+- local customer identity and local order history are still mock-device storage, not backend-authenticated customer records
+
+Recommended next backend data additions if you want zero static public content:
+1. add a `reviews` table, model, seeder, public approved reviews endpoint, and admin approval workflow
+2. add a `homepage_sections` or richer `company_settings` content model for hero slides, service badges, gallery ordering, and trust copy
+3. move local customer/order identity into real customer auth and customer order APIs on the frontend
+
 ## Next Recommendation
 
 If this direction is now closer to what you want, the next pass should focus on:

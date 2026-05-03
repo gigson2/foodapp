@@ -1,14 +1,15 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/common/Button';
+import type { CompanySettings } from '@/types';
 
 type HeroSectionProps = {
-    notificationPermission: NotificationPermission | 'unsupported';
+    companySettings: CompanySettings | null;
     onBrowseMenu: () => void;
     onOpenAccount: () => void;
 };
 
-const heroSlides = [
+const defaultHeroSlides = [
     {
         image: '/assets/images/image6.jpeg',
         title: 'Tender Grilled Chicken & Goat',
@@ -29,16 +30,32 @@ const heroSlides = [
     },
 ];
 
-export function HeroSection({ onBrowseMenu, onOpenAccount }: HeroSectionProps) {
+export function HeroSection({ companySettings, onBrowseMenu, onOpenAccount }: HeroSectionProps) {
     const [activeIndex, setActiveIndex] = useState(0);
+    const heroSlides = [
+        {
+            image: '/assets/images/image6.jpeg',
+            title: companySettings?.tagline ?? defaultHeroSlides[0].title,
+            description: companySettings?.about ?? defaultHeroSlides[0].description,
+        },
+        defaultHeroSlides[1],
+        {
+            image: '/assets/images/image4.jpeg',
+            title: 'Pickup Orders With Cash At Collection',
+            description: companySettings?.address
+                ? `Order online, come to ${companySettings.address}, and pay when your food is ready for pickup.`
+                : defaultHeroSlides[2].description,
+        },
+    ];
+    const slideCount = heroSlides.length;
 
     useEffect(() => {
         const interval = window.setInterval(() => {
-            setActiveIndex((current) => (current + 1) % heroSlides.length);
+            setActiveIndex((current) => (current + 1) % slideCount);
         }, 5200);
 
         return () => window.clearInterval(interval);
-    }, []);
+    }, [slideCount]);
 
     const activeSlide = heroSlides[activeIndex];
 
@@ -87,7 +104,9 @@ export function HeroSection({ onBrowseMenu, onOpenAccount }: HeroSectionProps) {
                             <span className="rounded-full border border-white/14 bg-[rgba(255,255,255,0.06)] px-4 py-2">Cash at Pickup</span>
                             <span className="rounded-full border border-white/14 bg-[rgba(255,255,255,0.06)] px-4 py-2">Freshly Grilled</span>
                             <span className="rounded-full border border-white/14 bg-[rgba(255,255,255,0.06)] px-4 py-2">Pickup Only</span>
-                            <span className="rounded-full border border-white/14 bg-[rgba(255,255,255,0.06)] px-4 py-2">Papillion, Nebraska</span>
+                            <span className="rounded-full border border-white/14 bg-[rgba(255,255,255,0.06)] px-4 py-2">
+                                {companySettings?.address?.includes('Papillion') ? 'Papillion, Nebraska' : 'Hospitality First'}
+                            </span>
                         </div>
                     </div>
 
@@ -95,7 +114,7 @@ export function HeroSection({ onBrowseMenu, onOpenAccount }: HeroSectionProps) {
                         <button
                             aria-label="Previous hero slide"
                             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-[rgba(255,255,255,0.06)] text-white transition hover:bg-[rgba(255,255,255,0.12)]"
-                            onClick={() => setActiveIndex((current) => (current - 1 + heroSlides.length) % heroSlides.length)}
+                            onClick={() => setActiveIndex((current) => (current - 1 + slideCount) % slideCount)}
                             type="button"
                         >
                             <ChevronLeft className="h-4 w-4" />
@@ -116,7 +135,7 @@ export function HeroSection({ onBrowseMenu, onOpenAccount }: HeroSectionProps) {
                         <button
                             aria-label="Next hero slide"
                             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-[rgba(255,255,255,0.06)] text-white transition hover:bg-[rgba(255,255,255,0.12)]"
-                            onClick={() => setActiveIndex((current) => (current + 1) % heroSlides.length)}
+                            onClick={() => setActiveIndex((current) => (current + 1) % slideCount)}
                             type="button"
                         >
                             <ChevronRight className="h-4 w-4" />

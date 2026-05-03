@@ -1,4 +1,5 @@
 import { BellRing, Download } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AccountModal } from '@/components/account/AccountModal';
@@ -20,8 +21,6 @@ import { OrderSuccessModal } from '@/components/ordering/OrderSuccessModal';
 import { FirstVisitPromptModal } from '@/components/pwa/FirstVisitPromptModal';
 import { ReviewsSection } from '@/components/reviews/ReviewsSection';
 import { LeaveReviewModal } from '@/components/reviews/LeaveReviewModal';
-import { mockCategories } from '@/data/mockCategories';
-import { mockFoods } from '@/data/mockFoods';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { useLocalCustomer } from '@/hooks/useLocalCustomer';
 import { useLocalOrders } from '@/hooks/useLocalOrders';
@@ -30,6 +29,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useScrollToSection } from '@/hooks/useScrollToSection';
 import { orderService } from '@/services/orderService';
 import { createPushSubscriptionPlaceholder, requestNotificationAccess } from '@/services/pwaService';
+import { publicService } from '@/services/publicService';
 import { reviewService } from '@/services/reviewService';
 import { readStorage, writeStorage } from '@/utils/storage';
 import type { Food, Order } from '@/types';
@@ -97,13 +97,26 @@ export function AppShell() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
 
-    const categoryNames = useMemo(() => ['All', ...mockCategories.map((category) => category.name)], []);
-    const popularFoods = useMemo(() => mockFoods.filter((food) => food.isPopular).slice(0, 4), []);
+    const { data: categories = [] } = useQuery({
+        queryKey: ['public-categories'],
+        queryFn: publicService.getCategories,
+    });
+    const { data: foods = [] } = useQuery({
+        queryKey: ['public-foods'],
+        queryFn: publicService.getFoods,
+    });
+    const { data: companySettings = null } = useQuery({
+        queryKey: ['public-company-settings'],
+        queryFn: publicService.getCompanySettings,
+    });
+
+    const categoryNames = useMemo(() => ['All', ...categories.map((category) => category.name)], [categories]);
+    const popularFoods = useMemo(() => foods.filter((food) => food.isPopular).slice(0, 4), [foods]);
 
     const filteredFoods = useMemo(() => {
         const term = searchTerm.trim().toLowerCase();
 
-        return mockFoods.filter((food) => {
+        return foods.filter((food) => {
             const categoryMatch = activeCategory === 'All' || food.category === activeCategory;
             const searchMatch =
                 term.length === 0 ||
@@ -114,7 +127,7 @@ export function AppShell() {
 
             return categoryMatch && searchMatch && food.isAvailable;
         });
-    }, [activeCategory, searchTerm]);
+    }, [activeCategory, foods, searchTerm]);
 
     useEffect(() => {
         const sectionIds = ['home', 'popular', 'menu', 'about', 'pickup', 'gallery', 'reviews', 'contact', 'account'];
@@ -422,7 +435,7 @@ export function AppShell() {
             </div>
 
             <main>
-                <HeroSection notificationPermission={permission} onBrowseMenu={() => scrollToSection('menu')} onOpenAccount={openAccountFlow} />
+                <HeroSection companySettings={companySettings} onBrowseMenu={() => scrollToSection('menu')} onOpenAccount={openAccountFlow} />
                 <PopularGrillsSection foods={popularFoods} onSelectFood={setSelectedFood} />
                 <FoodMenuSection
                     activeCategory={activeCategory}
@@ -433,11 +446,11 @@ export function AppShell() {
                     onSelectFood={setSelectedFood}
                     searchTerm={searchTerm}
                 />
-                <AboutSection />
+                <AboutSection companySettings={companySettings} />
                 <PickupHowItWorksSection />
                 <GallerySection />
                 <ReviewsSection onLeaveReview={() => setReviewOpen(true)} reviews={approvedReviews} />
-                <ContactSection />
+                <ContactSection companySettings={companySettings} onOrderNow={() => scrollToSection('menu')} />
 
                 <section className="section-shell scroll-mt-28 py-20 lg:py-24" id="account">
                     <Card className="theme-panel theme-dark-block overflow-hidden p-6 sm:p-8 lg:p-10">
@@ -471,6 +484,7 @@ export function AppShell() {
             />
 
             <FoodOrderModal
+                companySettings={companySettings}
                 food={selectedFood}
                 isOpen={Boolean(selectedFood)}
                 key={selectedFood?.id ?? 'food-order-modal'}
@@ -494,6 +508,7 @@ export function AppShell() {
             />
 
             <OrderSuccessModal
+                companySettings={companySettings}
                 isOpen={Boolean(orderSuccess)}
                 onClose={() => setOrderSuccess(null)}
                 onOpenAccount={() => {
@@ -504,7 +519,7 @@ export function AppShell() {
             />
 
             <LeaveReviewModal
-                foods={mockFoods}
+                foods={foods}
                 initialValues={{
                     name: customer?.name,
                     phone: customer?.phone,

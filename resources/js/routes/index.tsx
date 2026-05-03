@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { PlaceholderRoute } from '@/components/layout/PlaceholderRoute';
 import { RouteErrorBoundary } from '@/components/layout/RouteErrorBoundary';
+import { AdminConsolePage } from '@/pages/admin/AdminConsolePage';
 
 export const router = createBrowserRouter([
     {
@@ -21,12 +22,7 @@ export const router = createBrowserRouter([
     },
     {
         path: '/admin',
-        element: (
-            <PlaceholderRoute
-                description="The admin dashboard is intentionally deferred. This route is reserved for the later backend and operations interface."
-                title="Admin dashboard placeholder"
-            />
-        ),
+        element: <AdminConsolePage />,
         errorElement: <RouteErrorBoundary />,
     },
 ]);

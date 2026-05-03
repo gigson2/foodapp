@@ -8,18 +8,19 @@ import { MoneyDisplay } from '@/components/ordering/MoneyDisplay';
 import { OrderStatusBadge } from '@/components/ordering/OrderStatusBadge';
 import { openDirectionsPrompt } from '@/utils/location';
 import { formatUsPhone } from '@/utils/phone';
-import type { Order } from '@/types';
+import type { CompanySettings, Order } from '@/types';
 
 type OrderSuccessModalProps = {
+    companySettings: CompanySettings | null;
     isOpen: boolean;
     onClose: () => void;
     onOpenAccount: () => void;
     order: Order | null;
 };
 
-export function OrderSuccessModal({ isOpen, onClose, onOpenAccount, order }: OrderSuccessModalProps) {
+export function OrderSuccessModal({ companySettings, isOpen, onClose, onOpenAccount, order }: OrderSuccessModalProps) {
     const isMobile = useMediaQuery('(max-width: 767px)');
-    const pickupAddress = '701 Golden Gate Circle, Papillion, NE 68046';
+    const pickupAddress = companySettings?.address ?? '701 Golden Gate Circle, Papillion, NE 68046';
 
     if (! order) {
         return null;

@@ -2,9 +2,19 @@ import { MapPin, WalletCards } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { SectionContainer } from '@/components/layout/SectionContainer';
 import { openDirectionsPrompt } from '@/utils/location';
+import type { CompanySettings } from '@/types';
 
-export function ContactSection() {
-    const locationLabel = '701 Golden Gate Circle, Papillion, NE 68046';
+type ContactSectionProps = {
+    companySettings: CompanySettings | null;
+    onOrderNow: () => void;
+};
+
+export function ContactSection({ companySettings, onOrderNow }: ContactSectionProps) {
+    const locationLabel = companySettings?.address ?? '701 Golden Gate Circle, Papillion, NE 68046';
+    const fridayHours = companySettings?.opening_hours?.friday ?? 'Pre-orders open';
+    const saturdayHours = companySettings?.opening_hours?.saturday ?? '11:00 AM - 10:00 PM';
+    const orderingCutoff = companySettings?.opening_hours?.ordering_cutoff ?? 'Saturday 9:00 PM';
+    const phoneLabel = companySettings?.phone ?? 'Phone number coming soon';
 
     return (
         <div className="relative">
@@ -33,19 +43,19 @@ export function ContactSection() {
                             <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                                 <MapPin className="mx-auto h-5 w-5 text-[color:var(--primary-500)]" />
                                 <h3 className="mt-4 text-2xl">Ordering Schedule</h3>
-                                <p className="mt-3 text-sm leading-7 text-muted">Pre-orders open on Friday. Saturday preparation and pickup run from 11:00 AM to 10:00 PM, with final ordering at 9:00 PM.</p>
+                                <p className="mt-3 text-sm leading-7 text-muted">Friday: {fridayHours}. Saturday preparation and pickup run {saturdayHours}, with final ordering at {orderingCutoff}.</p>
                             </div>
                         </div>
 
                         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                            <Button size="lg">
+                            <Button onClick={onOrderNow} size="lg">
                                 Order Now
                             </Button>
                             <Button onClick={() => openDirectionsPrompt(locationLabel)} size="lg" variant="secondary">
                                 Get Directions
                             </Button>
                         </div>
-                        <p className="mt-4 text-sm text-muted">{locationLabel} · Phone number coming soon</p>
+                        <p className="mt-4 text-sm text-muted">{locationLabel} - {phoneLabel}</p>
                     </div>
                 </div>
             </SectionContainer>

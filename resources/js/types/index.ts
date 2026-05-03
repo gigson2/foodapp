@@ -1,3 +1,4 @@
+export * from '@/types/company';
 export * from '@/types/customer';
 export * from '@/types/food';
 export * from '@/types/notification';
