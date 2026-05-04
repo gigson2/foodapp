@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Customer;
 
+use App\Rules\RejectSvgUpload;
 use App\Support\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -27,7 +28,7 @@ class UpdateCustomerProfileRequest extends FormRequest
             'address' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:2000'],
-            'avatar' => ['nullable', 'image', 'max:4096'],
+            'avatar' => ['nullable', 'image', new RejectSvgUpload(), 'max:4096'],
             'in_app_enabled' => ['nullable', 'boolean'],
             'push_enabled' => ['nullable', 'boolean'],
             'email_enabled' => ['nullable', 'boolean'],

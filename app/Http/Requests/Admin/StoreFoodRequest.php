@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Rules\RejectSvgUpload;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,7 +26,7 @@ class StoreFoodRequest extends FormRequest
             'short_description' => ['nullable', 'string', 'max:255'],
             'image' => [
                 'nullable',
-                Rule::when($this->hasFile('image'), ['image', 'max:4096']),
+                Rule::when($this->hasFile('image'), ['image', new RejectSvgUpload(), 'max:4096']),
                 Rule::when(! $this->hasFile('image'), ['string', 'max:255']),
             ],
             'price' => ['required', 'numeric', 'min:0'],

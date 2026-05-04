@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\Admin\VisitorController as AdminVisitorController;
 use App\Http\Controllers\Api\Auth\CurrentUserController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\LogoutController;
+use App\Http\Controllers\Api\Auth\PasswordRecoveryController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\PushNotificationTestController;
 use App\Http\Controllers\Api\Customer\NotificationController as CustomerNotificationController;
@@ -47,14 +48,20 @@ Route::get('/company-settings', PublicCompanySettingController::class)->name('ap
 Route::get('/reviews', [PublicReviewController::class, 'index'])->name('api.public.reviews.index');
 Route::post('/visitor-events', [PublicVisitorEventController::class, 'store'])->name('api.public.visitor-events.store');
 
-Route::middleware('web')->group(function (): void {
+Route::middleware([])->group(function (): void {
     Route::post('/register', RegisterController::class)->middleware('throttle:auth-register')->name('api.register');
     Route::post('/login', LoginController::class)->middleware('throttle:auth-login')->name('api.login');
+    Route::post('/password/forgot', [PasswordRecoveryController::class, 'requestOtp'])
+        ->middleware('throttle:password-recovery-request')
+        ->name('api.password.forgot');
+    Route::post('/password/reset', [PasswordRecoveryController::class, 'reset'])
+        ->middleware('throttle:password-recovery-reset')
+        ->name('api.password.reset');
     Route::get('/me', CurrentUserController::class)->name('api.me');
     Route::post('/logout', LogoutController::class)->middleware('auth:sanctum')->name('api.logout');
 });
 
-Route::middleware(['web', 'auth:sanctum'])->group(function (): void {
+Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store'])->name('api.push-subscriptions.store');
     Route::post('/push-notifications/test', PushNotificationTestController::class)
         ->middleware('throttle:push-notification-tests')

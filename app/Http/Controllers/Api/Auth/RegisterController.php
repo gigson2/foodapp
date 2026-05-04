@@ -11,7 +11,6 @@ use App\Models\NotificationPreference;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
 
 class RegisterController extends Controller
 {
@@ -50,20 +49,15 @@ class RegisterController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
-        $user->forceFill(['last_login_at' => now()])->save();
-        $token = $user->createToken($this->tokenName($request))->plainTextToken;
+
+        // Update last_login_at without triggering model events or attribute casting
+        // to prevent password re-hashing that would cause immediate logout
+        User::query()->where('id', $user->id)->update(['last_login_at' => now()]);
+        $user->last_login_at = now();
 
         return response()->json([
             'message' => 'Registration successful.',
-            'token' => $token,
             'user' => new UserResource($user->load(['customerProfile', 'notificationPreference'])),
         ], 201);
-    }
-
-    private function tokenName(Request $request): string
-    {
-        $segment = $request->userAgent() ? substr(md5($request->userAgent()), 0, 8) : 'unknown';
-
-        return sprintf('spa-%s-%s', now()->timestamp, $segment);
     }
 }

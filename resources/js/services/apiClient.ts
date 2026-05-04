@@ -1,6 +1,5 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'sonner';
-import { clearAuthToken, getAuthToken } from '@/services/authTokenStorage';
 
 type ApiErrorPayload = {
     message?: string;
@@ -149,6 +148,7 @@ function isWriteMethod(method?: string): boolean {
 
 type RetriableConfig = InternalAxiosRequestConfig & {
     _retriedWithFreshCsrf?: boolean;
+    _skipGlobalErrorHandling?: boolean;
 };
 
 export const apiClient = axios.create({
@@ -163,14 +163,6 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(async (config) => {
     if (isWriteMethod(config.method)) {
         await ensureCsrfCookie();
-    }
-
-    const token = getAuthToken();
-
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    } else if (config.headers.Authorization) {
-        delete config.headers.Authorization;
     }
 
     return config;
@@ -189,12 +181,15 @@ apiClient.interceptors.response.use(
             return apiClient(originalConfig);
         }
 
-        if (status === 401 && getAuthToken() !== null) {
-            clearAuthToken();
-            window.dispatchEvent(new CustomEvent('restaurant:unauthorized'));
-        }
+        const skipGlobal = (originalConfig as RetriableConfig | undefined)?._skipGlobalErrorHandling;
 
-        notifyApiError(error);
+        if (!skipGlobal) {
+            if (status === 401) {
+                window.dispatchEvent(new CustomEvent('restaurant:unauthorized'));
+            }
+
+            notifyApiError(error);
+        }
 
         return Promise.reject(error);
     },

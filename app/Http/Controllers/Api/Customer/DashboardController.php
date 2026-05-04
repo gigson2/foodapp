@@ -14,23 +14,24 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {
-        $user = $request->user()->loadMissing(['orders.items', 'reviews']);
+        $user = $request->user();
         [$rangeStart, $rangeEnd] = $this->resolveRange(
             $request->query('date_from'),
             $request->query('date_to'),
             2,
         );
 
-        $orders = $user->orders->filter(function ($order) use ($rangeStart, $rangeEnd) {
-            $placedAt = $order->placed_at ?? $order->created_at;
-
-            return $placedAt !== null
-                && Carbon::parse($placedAt)->betweenIncluded($rangeStart, $rangeEnd);
-        })->values();
-        $completedOrders = $orders->where('status', OrderStatus::Completed);
-        $reviews = $user->reviews->filter(
-            fn ($review) => Carbon::parse($review->created_at)->betweenIncluded($rangeStart, $rangeEnd),
-        )->values();
+        $ordersInRange = $user->orders()->whereBetween('placed_at', [$rangeStart, $rangeEnd]);
+        $reviewsInRange = $user->reviews()->whereBetween('created_at', [$rangeStart, $rangeEnd]);
+        $recentOrders = (clone $ordersInRange)
+            ->with('items')
+            ->latest('placed_at')
+            ->take(5)
+            ->get();
+        $completedOrdersCount = (clone $ordersInRange)->where('status', OrderStatus::Completed)->count();
+        $completedOrdersTotal = (float) (clone $ordersInRange)
+            ->where('status', OrderStatus::Completed)
+            ->sum('total');
 
         return response()->json([
             'data' => [
@@ -39,27 +40,27 @@ class DashboardController extends Controller
                     'to' => $rangeEnd->toDateString(),
                 ],
                 'metrics' => [
-                    'total_orders' => $orders->count(),
-                    'active_orders' => $orders->whereIn('status', [
+                    'total_orders' => (clone $ordersInRange)->count(),
+                    'active_orders' => (clone $ordersInRange)->whereIn('status', [
                         OrderStatus::Received,
                         OrderStatus::Processing,
                         OrderStatus::ReadyForPickup,
                     ])->count(),
-                    'completed_orders' => $completedOrders->count(),
-                    'cancelled_orders' => $orders->where('status', OrderStatus::Cancelled)->count(),
-                    'total_spent' => (float) $completedOrders->sum('total'),
-                    'pending_reviews' => $reviews->where('status', ReviewStatus::Pending)->count(),
+                    'completed_orders' => $completedOrdersCount,
+                    'cancelled_orders' => (clone $ordersInRange)->where('status', OrderStatus::Cancelled)->count(),
+                    'total_spent' => $completedOrdersTotal,
+                    'pending_reviews' => (clone $reviewsInRange)->where('status', ReviewStatus::Pending)->count(),
                     'unread_notifications' => $user->unreadNotifications()->count(),
                 ],
                 'status_breakdown' => [
-                    OrderStatus::Received->value => $orders->where('status', OrderStatus::Received)->count(),
-                    OrderStatus::Processing->value => $orders->where('status', OrderStatus::Processing)->count(),
-                    OrderStatus::ReadyForPickup->value => $orders->where('status', OrderStatus::ReadyForPickup)->count(),
-                    OrderStatus::Completed->value => $completedOrders->count(),
-                    OrderStatus::Cancelled->value => $orders->where('status', OrderStatus::Cancelled)->count(),
+                    OrderStatus::Received->value => (clone $ordersInRange)->where('status', OrderStatus::Received)->count(),
+                    OrderStatus::Processing->value => (clone $ordersInRange)->where('status', OrderStatus::Processing)->count(),
+                    OrderStatus::ReadyForPickup->value => (clone $ordersInRange)->where('status', OrderStatus::ReadyForPickup)->count(),
+                    OrderStatus::Completed->value => $completedOrdersCount,
+                    OrderStatus::Cancelled->value => (clone $ordersInRange)->where('status', OrderStatus::Cancelled)->count(),
                 ],
                 'recent_orders' => OrderResource::collection(
-                    $orders->sortByDesc('placed_at')->take(5)->values(),
+                    $recentOrders,
                 )->resolve($request),
             ],
         ]);

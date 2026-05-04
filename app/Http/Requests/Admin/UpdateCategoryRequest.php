@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Rules\RejectSvgUpload;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,7 +26,7 @@ class UpdateCategoryRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'image' => [
                 'nullable',
-                Rule::when($this->hasFile('image'), ['image', 'max:4096']),
+                Rule::when($this->hasFile('image'), ['image', new RejectSvgUpload(), 'max:4096']),
                 Rule::when(! $this->hasFile('image'), ['string', 'max:255']),
             ],
             'sort_order' => ['nullable', 'integer', 'min:0'],

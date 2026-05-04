@@ -1,5 +1,4 @@
 import { apiClient, ensureCsrfCookie } from '@/services/apiClient';
-import { clearAuthToken, setAuthToken } from '@/services/authTokenStorage';
 import { getExistingPushSubscription, getNotificationPermission, subscribeToPush } from '@/services/pwaService';
 import type { AuthenticatedUser } from '@/types';
 
@@ -31,11 +30,13 @@ async function syncCurrentDevicePushSubscription(): Promise<void> {
         auth_token: subJson.keys?.auth ?? null,
         content_encoding: 'aes128gcm',
         user_agent: navigator.userAgent,
-    });
+    }, { _skipGlobalErrorHandling: true } as Record<string, unknown>);
 }
 
 async function getCurrentUser() {
-    const response = await apiClient.get<ApiItem<AuthenticatedUser>>('/me');
+    const response = await apiClient.get<ApiItem<AuthenticatedUser>>('/me', {
+        _skipGlobalErrorHandling: true,
+    } as Record<string, unknown>);
 
     return response.data.data ?? null;
 }
@@ -47,16 +48,15 @@ export const sessionService = {
     async login(credentials: { login: string; password: string }) {
         await ensureCsrfCookie();
         const response = await apiClient.post('/login', credentials);
-        const payload = response.data as { message: string; token: string; user: AuthenticatedUser };
-        setAuthToken(payload.token);
+        const payload = response.data as { message: string; user: AuthenticatedUser };
         const retryDelays = [0, 120, 260, 420];
 
-        try {
-            for (const delay of retryDelays) {
-                if (delay > 0) {
-                    await wait(delay);
-                }
+        for (const delay of retryDelays) {
+            if (delay > 0) {
+                await wait(delay);
+            }
 
+            try {
                 const currentUser = await getCurrentUser();
 
                 if (currentUser) {
@@ -67,37 +67,58 @@ export const sessionService = {
                         user: currentUser,
                     };
                 }
+            } catch (error) {
+                // If this is the last retry, throw the error
+                if (delay === retryDelays[retryDelays.length - 1]) {
+                    throw error;
+                }
+                // Otherwise, continue to next retry
             }
-        } catch (error) {
-            clearAuthToken();
-            throw error;
         }
-
-        clearAuthToken();
 
         throw new Error('The session was not established after login.');
     },
-    async register(input: { name: string; phone: string; password: string; passwordConfirmation: string }) {
+    async register(input: { name: string; phone: string; email?: string; password: string; passwordConfirmation: string }) {
         await ensureCsrfCookie();
         const response = await apiClient.post('/register', {
             name: input.name,
             phone: input.phone,
+            email: input.email ?? '',
             password: input.password,
             password_confirmation: input.passwordConfirmation,
         });
-        const payload = response.data as { message: string; token: string; user: AuthenticatedUser };
-        setAuthToken(payload.token);
+        const payload = response.data as { message: string; user: AuthenticatedUser };
         await syncCurrentDevicePushSubscription().catch(() => undefined);
 
         return payload;
     },
+    async requestPasswordResetOtp(input: { lookup: 'phone' | 'email'; login: string }) {
+        await ensureCsrfCookie();
+        const response = await apiClient.post<{ message: string }>('/password/forgot', input);
+
+        return response.data.message;
+    },
+    async resetPasswordWithOtp(input: {
+        lookup: 'phone' | 'email';
+        login: string;
+        code: string;
+        password: string;
+        passwordConfirmation: string;
+    }) {
+        await ensureCsrfCookie();
+        const response = await apiClient.post<{ message: string }>('/password/reset', {
+            lookup: input.lookup,
+            login: input.login,
+            code: input.code,
+            password: input.password,
+            password_confirmation: input.passwordConfirmation,
+        });
+
+        return response.data.message;
+    },
     async logout() {
         await ensureCsrfCookie();
-        try {
-            await apiClient.post('/logout');
-        } finally {
-            clearAuthToken();
-        }
+        await apiClient.post('/logout');
 
         const retryDelays = [0, 120, 260, 420];
 

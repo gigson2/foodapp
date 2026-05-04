@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\PushSubscription;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\WebPush;
 
@@ -81,10 +82,22 @@ class WebPushService
                     // 410 Gone means the subscription has been removed by the browser
                     if ($report->getResponse()?->getStatusCode() === 410) {
                         $stale[] = $sub->id;
+                    } else {
+                        Log::warning('[WebPush] Delivery failed', [
+                            'user_id'    => $user->id,
+                            'status'     => $report->getResponse()?->getStatusCode(),
+                            'reason'     => $report->getReason(),
+                            'endpoint'   => substr($sub->endpoint, 0, 60).'…',
+                        ]);
                     }
                 }
-            } catch (\Throwable) {
+            } catch (\Throwable $e) {
                 // Never fail the main request due to a push delivery error
+                Log::error('[WebPush] Delivery exception', [
+                    'user_id'    => $user->id,
+                    'endpoint'   => substr($sub->endpoint, 0, 60).'…',
+                    'error'      => $e->getMessage(),
+                ]);
             }
         }
 

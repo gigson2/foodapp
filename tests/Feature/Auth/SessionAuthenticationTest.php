@@ -4,7 +4,6 @@ namespace Tests\Feature\Auth;
 
 use App\Enums\UserRole;
 use App\Models\User;
-use Database\Seeders\RestaurantPlatformSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
@@ -26,7 +25,7 @@ class SessionAuthenticationTest extends TestCase
 
     public function test_admin_login_establishes_session_for_me_and_dashboard(): void
     {
-        $this->seed(RestaurantPlatformSeeder::class);
+        $this->seed('Database\\Seeders\\RestaurantPlatformSeeder');
 
         $loginResponse = $this->withSession([])->postJson('/api/login', [
             'login' => '+16462503361',
@@ -35,7 +34,7 @@ class SessionAuthenticationTest extends TestCase
 
         $loginResponse
             ->assertOk()
-            ->assertJsonStructure(['token'])
+            ->assertJsonMissingPath('token')
             ->assertJsonPath('user.role', UserRole::Admin->value)
             ->assertJsonPath('user.phone', '+16462503361');
 
@@ -95,22 +94,22 @@ class SessionAuthenticationTest extends TestCase
             ]);
     }
 
-    public function test_login_token_can_access_me_without_session_reauthentication(): void
+    public function test_cleared_session_cannot_access_me_without_reauthentication(): void
     {
-        $this->seed(RestaurantPlatformSeeder::class);
+        $this->seed('Database\\Seeders\\RestaurantPlatformSeeder');
 
-        $token = $this->withSession([])->postJson('/api/login', [
+        $this->withSession([])->postJson('/api/login', [
             'login' => '+16462503361',
             'password' => 'a.password!',
-        ])->assertOk()->json('token');
+        ])->assertOk();
 
         $this->flushSession();
         Auth::forgetGuards();
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
-            ->getJson('/api/me')
+        $this->getJson('/api/me')
             ->assertOk()
-            ->assertJsonPath('data.role', UserRole::Admin->value)
-            ->assertJsonPath('data.phone', '+16462503361');
+            ->assertExactJson([
+                'data' => null,
+            ]);
     }
 }

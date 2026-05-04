@@ -6,6 +6,7 @@ import { AdminFilterSelect } from '@/admin/components/common/AdminFilterSelect';
 import { AdminSearchInput } from '@/admin/components/common/AdminSearchInput';
 import { AdminSectionCard } from '@/admin/components/common/AdminSectionCard';
 import { Button } from '@/components/common/Button';
+import { Input } from '@/components/common/Input';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { MoneyDisplay } from '@/components/ordering/MoneyDisplay';
 import { OrderStatusBadge } from '@/components/ordering/OrderStatusBadge';
@@ -13,40 +14,55 @@ import { customerPortalService } from '@/customer/services/customerPortalService
 import type { CustomerPortalOrder } from '@/customer/types/customerPortal';
 import { formatDateTime } from '@/utils/admin';
 
+function toDateInputValue(date: Date) {
+    return date.toISOString().slice(0, 10);
+}
+
+function getDefaultRange() {
+    const end = new Date();
+    const start = new Date(end);
+    start.setDate(end.getDate() - 29);
+
+    return {
+        dateFrom: toDateInputValue(start),
+        dateTo: toDateInputValue(end),
+    };
+}
+
+function formatRangeLabel(dateFrom?: string, dateTo?: string) {
+    if (!dateFrom || !dateTo) {
+        return '';
+    }
+
+    const from = new Date(`${dateFrom}T00:00:00`);
+    const to = new Date(`${dateTo}T00:00:00`);
+
+    return `${from.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} - ${to.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+}
+
 export function CustomerOrdersPage() {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
+    const [range, setRange] = useState(getDefaultRange);
     const [selectedOrder, setSelectedOrder] = useState<CustomerPortalOrder | null>(null);
     const ordersQuery = useQuery({
-        queryKey: ['customer-portal', 'orders'],
-        queryFn: customerPortalService.getOrders,
+        queryKey: ['customer-portal', 'orders', { page, perPage, search, statusFilter, range }],
+        queryFn: () => customerPortalService.getOrdersPage({
+            page,
+            perPage,
+            search,
+            status: statusFilter,
+            dateFrom: range.dateFrom,
+            dateTo: range.dateTo,
+        }),
         refetchInterval: 15_000,
         refetchOnWindowFocus: true,
     });
-
-    const filteredOrders = useMemo(() => {
-        const term = search.trim().toLowerCase();
-
-        return (ordersQuery.data ?? []).filter((order) => {
-            const statusMatch = statusFilter === '' || order.status === statusFilter;
-            const text = [
-                order.orderNumber,
-                order.customerName,
-                order.customerPhone,
-                ...order.items.map((item) => item.foodName),
-            ].join(' ').toLowerCase();
-
-            return statusMatch && (term === '' || text.includes(term));
-        });
-    }, [ordersQuery.data, search, statusFilter]);
-
-    const paginatedOrders = useMemo(() => {
-        const start = (page - 1) * perPage;
-
-        return filteredOrders.slice(start, start + perPage);
-    }, [filteredOrders, page, perPage]);
+    const orders = ordersQuery.data?.items ?? [];
+    const meta = ordersQuery.data?.meta;
+    const rangeLabel = useMemo(() => formatRangeLabel(range.dateFrom, range.dateTo), [range.dateFrom, range.dateTo]);
 
     const columns: TableColumn<CustomerPortalOrder>[] = [
         {
@@ -106,7 +122,33 @@ export function CustomerOrdersPage() {
 
             <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
                 <AdminSectionCard className="overflow-hidden">
-                    <div className="grid gap-4 border-b border-[color:var(--ui-divider)] px-5 py-5 md:grid-cols-[1.2fr_0.7fr]">
+                    <div className="border-b border-(--ui-divider) px-5 py-5">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Orders range</p>
+                                <p className="mt-2 text-sm text-muted">Filter your pickup history by date. Current range: {rangeLabel}</p>
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[24rem]">
+                                <Input label="From" max={range.dateTo} onChange={(event) => {
+                                    setRange((current) => ({ ...current, dateFrom: event.target.value }));
+                                    setPage(1);
+                                }} type="date" value={range.dateFrom} />
+                                <Input label="To" min={range.dateFrom} onChange={(event) => {
+                                    setRange((current) => ({ ...current, dateTo: event.target.value }));
+                                    setPage(1);
+                                }} type="date" value={range.dateTo} />
+                            </div>
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                            <Button onClick={() => {
+                                setRange(getDefaultRange());
+                                setPage(1);
+                            }} size="sm" variant="ghost">
+                                Reset to last 30 days
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="grid gap-4 border-b border-(--ui-divider) px-5 py-5 md:grid-cols-[1.2fr_0.7fr]">
                         <AdminSearchInput
                             label="Search"
                             onChange={(value) => {
@@ -137,10 +179,10 @@ export function CustomerOrdersPage() {
                     <AdminDataTable
                         columns={columns}
                         currentPage={page}
-                        data={paginatedOrders}
+                        data={orders}
                         loading={ordersQuery.isLoading}
                         perPage={perPage}
-                        totalRows={filteredOrders.length}
+                        totalRows={meta?.total ?? 0}
                         onPageChange={setPage}
                         onPerPageChange={(nextPerPage) => {
                             setPerPage(nextPerPage);
@@ -153,7 +195,7 @@ export function CustomerOrdersPage() {
                     <h3 className="text-3xl">Order details</h3>
                     {selectedOrder ? (
                         <div className="mt-5 space-y-4">
-                            <div className="ui-surface-raised rounded-[1.5rem] p-4">
+                            <div className="ui-surface-raised rounded-3xl p-4">
                                 <p className="text-xs uppercase tracking-[0.14em] text-muted">Order number</p>
                                 <p className="mt-2 text-2xl font-semibold">{selectedOrder.orderNumber}</p>
                             </div>

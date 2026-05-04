@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Rules\RejectSvgUpload;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCompanySettingRequest extends FormRequest
@@ -37,8 +38,8 @@ class StoreCompanySettingRequest extends FormRequest
             'pickup_instructions' => ['nullable', 'string'],
             'cash_only_notice' => ['nullable', 'string', 'max:255'],
             'opening_hours' => ['nullable', 'array'],
-            'logo' => ['nullable', 'image', 'max:4096'],
-            'favicon' => ['nullable', 'image', 'max:2048'],
+            'logo' => ['nullable', 'image', new RejectSvgUpload(), 'max:4096'],
+            'favicon' => ['nullable', 'image', new RejectSvgUpload(), 'max:2048'],
             'social_links' => ['nullable', 'array'],
         ];
     }

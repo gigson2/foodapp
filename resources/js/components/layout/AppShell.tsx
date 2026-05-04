@@ -44,7 +44,6 @@ import {
 } from '@/services/publicService';
 import { subscribeToPublicContentUpdates } from '@/services/publicContentSync';
 import { reviewService } from '@/services/reviewService';
-import { adminService } from '@/services/adminService';
 import { sessionService } from '@/services/sessionService';
 import { normalizeUsPhone } from '@/utils/phone';
 import { readStorage, writeStorage } from '@/utils/storage';
@@ -191,10 +190,22 @@ export function AppShell() {
     });
 
     const sessionLoginMutation = useMutation({
-        mutationFn: adminService.login,
+        mutationFn: sessionService.login,
     });
     const sessionRegisterMutation = useMutation({
-        mutationFn: (input: { name: string; phone: string; password: string; passwordConfirmation: string }) => sessionService.register(input),
+        mutationFn: (input: { name: string; phone: string; email?: string; password: string; passwordConfirmation: string }) => sessionService.register(input),
+    });
+    const passwordRecoveryRequestMutation = useMutation({
+        mutationFn: (input: { lookup: 'phone' | 'email'; login: string }) => sessionService.requestPasswordResetOtp(input),
+    });
+    const passwordRecoveryResetMutation = useMutation({
+        mutationFn: (input: {
+            lookup: 'phone' | 'email';
+            login: string;
+            code: string;
+            password: string;
+            passwordConfirmation: string;
+        }) => sessionService.resetPasswordWithOtp(input),
     });
 
     const categoryNames = useMemo(() => ['All', ...categories.map((category) => category.name)], [categories]);
@@ -628,7 +639,7 @@ export function AppShell() {
 
     return (
         <div className="app-surface min-h-screen pb-28 md:pb-10">
-            <div className="sticky top-0 z-40 bg-[color:var(--background-50)]/92 backdrop-blur-xl">
+            <div className="sticky top-0 z-40 bg-(--background-50)/92 backdrop-blur-xl">
                     <DesktopHeader
                         activeSection={desktopActiveSection}
                         brandLogoUrl={brandLogoUrl}
@@ -682,8 +693,8 @@ export function AppShell() {
                 <div className="top-utility relative z-10 md:hidden">
                     <div className="section-shell flex items-center justify-between gap-4 py-4">
                         <button className="flex items-center gap-3" onClick={() => scrollToSection('home')} type="button">
-                            {brandLogoUrl ? <img alt={`${brandName} logo`} className="h-11 w-auto shrink-0 object-contain" src={brandLogoUrl} /> : <span className="shrink-0 text-sm font-semibold text-[color:var(--primary-500)]">DG</span>}
-                            <div className="max-w-[11rem] text-left">
+                            {brandLogoUrl ? <img alt={`${brandName} logo`} className="h-11 w-auto shrink-0 object-contain" src={brandLogoUrl} /> : <span className="shrink-0 text-sm font-semibold text-(--primary-500)">DG</span>}
+                            <div className="max-w-44 text-left">
                                 <p className="font-display text-2xl leading-none">{brandName}</p>
                             </div>
                         </button>
@@ -800,7 +811,7 @@ export function AppShell() {
             <FrontendLoginModal
                 errorMessage={loginError}
                 isOpen={loginOpen}
-                loading={sessionLoginMutation.isPending || sessionRegisterMutation.isPending}
+                loading={sessionLoginMutation.isPending || sessionRegisterMutation.isPending || passwordRecoveryRequestMutation.isPending || passwordRecoveryResetMutation.isPending}
                 onClose={() => {
                     setLoginOpen(false);
                     setLoginError(null);
@@ -843,6 +854,7 @@ export function AppShell() {
                         const payload = await sessionRegisterMutation.mutateAsync({
                             name: values.name,
                             phone: normalizeUsPhone(values.phone),
+                            email: values.email.trim() === '' ? undefined : values.email.trim().toLowerCase(),
                             password: values.password,
                             passwordConfirmation: values.passwordConfirmation,
                         });
@@ -864,6 +876,43 @@ export function AppShell() {
                         }
 
                         setLoginError(error instanceof Error ? error.message : 'Unable to create account.');
+                    }
+                }}
+                onRequestPasswordReset={async (values) => {
+                    try {
+                        setLoginError(null);
+                        const message = await passwordRecoveryRequestMutation.mutateAsync({
+                            lookup: values.lookup,
+                            login: values.lookup === 'phone' ? normalizeUsPhone(values.login) : values.login.trim().toLowerCase(),
+                        });
+                        toast.success(message);
+                    } catch (error) {
+                        if (axios.isAxiosError(error)) {
+                            setLoginError((error.response?.data?.message as string | undefined) ?? 'Unable to send the reset code.');
+                            return;
+                        }
+
+                        setLoginError(error instanceof Error ? error.message : 'Unable to send the reset code.');
+                    }
+                }}
+                onResetPassword={async (values) => {
+                    try {
+                        setLoginError(null);
+                        const message = await passwordRecoveryResetMutation.mutateAsync({
+                            lookup: values.lookup,
+                            login: values.lookup === 'phone' ? normalizeUsPhone(values.login) : values.login.trim().toLowerCase(),
+                            code: values.code,
+                            password: values.password,
+                            passwordConfirmation: values.passwordConfirmation,
+                        });
+                        toast.success(message);
+                    } catch (error) {
+                        if (axios.isAxiosError(error)) {
+                            setLoginError((error.response?.data?.message as string | undefined) ?? 'Unable to reset the password.');
+                            return;
+                        }
+
+                        setLoginError(error instanceof Error ? error.message : 'Unable to reset the password.');
                     }
                 }}
             />

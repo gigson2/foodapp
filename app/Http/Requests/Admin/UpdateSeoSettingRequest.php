@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Rules\RejectSvgUpload;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -33,7 +34,7 @@ class UpdateSeoSettingRequest extends FormRequest
             'title' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'keywords' => ['nullable', 'string'],
-            'og_image' => ['nullable', 'image', 'max:4096'],
+            'og_image' => ['nullable', 'image', new RejectSvgUpload(), 'max:4096'],
             'schema_json' => ['nullable', 'array'],
         ];
     }

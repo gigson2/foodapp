@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Rules\RejectSvgUpload;
 use App\Support\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -24,7 +25,7 @@ class UpdateAdminProfileRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20', Rule::unique('users', 'phone')->ignore($userId)],
             'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
-            'avatar' => ['nullable', 'image', 'max:4096'],
+            'avatar' => ['nullable', 'image', new RejectSvgUpload(), 'max:4096'],
         ];
     }
 

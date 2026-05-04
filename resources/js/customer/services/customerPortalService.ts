@@ -245,10 +245,36 @@ export const customerPortalService = {
             recentOrders: payload.recent_orders.map(mapOrder),
         };
     },
-    async getOrders(): Promise<CustomerPortalOrder[]> {
-        const response = await apiClient.get<ApiCollection<ApiOrder>>('/customer/orders');
+    async getOrdersPage(params: {
+        page?: number;
+        perPage?: number;
+        search?: string;
+        status?: string;
+        dateFrom?: string;
+        dateTo?: string;
+    } = {}): Promise<CustomerPaginatedResult<CustomerPortalOrder>> {
+        const response = await apiClient.get<ApiPaginatedResponse<ApiOrder>>('/customer/orders', {
+            params: {
+                page: params.page,
+                per_page: params.perPage,
+                search: params.search,
+                status: params.status,
+                date_from: params.dateFrom,
+                date_to: params.dateTo,
+            },
+        });
 
-        return response.data.data.map(mapOrder);
+        return {
+            items: response.data.data.map(mapOrder),
+            meta: {
+                currentPage: response.data.meta.current_page,
+                lastPage: response.data.meta.last_page,
+                perPage: response.data.meta.per_page,
+                total: response.data.meta.total,
+                from: response.data.meta.from,
+                to: response.data.meta.to,
+            },
+        };
     },
     async createOrder(input: { foodId: string; quantity: number; customerNote?: string; submissionKey: string }): Promise<CustomerPortalOrder> {
         const response = await apiClient.post<{ data: ApiOrder }>('/customer/orders', {
