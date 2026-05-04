@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Public;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\FoodResource;
+use App\Http\Resources\PublicFoodResource;
 use App\Models\Food;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -11,7 +11,7 @@ class FoodController extends Controller
 {
     public function index(): AnonymousResourceCollection
     {
-        return FoodResource::collection(
+        return PublicFoodResource::collection(
             Food::query()
                 ->with('category')
                 ->where('is_available', true)
@@ -22,7 +22,7 @@ class FoodController extends Controller
         );
     }
 
-    public function show(string $slug): FoodResource
+    public function show(string $slug): PublicFoodResource
     {
         $food = Food::query()
             ->with('category')
@@ -31,6 +31,6 @@ class FoodController extends Controller
             ->whereHas('category', fn ($query) => $query->where('is_active', true))
             ->firstOrFail();
 
-        return new FoodResource($food);
+        return new PublicFoodResource($food);
     }
 }

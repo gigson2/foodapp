@@ -58,12 +58,4 @@ export const adminCustomerService = {
 
         return mapCustomer(response.data.data as ApiCustomer);
     },
-    async resetPassword(customerId: string | number): Promise<{ message: string; temporaryPassword: string }> {
-        const response = await adminApiClient.post(`/admin/customers/${customerId}/reset-password`);
-
-        return {
-            message: response.data.message as string,
-            temporaryPassword: response.data.temporary_password as string,
-        };
-    },
 };

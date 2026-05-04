@@ -42,7 +42,6 @@ type PublicCompanySettingsResponse = CompanySettings & {
 type PublicReviewResponse = {
     id: number;
     customer_name: string;
-    customer_phone: string;
     rating: number;
     message: string;
     food_name?: string | null;
@@ -101,7 +100,7 @@ function mapReview(review: PublicReviewResponse): Review {
     return {
         id: String(review.id),
         customerName: review.customer_name,
-        customerPhone: review.customer_phone,
+        customerPhone: '',
         rating: review.rating,
         message: review.message,
         foodName: review.food_name ?? undefined,

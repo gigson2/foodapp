@@ -7,11 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerResource;
 use App\Models\User;
 use App\Support\AdminPagination;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class CustomerController extends Controller
 {
@@ -73,21 +71,5 @@ class CustomerController extends Controller
             ->firstOrFail();
 
         return new CustomerResource($customer);
-    }
-
-    public function resetPassword(User $customer): JsonResponse
-    {
-        abort_unless($customer->role === UserRole::Customer->value, 404);
-
-        $customer->forceFill([
-            'password' => Hash::make('n.password1'),
-        ])->save();
-
-        $customer->tokens()->delete();
-
-        return response()->json([
-            'message' => 'Customer password has been reset to the default temporary password.',
-            'temporary_password' => 'n.password1',
-        ]);
     }
 }

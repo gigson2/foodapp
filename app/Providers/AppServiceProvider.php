@@ -40,6 +40,10 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(10)->by((string) ($request->user()?->id ?? $request->ip()));
         });
 
+        RateLimiter::for('push-notification-tests', function ($request) {
+            return Limit::perMinute(5)->by((string) ($request->user()?->id ?? 'guest').'|'.$request->ip());
+        });
+
         Notification::extend('webpush', function ($app) {
             return new WebPushChannel($app->make(WebPushService::class));
         });

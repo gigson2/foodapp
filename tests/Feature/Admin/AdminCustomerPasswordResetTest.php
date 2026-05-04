@@ -13,7 +13,7 @@ class AdminCustomerPasswordResetTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_reset_customer_password_to_the_default_temporary_value(): void
+    public function test_removed_customer_password_reset_endpoint_is_not_available(): void
     {
         $admin = User::factory()->admin()->create();
         $customer = User::factory()->create([
@@ -25,12 +25,10 @@ class AdminCustomerPasswordResetTest extends TestCase
 
         $response = $this->postJson("/api/admin/customers/{$customer->id}/reset-password");
 
-        $response
-            ->assertOk()
-            ->assertJsonPath('temporary_password', 'n.password1');
+        $response->assertNotFound();
 
         $customer->refresh();
 
-        $this->assertTrue(Hash::check('n.password1', $customer->password));
+        $this->assertTrue(Hash::check('old-password-123', $customer->password));
     }
 }

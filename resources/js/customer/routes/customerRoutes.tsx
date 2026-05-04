@@ -1,9 +1,8 @@
 import { Navigate, type RouteObject } from 'react-router-dom';
-import { CustomerApp } from '@/customer/CustomerApp';
 
 export const customerRoutes: RouteObject = {
     path: '/customer',
-    element: <CustomerApp />,
+    lazy: async () => ({ Component: (await import('@/customer/CustomerApp')).CustomerApp }),
     children: [
         {
             index: true,

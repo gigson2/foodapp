@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,8 +15,12 @@ class CurrentUserController extends Controller
     {
         $user = Auth::guard('sanctum')->user() ?? Auth::guard('web')->user();
 
+        if ($user instanceof User) {
+            $user->loadMissing('customerProfile');
+        }
+
         return response()->json([
-            'data' => $user ? (new UserResource($user->loadMissing('customerProfile')))->resolve($request) : null,
+            'data' => $user instanceof User ? (new UserResource($user))->resolve($request) : null,
         ]);
     }
 }

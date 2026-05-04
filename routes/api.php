@@ -56,7 +56,9 @@ Route::middleware('web')->group(function (): void {
 
 Route::middleware(['web', 'auth:sanctum'])->group(function (): void {
     Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store'])->name('api.push-subscriptions.store');
-    Route::post('/push-notifications/test', PushNotificationTestController::class)->name('api.push-notifications.test');
+    Route::post('/push-notifications/test', PushNotificationTestController::class)
+        ->middleware('throttle:push-notification-tests')
+        ->name('api.push-notifications.test');
 
     Route::prefix('customer')->middleware('role:'.UserRole::Customer->value)->group(function (): void {
         Route::get('/dashboard', CustomerDashboardController::class)->name('api.customer.dashboard');
@@ -84,7 +86,6 @@ Route::middleware(['web', 'auth:sanctum'])->group(function (): void {
         Route::patch('/orders/{order}/note', AdminOrderNoteController::class)->name('api.admin.orders.note');
         Route::get('/customers', [AdminCustomerController::class, 'index'])->name('api.admin.customers.index');
         Route::get('/customers/{customer}', [AdminCustomerController::class, 'show'])->name('api.admin.customers.show');
-        Route::post('/customers/{customer}/reset-password', [AdminCustomerController::class, 'resetPassword'])->name('api.admin.customers.reset-password');
         Route::get('/visitors', [AdminVisitorController::class, 'index'])->name('api.admin.visitors.index');
         Route::get('/analytics', AdminAnalyticsController::class)->name('api.admin.analytics');
         Route::delete('/analytics/prune-oldest-thirty-days', [AdminAnalyticsController::class, 'pruneOldestThirtyDays'])->name('api.admin.analytics.prune');

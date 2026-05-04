@@ -112,9 +112,7 @@ export function FrontendLoginModal({
                     <Input autoComplete="tel-national" error={errors.phone?.message} inputMode="tel" label="Phone number" maxLength={14} placeholder="(402) 555-0100" {...phoneField} />
                     <Input autoComplete="current-password" error={errors.password?.message} label="Password" placeholder="Enter your password" type="password" {...register('password')} />
                     <div className="rounded-[1.5rem] border border-white/10 bg-white/6 p-4 text-sm leading-7 text-muted">
-                        Sign in with your phone number and password.
-                        <br />
-                        Admin users go to the admin dashboard. Customer users stay on the storefront and can open their dashboard anytime.
+                        Welcome back! Sign in to track your orders, leave reviews, and enjoy a faster checkout experience.
                     </div>
                     {errorMessage ? <p className="text-sm text-[color:var(--primary-600)]">{errorMessage}</p> : null}
                     <Button className="w-full" disabled={loading} type="submit">
@@ -151,7 +149,7 @@ export function FrontendLoginModal({
     if (isMobile) {
         return (
             <BottomSheet
-                description="Use your phone number and password to access your account or admin dashboard."
+                description="Sign in to manage your orders and enjoy a personalised experience."
                 isOpen={isOpen}
                 onClose={onClose}
                 panelClassName="max-w-[min(100%,28rem)]"
@@ -164,7 +162,7 @@ export function FrontendLoginModal({
 
     return (
         <Modal
-            description="Use your phone number and password to access your account or admin dashboard."
+            description="Sign in to manage your orders and enjoy a personalised experience."
             isOpen={isOpen}
             onClose={onClose}
             title="Sign in"

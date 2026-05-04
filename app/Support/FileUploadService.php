@@ -5,6 +5,7 @@ namespace App\Support;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class FileUploadService
 {
@@ -14,7 +15,10 @@ class FileUploadService
             return null;
         }
 
-        $filename = Str::uuid()->toString().'.'.$file->getClientOriginalExtension();
+        $this->assertPublicUploadIsAllowed($file);
+
+        $extension = $file->extension() ?: 'bin';
+        $filename = Str::uuid()->toString().'.'.$extension;
         $path = $file->storeAs($directory, $filename, 'public');
 
         return $this->normalizePublicPath(Storage::url($path));
@@ -43,6 +47,18 @@ class FileUploadService
 
         if ($storagePath !== '') {
             Storage::disk('public')->delete($storagePath);
+        }
+    }
+
+    protected function assertPublicUploadIsAllowed(UploadedFile $file): void
+    {
+        $extension = strtolower((string) ($file->extension() ?: $file->getClientOriginalExtension()));
+        $mimeType = strtolower((string) $file->getMimeType());
+
+        if ($extension === 'svg' || $mimeType === 'image/svg+xml') {
+            throw ValidationException::withMessages([
+                'file' => 'SVG uploads are not supported for public assets.',
+            ]);
         }
     }
 

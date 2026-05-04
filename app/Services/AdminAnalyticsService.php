@@ -8,7 +8,6 @@ use App\Models\Review;
 use App\Models\VisitorEvent;
 use App\Models\VisitorSession;
 use Carbon\Carbon;
-use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 class AdminAnalyticsService
@@ -19,11 +18,12 @@ class AdminAnalyticsService
     public function getOverview(?string $dateFrom = null, ?string $dateTo = null): array
     {
         [$from, $to] = $this->resolveDateRange($dateFrom, $dateTo);
+        $visitorSessionsInRange = VisitorSession::query()->whereBetween('created_at', [$from, $to]);
+        $visitorEventsInRange = VisitorEvent::query()->whereBetween('created_at', [$from, $to]);
+        $reviewsInRange = Review::query()->whereBetween('created_at', [$from, $to]);
 
-        $deviceBreakdown = VisitorSession::query()
+        $deviceBreakdown = (clone $visitorSessionsInRange)
             ->select('device_type', DB::raw('COUNT(*) as total'))
-            ->whereDate('created_at', '>=', $from->toDateString())
-            ->whereDate('created_at', '<=', $to->toDateString())
             ->groupBy('device_type')
             ->orderByDesc('total')
             ->get()
@@ -40,9 +40,7 @@ class AdminAnalyticsService
                 $query
                     ->whereNull('orders.id')
                     ->orWhere(function ($nested) use ($from, $to): void {
-                        $nested
-                            ->whereDate('orders.placed_at', '>=', $from->toDateString())
-                            ->whereDate('orders.placed_at', '<=', $to->toDateString());
+                        $nested->whereBetween('orders.placed_at', [$from, $to]);
                     });
             })
             ->groupBy('foods.id', 'foods.name')
@@ -56,10 +54,8 @@ class AdminAnalyticsService
                 'revenue' => (float) $row->revenue,
             ]);
 
-        $recentEvents = VisitorEvent::query()
+        $recentEvents = (clone $visitorEventsInRange)
             ->with(['visitorSession', 'user'])
-            ->whereDate('created_at', '>=', $from->toDateString())
-            ->whereDate('created_at', '<=', $to->toDateString())
             ->latest()
             ->paginate(10);
 
@@ -69,45 +65,27 @@ class AdminAnalyticsService
                 'to' => $to->toDateString(),
             ],
             'metrics' => [
-                'total_visitors' => VisitorSession::query()
-                    ->whereDate('created_at', '>=', $from->toDateString())
-                    ->whereDate('created_at', '<=', $to->toDateString())
-                    ->count(),
-                'today_visitors' => VisitorSession::query()
-                    ->whereDate('created_at', '>=', $from->toDateString())
-                    ->whereDate('created_at', '<=', $to->toDateString())
+                'total_visitors' => (clone $visitorSessionsInRange)->count(),
+                'today_visitors' => (clone $visitorSessionsInRange)
                     ->whereDate('created_at', now()->toDateString())
                     ->count(),
-                'returning_visitors' => VisitorSession::query()
-                    ->whereDate('created_at', '>=', $from->toDateString())
-                    ->whereDate('created_at', '<=', $to->toDateString())
+                'returning_visitors' => (clone $visitorSessionsInRange)
                     ->whereNotNull('user_id')
                     ->distinct('user_id')
                     ->count('user_id'),
-                'food_views' => VisitorEvent::query()
-                    ->whereDate('created_at', '>=', $from->toDateString())
-                    ->whereDate('created_at', '<=', $to->toDateString())
+                'food_views' => (clone $visitorEventsInRange)
                     ->where('event_type', VisitorEventType::FoodView->value)
                     ->count(),
-                'menu_clicks' => VisitorEvent::query()
-                    ->whereDate('created_at', '>=', $from->toDateString())
-                    ->whereDate('created_at', '<=', $to->toDateString())
+                'menu_clicks' => (clone $visitorEventsInRange)
                     ->where('event_type', VisitorEventType::AddToCart->value)
                     ->count(),
-                'order_starts' => VisitorEvent::query()
-                    ->whereDate('created_at', '>=', $from->toDateString())
-                    ->whereDate('created_at', '<=', $to->toDateString())
+                'order_starts' => (clone $visitorEventsInRange)
                     ->where('event_type', VisitorEventType::CheckoutStarted->value)
                     ->count(),
-                'completed_orders' => VisitorEvent::query()
-                    ->whereDate('created_at', '>=', $from->toDateString())
-                    ->whereDate('created_at', '<=', $to->toDateString())
+                'completed_orders' => (clone $visitorEventsInRange)
                     ->where('event_type', VisitorEventType::OrderCompleted->value)
                     ->count(),
-                'review_submissions' => Review::query()
-                    ->whereDate('created_at', '>=', $from->toDateString())
-                    ->whereDate('created_at', '<=', $to->toDateString())
-                    ->count(),
+                'review_submissions' => (clone $reviewsInRange)->count(),
             ],
             'device_breakdown' => $deviceBreakdown,
             'top_foods' => $topFoods,
@@ -160,7 +138,7 @@ class AdminAnalyticsService
     }
 
     /**
-     * @return array{0: CarbonInterface, 1: CarbonInterface}
+     * @return array{Carbon, Carbon}
      */
     protected function resolveDateRange(?string $dateFrom, ?string $dateTo): array
     {

@@ -1,9 +1,8 @@
 import { Navigate, type RouteObject } from 'react-router-dom';
-import { AdminApp } from '@/admin/AdminApp';
 
 export const adminRoutes: RouteObject = {
     path: '/admin',
-    element: <AdminApp />,
+    lazy: async () => ({ Component: (await import('@/admin/AdminApp')).AdminApp }),
     children: [
         {
             index: true,

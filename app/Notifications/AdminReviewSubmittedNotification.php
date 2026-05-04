@@ -4,9 +4,10 @@ namespace App\Notifications;
 
 use App\Models\Review;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class AdminReviewSubmittedNotification extends Notification
+class AdminReviewSubmittedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

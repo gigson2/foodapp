@@ -30,6 +30,7 @@ import { AUTH_SESSION_QUERY_KEY, useAuthSession } from '@/hooks/useAuthSession';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { useLocalCustomer } from '@/hooks/useLocalCustomer';
 import { useScrollToSection } from '@/hooks/useScrollToSection';
+import { useVisitorTracking } from '@/hooks/useVisitorTracking';
 import { customerPortalService } from '@/customer/services/customerPortalService';
 import { markAllCustomerNotificationsReadInCache, markCustomerNotificationReadInCache } from '@/admin/utils/notificationCache';
 import { orderService } from '@/services/orderService';
@@ -104,6 +105,7 @@ export function AppShell() {
     const [permission, setPermission] = useState(() => getNotificationPermission());
     const scrollToSection = useScrollToSection();
     const { canInstall, isIos, isStandalone, promptInstall } = useInstallPrompt();
+    const { trackEvent } = useVisitorTracking();
     const [activeCategory, setActiveCategory] = useState('All');
     const [activeSection, setActiveSection] = useState('home');
     const [customerModalMode, setCustomerModalMode] = useState<'order' | 'account'>('order');
@@ -419,6 +421,11 @@ export function AppShell() {
         }
     };
 
+    const handleSelectFood = (food: Food) => {
+        setSelectedFood(food);
+        trackEvent({ eventType: 'food_view', eventName: food.name, metadata: { food_id: food.id } });
+    };
+
     const handlePlaceOrder = async (food: Food, quantity: number) => {
         if (placingOrder) {
             return;
@@ -435,6 +442,7 @@ export function AppShell() {
 
                 setSelectedFood(null);
                 setOrderSuccess(order);
+                trackEvent({ eventType: 'order_completed', eventName: food.name, metadata: { food_id: food.id, quantity, order_number: order.orderNumber } });
                 void queryClient.invalidateQueries({ queryKey: ['customer-portal', 'orders'] });
                 void queryClient.invalidateQueries({ queryKey: ['customer-portal', 'dashboard'] });
                 toast.success('Pickup order received', {
@@ -462,6 +470,7 @@ export function AppShell() {
 
                 setSelectedFood(null);
                 setOrderSuccess(order);
+                trackEvent({ eventType: 'order_completed', eventName: food.name, metadata: { food_id: food.id, quantity, order_number: order.orderNumber } });
                 toast.success('Pickup order received', {
                     description: `${order.orderNumber} was sent to the restaurant.`,
                 });
@@ -472,6 +481,7 @@ export function AppShell() {
             return;
         }
 
+        trackEvent({ eventType: 'checkout_started', eventName: food.name, metadata: { food_id: food.id, quantity } });
         setPendingOrder({ food, quantity });
         setCustomerModalMode('order');
         setDetailsOpen(true);
@@ -587,6 +597,7 @@ export function AppShell() {
             toast.success('Review submitted', {
                 description: 'Thank you. Your review has been submitted and will appear after approval.',
             });
+            trackEvent({ eventType: 'review_submitted', eventName: values.foodName ?? 'general', metadata: { rating: values.rating } });
             setReviewOpen(false);
 
             return { success: true };
@@ -690,14 +701,14 @@ export function AppShell() {
 
             <main>
                 <HeroSection companySettings={companySettings} onBrowseMenu={() => scrollToSection('menu')} onOpenAccount={openAccountFlow} />
-                <PopularGrillsSection foods={popularFoods} onSelectFood={setSelectedFood} />
+                <PopularGrillsSection foods={popularFoods} onSelectFood={handleSelectFood} />
                 <FoodMenuSection
                     activeCategory={activeCategory}
                     categories={categoryNames}
                     foods={filteredFoods}
                     onCategoryChange={setActiveCategory}
                     onSearchChange={setSearchTerm}
-                    onSelectFood={setSelectedFood}
+                    onSelectFood={handleSelectFood}
                     searchTerm={searchTerm}
                 />
                 <AboutSection companySettings={companySettings} />
