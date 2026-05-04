@@ -12,6 +12,11 @@ export function PopularFoodsWidget({ foods }: PopularFoodsWidgetProps) {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Popular foods</p>
             <h2 className="mt-2 text-3xl">Best movers</h2>
             <div className="mt-5 space-y-4">
+                {foods.length === 0 ? (
+                    <div className="ui-surface-solid rounded-[1.25rem] px-4 py-4 text-sm text-muted">
+                        No menu sales were recorded in the selected date range.
+                    </div>
+                ) : null}
                 {foods.map((food, index) => (
                     <div className="ui-surface-solid flex items-center justify-between gap-3 rounded-[1.25rem] px-4 py-4" key={food.id}>
                         <div className="flex items-center gap-4">

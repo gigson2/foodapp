@@ -95,7 +95,7 @@ export function CustomerDetailsModal({
                 Your phone number will be used to identify your orders.
             </div>
 
-            <Button className="w-full" type="submit">
+            <Button className="w-full" disabled={loading} type="submit">
                 {loading ? <LoadingSpinner /> : null}
                 {mode === 'order' ? 'Continue to Place Order' : 'Continue'}
             </Button>

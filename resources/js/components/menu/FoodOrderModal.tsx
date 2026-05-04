@@ -17,9 +17,10 @@ type FoodOrderModalProps = {
     isOpen: boolean;
     onClose: () => void;
     onPlaceOrder: (food: Food, quantity: number) => void;
+    submitting?: boolean;
 };
 
-export function FoodOrderModal({ companySettings, food, isOpen, onClose, onPlaceOrder }: FoodOrderModalProps) {
+export function FoodOrderModal({ companySettings, food, isOpen, onClose, onPlaceOrder, submitting = false }: FoodOrderModalProps) {
     const isMobile = useMediaQuery('(max-width: 767px)');
     const [quantity, setQuantity] = useState(1);
     const companyName = getCompanyName(companySettings);
@@ -116,7 +117,7 @@ export function FoodOrderModal({ companySettings, food, isOpen, onClose, onPlace
                 <p>Friday: {fridayHours}. Grill preparation and pickup happen Saturday {saturdayHours}, with a final ordering cutoff at {orderingCutoff}.</p>
             </div>
 
-            <Button className="w-full" onClick={() => onPlaceOrder(food, quantity)} type="button">
+            <Button className="w-full" disabled={submitting} onClick={() => onPlaceOrder(food, quantity)} type="button">
                 Place Pickup Order
             </Button>
         </div>

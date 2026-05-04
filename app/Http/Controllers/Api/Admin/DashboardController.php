@@ -18,9 +18,13 @@ class DashboardController extends Controller
 
     public function __invoke(Request $request): JsonResponse
     {
-        $metrics = $this->dashboardMetricsService->getAdminOverview();
+        $metrics = $this->dashboardMetricsService->getAdminOverview(
+            $request->query('date_from'),
+            $request->query('date_to'),
+        );
 
         return response()->json([
+            'date_range' => $metrics['date_range'],
             'metrics' => [
                 'total_orders' => $metrics['total_orders'],
                 'today_orders' => $metrics['today_orders'],

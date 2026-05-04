@@ -40,7 +40,7 @@ class OrderController extends Controller
 
     public function show(Request $request, Order $order): OrderResource
     {
-        abort_unless($order->user_id === $request->user()->id || $request->user()->isAdmin(), 403);
+        abort_unless($order->user_id === $request->user()->id, 403);
 
         return new OrderResource($order->load(['items', 'user']));
     }

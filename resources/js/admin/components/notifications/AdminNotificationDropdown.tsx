@@ -16,7 +16,9 @@ export function AdminNotificationDropdown({
     onMarkAllRead,
     onMarkRead,
 }: AdminNotificationDropdownProps) {
-    const unreadNotifications = notifications.filter((notification) => !notification.read).slice(0, 3);
+    const unreadNotifications = notifications
+        .filter((notification): notification is AdminNotificationItem => Boolean(notification) && !notification.read)
+        .slice(0, 3);
 
     return (
         <div
@@ -40,10 +42,10 @@ export function AdminNotificationDropdown({
                             <div className="flex items-start justify-between gap-3">
                                 <div className="space-y-2">
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <p className="font-semibold">{notification.title}</p>
+                                        <p className="font-semibold">{notification.title ?? 'Notification'}</p>
                                         <AdminBadge className="border-[color:var(--primary-500)]/30 bg-[color:var(--primary-500)]/12 text-[color:var(--primary-500)]">Unread</AdminBadge>
                                     </div>
-                                    <p className="text-sm leading-7 text-muted">{notification.message}</p>
+                                    <p className="text-sm leading-7 text-muted">{notification.message ?? 'No message available.'}</p>
                                     <p className="text-xs text-muted">{formatAdminDateTime(notification.createdAt)}</p>
                                 </div>
                             </div>

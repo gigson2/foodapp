@@ -2,7 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import type { AdminPaginatedResult } from '@/admin/services/adminApiClient';
 import type { AdminDashboardSnapshot } from '@/admin/types/adminDashboard';
 import type { AdminNotificationItem } from '@/admin/types/adminNotification';
-import type { CustomerDashboardSummary, CustomerPortalNotification } from '@/customer/types/customerPortal';
+import type { CustomerDashboardSummary, CustomerPaginatedResult, CustomerPortalNotification } from '@/customer/types/customerPortal';
 
 function isAdminNotificationsQueryKey(queryKey: readonly unknown[]): boolean {
     return queryKey[0] === 'admin-app' && queryKey[1] === 'notifications';
@@ -159,6 +159,23 @@ export function markCustomerNotificationReadInCache(queryClient: QueryClient, no
         });
     });
 
+    queryClient
+        .getQueriesData<CustomerPaginatedResult<CustomerPortalNotification>>({ queryKey: ['customer-portal', 'notifications-page'] })
+        .forEach(([queryKey, data]) => {
+            if (!data || !Array.isArray(queryKey)) {
+                return;
+            }
+
+            queryClient.setQueryData<CustomerPaginatedResult<CustomerPortalNotification>>(queryKey, {
+                ...data,
+                items: data.items.map((notification) => (
+                    notification.id === notificationId
+                        ? { ...notification, read: true }
+                        : notification
+                )),
+            });
+        });
+
     if (unreadDelta > 0) {
         queryClient.setQueryData<CustomerDashboardSummary>(['customer-portal', 'dashboard'], (current) => {
             if (!current) {
@@ -184,6 +201,19 @@ export function markAllCustomerNotificationsReadInCache(queryClient: QueryClient
 
         return current.map((notification) => ({ ...notification, read: true }));
     });
+
+    queryClient
+        .getQueriesData<CustomerPaginatedResult<CustomerPortalNotification>>({ queryKey: ['customer-portal', 'notifications-page'] })
+        .forEach(([queryKey, data]) => {
+            if (!data || !Array.isArray(queryKey)) {
+                return;
+            }
+
+            queryClient.setQueryData<CustomerPaginatedResult<CustomerPortalNotification>>(queryKey, {
+                ...data,
+                items: data.items.map((notification) => ({ ...notification, read: true })),
+            });
+        });
 
     queryClient.setQueryData<CustomerDashboardSummary>(['customer-portal', 'dashboard'], (current) => {
         if (!current) {

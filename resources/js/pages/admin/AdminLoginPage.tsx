@@ -17,7 +17,7 @@ export function AdminLoginPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { isLoading: loadingSession, user } = useAuthSession();
-    const [credentials, setCredentials] = useState({ phone: '(402) 555-0100', password: 'password' });
+    const [credentials, setCredentials] = useState({ phone: '', password: '' });
 
     const loginMutation = useMutation({
         mutationFn: adminService.login,
@@ -50,7 +50,7 @@ export function AdminLoginPage() {
                             Sign in with your admin phone number and password to manage foods, categories, pickup orders, visitors, SEO, and company operations.
                         </p>
                         <p className="mt-3 text-sm leading-7 text-muted">
-                            This is real Laravel admin authentication. The public storefront account modal is still a local pickup identity flow and does not sign you into the admin system.
+                            This uses the same real Laravel account system as the storefront. Only users with the admin role can continue into the admin dashboard.
                         </p>
                     </div>
                     <ThemeToggle />
@@ -74,7 +74,7 @@ export function AdminLoginPage() {
                         onChange={(event) =>
                             setCredentials((current) => ({ ...current, phone: formatUsPhone(event.target.value) }))
                         }
-                        placeholder="(402) 555-0100"
+                        placeholder="(646) 250-3361"
                         value={credentials.phone}
                     />
                     <Input
@@ -96,17 +96,12 @@ export function AdminLoginPage() {
                         </p>
                     ) : null}
 
-                    <Button className="w-full" type="submit">
+                    <Button className="w-full" disabled={loginMutation.isPending} type="submit">
                         <ShieldCheck className="h-4 w-4" />
                         Sign in to admin
                     </Button>
                 </form>
 
-                <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-white/6 p-4 text-sm leading-7 text-muted">
-                    Demo admin credentials seeded locally:
-                    <br />
-                    `(402) 555-0100` / `password`
-                </div>
             </Card>
         </div>
     );

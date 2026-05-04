@@ -17,8 +17,11 @@ export function useAdminNotifications() {
 
     const markReadMutation = useMutation({
         mutationFn: adminNotificationService.markRead,
-        onSuccess: (notification) => {
-            markAdminNotificationReadInCache(queryClient, notification.id);
+        onMutate: (notificationId) => {
+            markAdminNotificationReadInCache(queryClient, notificationId);
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-app', 'notifications'] });
         },
     });
 
@@ -29,7 +32,7 @@ export function useAdminNotifications() {
         },
     });
 
-    const notifications = notificationsQuery.data?.items ?? [];
+    const notifications = (notificationsQuery.data?.items ?? []).filter(Boolean);
     const unreadCount = unreadCountQuery.data?.meta.total ?? notifications.filter((notification) => !notification.read).length;
 
     return {

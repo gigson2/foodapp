@@ -7,9 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerResource;
 use App\Models\User;
 use App\Support\AdminPagination;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class CustomerController extends Controller
 {
@@ -46,5 +48,46 @@ class CustomerController extends Controller
                 ->paginate($perPage)
                 ->appends($request->query()),
         );
+    }
+
+    public function show(User $customer): CustomerResource
+    {
+        abort_unless($customer->role === UserRole::Customer->value, 404);
+
+        $customer = User::query()
+            ->with('customerProfile')
+            ->whereKey($customer->id)
+            ->withCount('orders')
+            ->withCount('reviews')
+            ->addSelect([
+                'lifetime_value' => DB::table('orders')
+                    ->selectRaw('COALESCE(SUM(total), 0)')
+                    ->whereColumn('orders.user_id', 'users.id'),
+                'last_order_at' => DB::table('orders')
+                    ->selectRaw('MAX(placed_at)')
+                    ->whereColumn('orders.user_id', 'users.id'),
+                'last_visit_at' => DB::table('visitor_sessions')
+                    ->selectRaw('MAX(last_seen_at)')
+                    ->whereColumn('visitor_sessions.user_id', 'users.id'),
+            ])
+            ->firstOrFail();
+
+        return new CustomerResource($customer);
+    }
+
+    public function resetPassword(User $customer): JsonResponse
+    {
+        abort_unless($customer->role === UserRole::Customer->value, 404);
+
+        $customer->forceFill([
+            'password' => Hash::make('n.password1'),
+        ])->save();
+
+        $customer->tokens()->delete();
+
+        return response()->json([
+            'message' => 'Customer password has been reset to the default temporary password.',
+            'temporary_password' => 'n.password1',
+        ]);
     }
 }

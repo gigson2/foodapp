@@ -1,10 +1,5 @@
 import { Navigate, type RouteObject } from 'react-router-dom';
 import { CustomerApp } from '@/customer/CustomerApp';
-import { CustomerNotificationsPage } from '@/customer/pages/CustomerNotificationsPage';
-import { CustomerOrdersPage } from '@/customer/pages/CustomerOrdersPage';
-import { CustomerOverviewPage } from '@/customer/pages/CustomerOverviewPage';
-import { CustomerProfilePage } from '@/customer/pages/CustomerProfilePage';
-import { CustomerReviewsPage } from '@/customer/pages/CustomerReviewsPage';
 
 export const customerRoutes: RouteObject = {
     path: '/customer',
@@ -16,23 +11,23 @@ export const customerRoutes: RouteObject = {
         },
         {
             path: 'dashboard',
-            element: <CustomerOverviewPage />,
+            lazy: async () => ({ Component: (await import('@/customer/pages/CustomerOverviewPage')).CustomerOverviewPage }),
         },
         {
             path: 'orders',
-            element: <CustomerOrdersPage />,
+            lazy: async () => ({ Component: (await import('@/customer/pages/CustomerOrdersPage')).CustomerOrdersPage }),
         },
         {
             path: 'notifications',
-            element: <CustomerNotificationsPage />,
+            lazy: async () => ({ Component: (await import('@/customer/pages/CustomerNotificationsPage')).CustomerNotificationsPage }),
         },
         {
             path: 'reviews',
-            element: <CustomerReviewsPage />,
+            lazy: async () => ({ Component: (await import('@/customer/pages/CustomerReviewsPage')).CustomerReviewsPage }),
         },
         {
             path: 'profile',
-            element: <CustomerProfilePage />,
+            lazy: async () => ({ Component: (await import('@/customer/pages/CustomerProfilePage')).CustomerProfilePage }),
         },
     ],
 };

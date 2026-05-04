@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import type { AuthenticatedUser } from '@/types';
 import { AUTH_SESSION_QUERY_KEY } from '@/hooks/useAuthSession';
 import { publicService, PUBLIC_COMPANY_SETTINGS_QUERY_KEY } from '@/services/publicService';
+import { authService } from '@/services/authService';
 import { sessionService } from '@/services/sessionService';
 import { markAllCustomerNotificationsReadInCache, markCustomerNotificationReadInCache } from '@/admin/utils/notificationCache';
 import { customerPortalService } from '@/customer/services/customerPortalService';
@@ -35,8 +36,11 @@ export function CustomerLayout({ currentUser }: CustomerLayoutProps) {
     });
     const markReadMutation = useMutation({
         mutationFn: customerPortalService.markNotificationRead,
-        onSuccess: (notification) => {
-            markCustomerNotificationReadInCache(queryClient, notification.id);
+        onMutate: (notificationId) => {
+            markCustomerNotificationReadInCache(queryClient, notificationId);
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: ['customer-portal', 'notifications'] });
         },
     });
     const markAllMutation = useMutation({
@@ -50,6 +54,7 @@ export function CustomerLayout({ currentUser }: CustomerLayoutProps) {
     const logoutMutation = useMutation({
         mutationFn: sessionService.logout,
         onSuccess: async () => {
+            authService.logout();
             toast.success('Logged out successfully');
             queryClient.setQueryData(AUTH_SESSION_QUERY_KEY, null);
             await queryClient.clear();
@@ -58,7 +63,7 @@ export function CustomerLayout({ currentUser }: CustomerLayoutProps) {
     });
 
     const brandName = useMemo(() => getCompanyName(companySettings), [companySettings]);
-    const notifications = notificationsQuery.data ?? [];
+    const notifications = (notificationsQuery.data ?? []).filter(Boolean);
     const unreadCount = notifications.filter((notification) => !notification.read).length;
 
     return (

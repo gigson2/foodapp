@@ -29,15 +29,15 @@ class SessionAuthenticationTest extends TestCase
         $this->seed(RestaurantPlatformSeeder::class);
 
         $loginResponse = $this->withSession([])->postJson('/api/login', [
-            'login' => '+14025550100',
-            'password' => 'password',
+            'login' => '+16462503361',
+            'password' => 'a.password!',
         ]);
 
         $loginResponse
             ->assertOk()
             ->assertJsonStructure(['token'])
             ->assertJsonPath('user.role', UserRole::Admin->value)
-            ->assertJsonPath('user.phone', '+14025550100');
+            ->assertJsonPath('user.phone', '+16462503361');
 
         $this->assertAuthenticated();
 
@@ -46,7 +46,7 @@ class SessionAuthenticationTest extends TestCase
         $meResponse
             ->assertOk()
             ->assertJsonPath('data.role', UserRole::Admin->value)
-            ->assertJsonPath('data.phone', '+14025550100');
+            ->assertJsonPath('data.phone', '+16462503361');
 
         $dashboardResponse = $this->getJson('/api/admin/dashboard');
 
@@ -100,8 +100,8 @@ class SessionAuthenticationTest extends TestCase
         $this->seed(RestaurantPlatformSeeder::class);
 
         $token = $this->withSession([])->postJson('/api/login', [
-            'login' => '+14025550100',
-            'password' => 'password',
+            'login' => '+16462503361',
+            'password' => 'a.password!',
         ])->assertOk()->json('token');
 
         $this->flushSession();
@@ -111,6 +111,6 @@ class SessionAuthenticationTest extends TestCase
             ->getJson('/api/me')
             ->assertOk()
             ->assertJsonPath('data.role', UserRole::Admin->value)
-            ->assertJsonPath('data.phone', '+14025550100');
+            ->assertJsonPath('data.phone', '+16462503361');
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Customer;
 
+use App\Support\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -31,5 +32,14 @@ class UpdateCustomerProfileRequest extends FormRequest
             'push_enabled' => ['nullable', 'boolean'],
             'email_enabled' => ['nullable', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'name' => trim((string) $this->input('name')),
+            'email' => $this->filled('email') ? strtolower(trim((string) $this->input('email'))) : null,
+            'phone' => PhoneNumber::normalizeUs($this->input('phone')),
+        ]);
     }
 }

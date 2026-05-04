@@ -1,6 +1,6 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'sonner';
-import { getAuthToken } from '@/services/authTokenStorage';
+import { clearAuthToken, getAuthToken } from '@/services/authTokenStorage';
 
 type ApiErrorPayload = {
     message?: string;
@@ -187,6 +187,11 @@ apiClient.interceptors.response.use(
             await ensureCsrfCookie(true);
 
             return apiClient(originalConfig);
+        }
+
+        if (status === 401 && getAuthToken() !== null) {
+            clearAuthToken();
+            window.dispatchEvent(new CustomEvent('restaurant:unauthorized'));
         }
 
         notifyApiError(error);

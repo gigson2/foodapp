@@ -33,9 +33,14 @@ export function AdminNotificationsPage() {
 
     const markReadMutation = useMutation({
         mutationFn: adminNotificationService.markRead,
-        onSuccess: (notification) => {
+        onMutate: (notificationId) => {
+            markAdminNotificationReadInCache(queryClient, notificationId);
+        },
+        onSuccess: () => {
             toast.success('Notification marked as read');
-            markAdminNotificationReadInCache(queryClient, notification.id);
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-app', 'notifications'] });
         },
     });
 
@@ -57,7 +62,7 @@ export function AdminNotificationsPage() {
         },
     });
 
-    const notifications = notificationsQuery.data?.items ?? [];
+    const notifications = (notificationsQuery.data?.items ?? []).filter((notification): notification is AdminNotificationItem => Boolean(notification));
     const meta = notificationsQuery.data?.meta;
     const hasUnreadNotifications = notifications.some((notification) => !notification.read);
     const columns: TableColumn<AdminNotificationItem>[] = [

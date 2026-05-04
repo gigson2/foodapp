@@ -91,6 +91,7 @@ export function AdminOrdersPage() {
     const orders = ordersQuery.data?.items ?? [];
     const meta = ordersQuery.data?.meta;
     const noteDraft = selectedOrder ? (noteDraftByOrder[selectedOrder.id] ?? selectedOrder.adminNote ?? '') : '';
+    const canCancelSelectedOrder = selectedOrder?.status === 'received';
     const columns: TableColumn<AdminOrder>[] = [
         {
             name: 'Order #',
@@ -138,7 +139,7 @@ export function AdminOrdersPage() {
             cell: (order) => (
                 <IconButton
                     aria-label={`View ${order.orderNumber}`}
-                    className={order.status === 'processing' ? 'h-10 w-10 border-rose-500/30 text-rose-400 hover:border-rose-500/42 hover:bg-rose-500/12' : 'h-10 w-10'}
+                    className={order.status === 'received' || order.status === 'processing' ? 'h-10 w-10 border-rose-500/30 text-rose-400 hover:border-rose-500/42 hover:bg-rose-500/12' : 'h-10 w-10'}
                     onClick={() => setSelectedOrderId(order.id)}
                 >
                     <Eye className="h-4 w-4" />
@@ -230,7 +231,14 @@ export function AdminOrdersPage() {
                                     <Button onClick={() => statusMutation.mutate({ orderId: selectedOrder.id, nextStatus: 'ready_for_pickup' })} size="sm" variant="secondary">Mark ready for pickup</Button>
                                     <Button onClick={() => statusMutation.mutate({ orderId: selectedOrder.id, nextStatus: 'completed' })} size="sm" variant="accent">Mark completed</Button>
                                     <Button onClick={() => cashMutation.mutate({ orderId: selectedOrder.id, cashStatus: 'cash_collected' })} size="sm">Mark cash collected</Button>
-                                    <Button onClick={() => statusMutation.mutate({ orderId: selectedOrder.id, nextStatus: 'cancelled' })} size="sm" variant="ghost">Cancel order</Button>
+                                    <Button
+                                        disabled={!canCancelSelectedOrder}
+                                        onClick={() => statusMutation.mutate({ orderId: selectedOrder.id, nextStatus: 'cancelled' })}
+                                        size="sm"
+                                        variant="ghost"
+                                    >
+                                        Cancel order
+                                    </Button>
                                 </div>
                             </div>
 

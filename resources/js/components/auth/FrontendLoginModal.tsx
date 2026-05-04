@@ -117,7 +117,7 @@ export function FrontendLoginModal({
                         Admin users go to the admin dashboard. Customer users stay on the storefront and can open their dashboard anytime.
                     </div>
                     {errorMessage ? <p className="text-sm text-[color:var(--primary-600)]">{errorMessage}</p> : null}
-                    <Button className="w-full" type="submit">
+                    <Button className="w-full" disabled={loading} type="submit">
                         {loading ? <LoadingSpinner /> : null}
                         Sign in
                     </Button>
@@ -139,7 +139,7 @@ export function FrontendLoginModal({
                         Registration uses your full name, USA phone number, and password.
                     </div>
                     {errorMessage ? <p className="text-sm text-[color:var(--primary-600)]">{errorMessage}</p> : null}
-                    <Button className="w-full" type="submit">
+                    <Button className="w-full" disabled={loading} type="submit">
                         {loading ? <LoadingSpinner /> : null}
                         Create account
                     </Button>

@@ -1,17 +1,5 @@
 import { Navigate, type RouteObject } from 'react-router-dom';
 import { AdminApp } from '@/admin/AdminApp';
-import { AdminAnalyticsPage } from '@/admin/pages/AdminAnalyticsPage';
-import { AdminCategoriesPage } from '@/admin/pages/AdminCategoriesPage';
-import { AdminCompanySettingsPage } from '@/admin/pages/AdminCompanySettingsPage';
-import { AdminCustomersPage } from '@/admin/pages/AdminCustomersPage';
-import { AdminDashboardPage } from '@/admin/pages/AdminDashboardPage';
-import { AdminMenuPage } from '@/admin/pages/AdminMenuPage';
-import { AdminNotificationsPage } from '@/admin/pages/AdminNotificationsPage';
-import { AdminOrdersPage } from '@/admin/pages/AdminOrdersPage';
-import { AdminProfilePage } from '@/admin/pages/AdminProfilePage';
-import { AdminPwaSettingsPage } from '@/admin/pages/AdminPwaSettingsPage';
-import { AdminReviewsPage } from '@/admin/pages/AdminReviewsPage';
-import { AdminSeoSettingsPage } from '@/admin/pages/AdminSeoSettingsPage';
 
 export const adminRoutes: RouteObject = {
     path: '/admin',
@@ -27,51 +15,51 @@ export const adminRoutes: RouteObject = {
         },
         {
             path: 'dashboard/overview',
-            element: <AdminDashboardPage />,
+            lazy: async () => ({ Component: (await import('@/admin/pages/AdminDashboardPage')).AdminDashboardPage }),
         },
         {
             path: 'orders',
-            element: <AdminOrdersPage />,
+            lazy: async () => ({ Component: (await import('@/admin/pages/AdminOrdersPage')).AdminOrdersPage }),
         },
         {
             path: 'menu',
-            element: <AdminMenuPage />,
+            lazy: async () => ({ Component: (await import('@/admin/pages/AdminMenuPage')).AdminMenuPage }),
         },
         {
             path: 'categories',
-            element: <AdminCategoriesPage />,
+            lazy: async () => ({ Component: (await import('@/admin/pages/AdminCategoriesPage')).AdminCategoriesPage }),
         },
         {
             path: 'reviews',
-            element: <AdminReviewsPage />,
+            lazy: async () => ({ Component: (await import('@/admin/pages/AdminReviewsPage')).AdminReviewsPage }),
         },
         {
             path: 'customers',
-            element: <AdminCustomersPage />,
+            lazy: async () => ({ Component: (await import('@/admin/pages/AdminCustomersPage')).AdminCustomersPage }),
         },
         {
             path: 'analytics',
-            element: <AdminAnalyticsPage />,
+            lazy: async () => ({ Component: (await import('@/admin/pages/AdminAnalyticsPage')).AdminAnalyticsPage }),
         },
         {
             path: 'notifications',
-            element: <AdminNotificationsPage />,
+            lazy: async () => ({ Component: (await import('@/admin/pages/AdminNotificationsPage')).AdminNotificationsPage }),
         },
         {
             path: 'settings/company',
-            element: <AdminCompanySettingsPage />,
+            lazy: async () => ({ Component: (await import('@/admin/pages/AdminCompanySettingsPage')).AdminCompanySettingsPage }),
         },
         {
             path: 'settings/seo',
-            element: <AdminSeoSettingsPage />,
+            lazy: async () => ({ Component: (await import('@/admin/pages/AdminSeoSettingsPage')).AdminSeoSettingsPage }),
         },
         {
             path: 'settings/pwa',
-            element: <AdminPwaSettingsPage />,
+            lazy: async () => ({ Component: (await import('@/admin/pages/AdminPwaSettingsPage')).AdminPwaSettingsPage }),
         },
         {
             path: 'profile',
-            element: <AdminProfilePage />,
+            lazy: async () => ({ Component: (await import('@/admin/pages/AdminProfilePage')).AdminProfilePage }),
         },
     ],
 };

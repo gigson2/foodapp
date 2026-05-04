@@ -4,6 +4,7 @@ import { normalizeUsPhone } from '@/utils/phone';
 import type {
     CustomerDashboardSummary,
     CustomerPasswordUpdateInput,
+    CustomerPaginatedResult,
     CustomerPortalNotification,
     CustomerPortalOrder,
     CustomerPortalReview,
@@ -17,6 +18,18 @@ type ApiCollection<T> = {
 
 type ApiItem<T> = {
     data: T;
+};
+
+type ApiPaginatedResponse<T> = {
+    data: T[];
+    meta: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+        from: number | null;
+        to: number | null;
+    };
 };
 
 type ApiOrder = {
@@ -51,8 +64,8 @@ type ApiOrder = {
 
 type ApiDatabaseNotification = {
     id: string;
-    type: string;
-    data: Record<string, unknown>;
+    type: string | null;
+    data: Record<string, unknown> | null;
     read_at?: string | null;
     created_at: string;
 };
@@ -73,6 +86,10 @@ type ApiReview = {
 };
 
 type ApiDashboardSummary = {
+    date_range?: {
+        from: string;
+        to: string;
+    };
     metrics: {
         total_orders: number;
         active_orders: number;
@@ -118,8 +135,9 @@ function mapOrder(order: ApiOrder): CustomerPortalOrder {
 }
 
 function mapNotificationType(notification: ApiDatabaseNotification): AppNotification['type'] {
-    const kind = typeof notification.data.kind === 'string' ? notification.data.kind : '';
-    const status = typeof notification.data.status === 'string' ? notification.data.status : '';
+    const data = notification.data ?? {};
+    const kind = typeof data.kind === 'string' ? data.kind : '';
+    const status = typeof data.status === 'string' ? data.status : '';
 
     if (kind === 'order_status') {
         if (status === 'processing') {
@@ -145,12 +163,13 @@ function mapNotificationType(notification: ApiDatabaseNotification): AppNotifica
 }
 
 function mapNotification(notification: ApiDatabaseNotification): CustomerPortalNotification {
-    const title = typeof notification.data.title === 'string' ? notification.data.title : notification.type.split('\\').pop() ?? 'Notification';
+    const data = notification.data ?? {};
+    const title = typeof data.title === 'string' ? data.title : (notification.type?.split('\\').pop() ?? 'Notification');
     const message =
-        typeof notification.data.message === 'string'
-            ? notification.data.message
-            : typeof notification.data.body === 'string'
-                ? notification.data.body
+        typeof data.message === 'string'
+            ? data.message
+            : typeof data.body === 'string'
+                ? data.body
                 : 'Activity was recorded on your account.';
 
     return {
@@ -161,9 +180,9 @@ function mapNotification(notification: ApiDatabaseNotification): CustomerPortalN
         read: Boolean(notification.read_at),
         createdAt: notification.created_at,
         targetRole: 'customer',
-        orderId: typeof notification.data.order_id === 'number' ? String(notification.data.order_id) : undefined,
-        reviewId: typeof notification.data.review_id === 'number' ? String(notification.data.review_id) : undefined,
-        orderStatus: typeof notification.data.status === 'string' ? (notification.data.status as Order['status']) : undefined,
+        orderId: typeof data.order_id === 'number' ? String(data.order_id) : undefined,
+        reviewId: typeof data.review_id === 'number' ? String(data.review_id) : undefined,
+        orderStatus: typeof data.status === 'string' ? (data.status as Order['status']) : undefined,
     };
 }
 
@@ -202,11 +221,17 @@ function toFormData(input: CustomerProfileUpdateInput): FormData {
 }
 
 export const customerPortalService = {
-    async getDashboard(): Promise<CustomerDashboardSummary> {
-        const response = await apiClient.get<ApiItem<ApiDashboardSummary>>('/customer/dashboard');
+    async getDashboard(params?: { dateFrom?: string; dateTo?: string }): Promise<CustomerDashboardSummary> {
+        const response = await apiClient.get<ApiItem<ApiDashboardSummary>>('/customer/dashboard', {
+            params: {
+                date_from: params?.dateFrom,
+                date_to: params?.dateTo,
+            },
+        });
         const payload = response.data.data;
 
         return {
+            dateRange: payload.date_range,
             metrics: {
                 totalOrders: payload.metrics.total_orders,
                 activeOrders: payload.metrics.active_orders,
@@ -225,10 +250,40 @@ export const customerPortalService = {
 
         return response.data.data.map(mapOrder);
     },
+    async createOrder(input: { foodId: string; quantity: number; customerNote?: string; submissionKey: string }): Promise<CustomerPortalOrder> {
+        const response = await apiClient.post<{ data: ApiOrder }>('/customer/orders', {
+            food_id: Number(input.foodId),
+            quantity: input.quantity,
+            customer_note: input.customerNote ?? '',
+            submission_key: input.submissionKey,
+        });
+
+        return mapOrder(response.data.data);
+    },
     async getNotifications(): Promise<CustomerPortalNotification[]> {
         const response = await apiClient.get<ApiCollection<ApiDatabaseNotification>>('/customer/notifications');
 
         return response.data.data.map(mapNotification);
+    },
+    async getNotificationsPage(params: { page?: number; perPage?: number } = {}): Promise<CustomerPaginatedResult<CustomerPortalNotification>> {
+        const response = await apiClient.get<ApiPaginatedResponse<ApiDatabaseNotification>>('/customer/notifications', {
+            params: {
+                page: params.page,
+                per_page: params.perPage,
+            },
+        });
+
+        return {
+            items: response.data.data.map(mapNotification),
+            meta: {
+                currentPage: response.data.meta.current_page,
+                lastPage: response.data.meta.last_page,
+                perPage: response.data.meta.per_page,
+                total: response.data.meta.total,
+                from: response.data.meta.from,
+                to: response.data.meta.to,
+            },
+        };
     },
     async markNotificationRead(notificationId: string): Promise<CustomerPortalNotification> {
         const response = await apiClient.patch<{ data: ApiDatabaseNotification }>(`/customer/notifications/${notificationId}/read`);

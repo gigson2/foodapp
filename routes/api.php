@@ -48,8 +48,8 @@ Route::get('/reviews', [PublicReviewController::class, 'index'])->name('api.publ
 Route::post('/visitor-events', [PublicVisitorEventController::class, 'store'])->name('api.public.visitor-events.store');
 
 Route::middleware('web')->group(function (): void {
-    Route::post('/register', RegisterController::class)->name('api.register');
-    Route::post('/login', LoginController::class)->name('api.login');
+    Route::post('/register', RegisterController::class)->middleware('throttle:auth-register')->name('api.register');
+    Route::post('/login', LoginController::class)->middleware('throttle:auth-login')->name('api.login');
     Route::get('/me', CurrentUserController::class)->name('api.me');
     Route::post('/logout', LogoutController::class)->middleware('auth:sanctum')->name('api.logout');
 });
@@ -61,7 +61,7 @@ Route::middleware(['web', 'auth:sanctum'])->group(function (): void {
     Route::prefix('customer')->middleware('role:'.UserRole::Customer->value)->group(function (): void {
         Route::get('/dashboard', CustomerDashboardController::class)->name('api.customer.dashboard');
         Route::get('/orders', [CustomerOrderController::class, 'index'])->name('api.customer.orders.index');
-        Route::post('/orders', [CustomerOrderController::class, 'store'])->name('api.customer.orders.store');
+        Route::post('/orders', [CustomerOrderController::class, 'store'])->middleware('throttle:customer-orders')->name('api.customer.orders.store');
         Route::get('/orders/{order}', [CustomerOrderController::class, 'show'])->name('api.customer.orders.show');
         Route::get('/reviews', [CustomerReviewController::class, 'index'])->name('api.customer.reviews.index');
         Route::post('/reviews', [CustomerReviewController::class, 'store'])->name('api.customer.reviews.store');
@@ -83,8 +83,11 @@ Route::middleware(['web', 'auth:sanctum'])->group(function (): void {
         Route::patch('/orders/{order}/payment-status', AdminOrderPaymentStatusController::class)->name('api.admin.orders.payment-status');
         Route::patch('/orders/{order}/note', AdminOrderNoteController::class)->name('api.admin.orders.note');
         Route::get('/customers', [AdminCustomerController::class, 'index'])->name('api.admin.customers.index');
+        Route::get('/customers/{customer}', [AdminCustomerController::class, 'show'])->name('api.admin.customers.show');
+        Route::post('/customers/{customer}/reset-password', [AdminCustomerController::class, 'resetPassword'])->name('api.admin.customers.reset-password');
         Route::get('/visitors', [AdminVisitorController::class, 'index'])->name('api.admin.visitors.index');
         Route::get('/analytics', AdminAnalyticsController::class)->name('api.admin.analytics');
+        Route::delete('/analytics/prune-oldest-thirty-days', [AdminAnalyticsController::class, 'pruneOldestThirtyDays'])->name('api.admin.analytics.prune');
         Route::get('/reviews', [AdminReviewController::class, 'index'])->name('api.admin.reviews.index');
         Route::patch('/reviews/{review}/status', [AdminReviewController::class, 'updateStatus'])->name('api.admin.reviews.status');
         Route::apiResource('foods', AdminFoodController::class);

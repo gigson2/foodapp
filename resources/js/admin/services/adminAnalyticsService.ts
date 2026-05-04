@@ -1,7 +1,11 @@
 import type { AdminVisitorSession } from '@/types/admin';
-import { adminApiClient } from '@/admin/services/adminApiClient';
+import { adminApiClient, buildAdminQuery } from '@/admin/services/adminApiClient';
 
 type AnalyticsResponse = {
+    date_range?: {
+        from: string;
+        to: string;
+    };
     metrics: {
         total_visitors: number;
         today_visitors: number;
@@ -36,17 +40,24 @@ type AnalyticsResponse = {
 };
 
 export const adminAnalyticsService = {
-    async getAnalytics() {
-        const response = await adminApiClient.get<AnalyticsResponse>('/admin/analytics');
+    async getAnalytics(params?: { dateFrom?: string; dateTo?: string }) {
+        const response = await adminApiClient.get<AnalyticsResponse>('/admin/analytics', {
+            params: buildAdminQuery({
+                date_from: params?.dateFrom,
+                date_to: params?.dateTo,
+            }),
+        });
 
         return response.data;
     },
-    async getVisitors(params: { page?: number; perPage?: number; search?: string }) {
+    async getVisitors(params: { page?: number; perPage?: number; search?: string; dateFrom?: string; dateTo?: string }) {
         const response = await adminApiClient.get('/admin/visitors', {
             params: {
                 page: params.page,
                 per_page: params.perPage,
                 search: params.search,
+                date_from: params.dateFrom,
+                date_to: params.dateTo,
             },
         });
 
@@ -60,6 +71,16 @@ export const adminAnalyticsService = {
                 from: number | null;
                 to: number | null;
             };
+        };
+    },
+    async pruneOldestThirtyDays() {
+        const response = await adminApiClient.delete('/admin/analytics/prune-oldest-thirty-days');
+
+        return response.data as {
+            message: string;
+            deleted_days: number;
+            deleted_sessions: number;
+            deleted_events: number;
         };
     },
 };

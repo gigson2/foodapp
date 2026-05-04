@@ -19,7 +19,7 @@ class StoreFoodRequest extends FormRequest
     {
         return [
             'category_id' => ['required', 'integer', 'exists:categories,id'],
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', 'unique:foods,name'],
             'slug' => ['required', 'string', 'max:255', 'unique:foods,slug'],
             'description' => ['required', 'string'],
             'short_description' => ['nullable', 'string', 'max:255'],
@@ -43,5 +43,13 @@ class StoreFoodRequest extends FormRequest
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'name' => trim((string) $this->input('name')),
+            'slug' => trim((string) $this->input('slug')),
+        ]);
     }
 }

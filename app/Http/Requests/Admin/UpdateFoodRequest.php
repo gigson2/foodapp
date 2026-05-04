@@ -21,7 +21,7 @@ class UpdateFoodRequest extends FormRequest
 
         return [
             'category_id' => ['required', 'integer', 'exists:categories,id'],
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('foods', 'name')->ignore($foodId)],
             'slug' => ['required', 'string', 'max:255', Rule::unique('foods', 'slug')->ignore($foodId)],
             'description' => ['required', 'string'],
             'short_description' => ['nullable', 'string', 'max:255'],
@@ -45,5 +45,13 @@ class UpdateFoodRequest extends FormRequest
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'name' => trim((string) $this->input('name')),
+            'slug' => trim((string) $this->input('slug')),
+        ]);
     }
 }

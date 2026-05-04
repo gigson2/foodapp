@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Support\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,5 +26,14 @@ class UpdateAdminProfileRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
             'avatar' => ['nullable', 'image', 'max:4096'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'name' => trim((string) $this->input('name')),
+            'email' => $this->filled('email') ? strtolower(trim((string) $this->input('email'))) : null,
+            'phone' => PhoneNumber::normalizeUs($this->input('phone')),
+        ]);
     }
 }

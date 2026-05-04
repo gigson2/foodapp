@@ -22,6 +22,7 @@ class StoreOrderRequest extends FormRequest
         return [
             'food_id' => ['required', 'integer', 'exists:foods,id'],
             'quantity' => ['required', 'integer', 'min:1', 'max:99'],
+            'submission_key' => ['required', 'string', 'max:80'],
             'customer_note' => ['nullable', 'string'],
             'order_type' => ['nullable', Rule::in([OrderType::Pickup->value])],
             'payment_method' => ['nullable', Rule::in([PaymentMethod::Cash->value])],

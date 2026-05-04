@@ -34,7 +34,7 @@ export function AdminLayout({ currentUser }: AdminLayoutProps) {
             toast.success('Logged out successfully');
             queryClient.setQueryData(AUTH_SESSION_QUERY_KEY, null);
             await queryClient.clear();
-            navigate('/admin/login', { replace: true });
+            navigate('/', { replace: true });
         },
     });
 

@@ -32,7 +32,6 @@ import { useLocalCustomer } from '@/hooks/useLocalCustomer';
 import { useScrollToSection } from '@/hooks/useScrollToSection';
 import { customerPortalService } from '@/customer/services/customerPortalService';
 import { markAllCustomerNotificationsReadInCache, markCustomerNotificationReadInCache } from '@/admin/utils/notificationCache';
-import { apiClient } from '@/services/apiClient';
 import { orderService } from '@/services/orderService';
 import { getNotificationPermission, subscribeToPush, requestNotificationAccess } from '@/services/pwaService';
 import {
@@ -90,6 +89,14 @@ function getMobileActiveSection(section: string): 'home' | 'menu' | 'reviews' | 
     return 'home';
 }
 
+function createSubmissionKey() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+
+    return `submission-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export function AppShell() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -105,6 +112,7 @@ export function AppShell() {
     const [installPromptReady, setInstallPromptReady] = useState(false);
     const [loadingCustomer, setLoadingCustomer] = useState(false);
     const [loadingReview, setLoadingReview] = useState(false);
+    const [placingOrder, setPlacingOrder] = useState(false);
     const [loginError, setLoginError] = useState<string | null>(null);
     const [loginOpen, setLoginOpen] = useState(false);
     const [notificationPromptDismissed, setNotificationPromptDismissed] = useState(() => readStorage(NOTIFICATION_PROMPT_KEY, false));
@@ -119,14 +127,17 @@ export function AppShell() {
     const { data: categories = [] } = useQuery({
         queryKey: PUBLIC_CATEGORIES_QUERY_KEY,
         queryFn: publicService.getCategories,
+        staleTime: 5 * 60 * 1000,
     });
     const { data: foods = [] } = useQuery({
         queryKey: PUBLIC_FOODS_QUERY_KEY,
         queryFn: publicService.getFoods,
+        staleTime: 5 * 60 * 1000,
     });
     const { data: companySettings = null } = useQuery({
         queryKey: PUBLIC_COMPANY_SETTINGS_QUERY_KEY,
         queryFn: publicService.getCompanySettings,
+        staleTime: 5 * 60 * 1000,
     });
 
     const effectiveCustomer = useMemo(() => {
@@ -149,6 +160,7 @@ export function AppShell() {
     const { data: approvedReviews = [] } = useQuery({
         queryKey: PUBLIC_REVIEWS_QUERY_KEY,
         queryFn: publicService.getApprovedReviews,
+        staleTime: 60 * 1000,
     });
     const customerNotificationsQuery = useQuery({
         enabled: sessionUser?.role === 'customer',
@@ -157,12 +169,15 @@ export function AppShell() {
         refetchInterval: 15_000,
         refetchOnWindowFocus: true,
     });
-    const customerNotifications = customerNotificationsQuery.data ?? [];
+    const customerNotifications = (customerNotificationsQuery.data ?? []).filter(Boolean);
     const unreadCount = customerNotifications.filter((notification) => !notification.read).length;
     const markNotificationReadMutation = useMutation({
         mutationFn: customerPortalService.markNotificationRead,
-        onSuccess: (notification) => {
-            markCustomerNotificationReadInCache(queryClient, notification.id);
+        onMutate: (notificationId) => {
+            markCustomerNotificationReadInCache(queryClient, notificationId);
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: ['customer-portal', 'notifications'] });
         },
     });
     const markAllNotificationsMutation = useMutation({
@@ -405,34 +420,18 @@ export function AppShell() {
     };
 
     const handlePlaceOrder = async (food: Food, quantity: number) => {
+        if (placingOrder) {
+            return;
+        }
+
         if (sessionUser?.role === 'customer') {
             try {
-                const response = await apiClient.post<{ data: { id: number; order_number: string; customer_name: string; customer_phone: string; subtotal: number; total: number; payment_method: string; order_type: string; status: Order['status']; placed_at?: string | null; created_at: string; items: Array<{ id: number; food_id: number | null; food_name: string; unit_price: number; quantity: number; line_total: number }> } }>('/customer/orders', {
-                    food_id: food.id,
+                setPlacingOrder(true);
+                const order = await customerPortalService.createOrder({
+                    foodId: food.id,
                     quantity,
+                    submissionKey: createSubmissionKey(),
                 });
-
-                const apiOrder = response.data.data;
-                const order: Order = {
-                    id: String(apiOrder.id),
-                    orderNumber: apiOrder.order_number,
-                    customerName: apiOrder.customer_name,
-                    customerPhone: apiOrder.customer_phone,
-                    items: apiOrder.items.map((item) => ({
-                        id: String(item.id),
-                        foodId: String(item.food_id ?? ''),
-                        foodName: item.food_name,
-                        price: item.unit_price,
-                        quantity: item.quantity,
-                        total: item.line_total,
-                    })),
-                    subtotal: apiOrder.subtotal,
-                    total: apiOrder.total,
-                    paymentMethod: apiOrder.payment_method as Order['paymentMethod'],
-                    orderType: apiOrder.order_type as Order['orderType'],
-                    status: apiOrder.status,
-                    createdAt: apiOrder.placed_at ?? apiOrder.created_at,
-                };
 
                 setSelectedFood(null);
                 setOrderSuccess(order);
@@ -445,23 +444,30 @@ export function AppShell() {
                 toast.error('Failed to place order', {
                     description: 'Please try again.',
                 });
+            } finally {
+                setPlacingOrder(false);
             }
 
             return;
         }
 
         if (effectiveCustomer) {
-            const order = orderService.createPickupCashOrder({
-                customer: effectiveCustomer,
-                food,
-                quantity,
-            });
+            try {
+                setPlacingOrder(true);
+                const order = orderService.createPickupCashOrder({
+                    customer: effectiveCustomer,
+                    food,
+                    quantity,
+                });
 
-            setSelectedFood(null);
-            setOrderSuccess(order);
-            toast.success('Pickup order received', {
-                description: `${order.orderNumber} was sent to the restaurant.`,
-            });
+                setSelectedFood(null);
+                setOrderSuccess(order);
+                toast.success('Pickup order received', {
+                    description: `${order.orderNumber} was sent to the restaurant.`,
+                });
+            } finally {
+                setPlacingOrder(false);
+            }
 
             return;
         }
@@ -509,32 +515,11 @@ export function AppShell() {
 
         try {
             if (pendingOrder && sessionUser?.role === 'customer') {
-                const response = await apiClient.post<{ data: { id: number; order_number: string; customer_name: string; customer_phone: string; subtotal: number; total: number; payment_method: string; order_type: string; status: Order['status']; placed_at?: string | null; created_at: string; items: Array<{ id: number; food_id: number | null; food_name: string; unit_price: number; quantity: number; line_total: number }> } }>('/customer/orders', {
-                    food_id: pendingOrder.food.id,
+                const order = await customerPortalService.createOrder({
+                    foodId: pendingOrder.food.id,
                     quantity: pendingOrder.quantity,
+                    submissionKey: createSubmissionKey(),
                 });
-
-                const apiOrder = response.data.data;
-                const order: Order = {
-                    id: String(apiOrder.id),
-                    orderNumber: apiOrder.order_number,
-                    customerName: apiOrder.customer_name,
-                    customerPhone: apiOrder.customer_phone,
-                    items: apiOrder.items.map((item) => ({
-                        id: String(item.id),
-                        foodId: String(item.food_id ?? ''),
-                        foodName: item.food_name,
-                        price: item.unit_price,
-                        quantity: item.quantity,
-                        total: item.line_total,
-                    })),
-                    subtotal: apiOrder.subtotal,
-                    total: apiOrder.total,
-                    paymentMethod: apiOrder.payment_method as Order['paymentMethod'],
-                    orderType: apiOrder.order_type as Order['orderType'],
-                    status: apiOrder.status,
-                    createdAt: apiOrder.placed_at ?? apiOrder.created_at,
-                };
 
                 setPendingOrder(null);
                 setSelectedFood(null);
@@ -754,12 +739,13 @@ export function AppShell() {
 
             <FoodOrderModal
                 companySettings={companySettings}
-                food={selectedFood}
-                isOpen={Boolean(selectedFood)}
-                key={selectedFood?.id ?? 'food-order-modal'}
-                onClose={() => setSelectedFood(null)}
-                onPlaceOrder={handlePlaceOrder}
-            />
+            food={selectedFood}
+            isOpen={Boolean(selectedFood)}
+            key={selectedFood?.id ?? 'food-order-modal'}
+            onClose={() => setSelectedFood(null)}
+            onPlaceOrder={handlePlaceOrder}
+            submitting={placingOrder}
+        />
 
             <CustomerDetailsModal
                 initialValues={{

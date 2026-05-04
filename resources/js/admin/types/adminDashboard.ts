@@ -63,6 +63,10 @@ export interface AdminQuickAction {
 }
 
 export interface AdminDashboardSnapshot {
+    dateRange?: {
+        from: string;
+        to: string;
+    };
     metrics: AdminDashboardMetrics;
     recentOrders: AdminOrder[];
     statusBreakdown: AdminStatusBreakdownItem[];

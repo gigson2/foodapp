@@ -1,10 +1,12 @@
 import axios from 'axios';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sessionService } from '@/services/sessionService';
 
 export const AUTH_SESSION_QUERY_KEY = ['auth', 'session'] as const;
 
 export function useAuthSession() {
+    const queryClient = useQueryClient();
     const query = useQuery({
         queryKey: AUTH_SESSION_QUERY_KEY,
         queryFn: async () => {
@@ -20,6 +22,16 @@ export function useAuthSession() {
         },
         retry: false,
     });
+
+    useEffect(() => {
+        function handleUnauthorized() {
+            queryClient.setQueryData(AUTH_SESSION_QUERY_KEY, null);
+        }
+
+        window.addEventListener('restaurant:unauthorized', handleUnauthorized);
+
+        return () => window.removeEventListener('restaurant:unauthorized', handleUnauthorized);
+    }, [queryClient]);
 
     return {
         ...query,

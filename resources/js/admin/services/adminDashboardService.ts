@@ -4,6 +4,10 @@ import type { AdminReviewSummary } from '@/admin/types/adminReview';
 import { adminApiClient } from '@/admin/services/adminApiClient';
 
 type DashboardResponse = {
+    date_range?: {
+        from: string;
+        to: string;
+    };
     metrics: {
         total_orders: number;
         today_orders: number;
@@ -105,11 +109,17 @@ function mapPendingReview(review: ApiReview) {
 }
 
 export const adminDashboardService = {
-    async getDashboardSnapshot(): Promise<AdminDashboardSnapshot> {
-        const response = await adminApiClient.get<DashboardResponse>('/admin/dashboard/overview');
+    async getDashboardSnapshot(params?: { dateFrom?: string; dateTo?: string }): Promise<AdminDashboardSnapshot> {
+        const response = await adminApiClient.get<DashboardResponse>('/admin/dashboard/overview', {
+            params: {
+                date_from: params?.dateFrom,
+                date_to: params?.dateTo,
+            },
+        });
         const payload = response.data;
 
         return {
+            dateRange: payload.date_range,
             metrics: {
                 totalOrders: payload.metrics.total_orders,
                 todayOrders: payload.metrics.today_orders,

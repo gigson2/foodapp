@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Support\PhoneNumber;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +17,7 @@ class LoginController extends Controller
     public function __invoke(LoginRequest $request): JsonResponse
     {
         $login = trim($request->string('login')->toString());
-        $normalizedPhone = $this->normalizePhone($login);
+        $normalizedPhone = PhoneNumber::normalizeUs($login);
 
         $user = User::query()
             ->where(function ($query) use ($login, $normalizedPhone): void {
@@ -59,24 +60,5 @@ class LoginController extends Controller
         $segment = $request->userAgent() ? substr(md5($request->userAgent()), 0, 8) : 'unknown';
 
         return sprintf('spa-%s-%s', now()->timestamp, $segment);
-    }
-
-    private function normalizePhone(string $value): ?string
-    {
-        $digits = preg_replace('/\D+/', '', $value) ?? '';
-
-        if ($digits === '') {
-            return null;
-        }
-
-        if (strlen($digits) === 10) {
-            return '+1'.$digits;
-        }
-
-        if (strlen($digits) === 11 && str_starts_with($digits, '1')) {
-            return '+'.$digits;
-        }
-
-        return '+'.$digits;
     }
 }

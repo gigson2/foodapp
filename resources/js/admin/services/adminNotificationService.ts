@@ -3,22 +3,23 @@ import { adminApiClient, buildAdminQuery, mapPaginatedResponse, type AdminPagina
 
 type ApiNotification = {
     id: string;
-    type: string;
-    data: Record<string, unknown>;
+    type: string | null;
+    data: Record<string, unknown> | null;
     read_at?: string | null;
     created_at: string;
 };
 
 function mapNotification(notification: ApiNotification): AdminNotificationItem {
+    const data = notification.data ?? {};
     return {
         id: notification.id,
-        title: String(notification.data.title ?? 'Notification'),
-        message: String(notification.data.message ?? ''),
-        type: (notification.data.kind as AdminNotificationItem['type']) ?? 'system',
+        title: String(data.title ?? 'Notification'),
+        message: String(data.message ?? ''),
+        type: (data.kind as AdminNotificationItem['type']) ?? 'system',
         read: Boolean(notification.read_at),
         createdAt: notification.created_at,
-        orderId: notification.data.order_id ? String(notification.data.order_id) : undefined,
-        reviewId: notification.data.review_id ? String(notification.data.review_id) : undefined,
+        orderId: data.order_id ? String(data.order_id) : undefined,
+        reviewId: data.review_id ? String(data.review_id) : undefined,
     };
 }
 

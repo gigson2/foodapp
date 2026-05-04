@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\DatabaseNotificationResource;
+use App\Support\AdminPagination;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Notifications\DatabaseNotification;
@@ -12,8 +13,20 @@ class NotificationController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
+        $query = $request->user()->notifications()->latest();
+
+        if ($request->hasAny(['page', 'per_page'])) {
+            $perPage = AdminPagination::resolvePerPage($request);
+
+            return DatabaseNotificationResource::collection(
+                $query
+                    ->paginate($perPage)
+                    ->appends($request->query()),
+            );
+        }
+
         return DatabaseNotificationResource::collection(
-            $request->user()->notifications()->latest()->get(),
+            $query->get(),
         );
     }
 

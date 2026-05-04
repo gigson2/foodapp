@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BellRing } from 'lucide-react';
 import { toast } from 'sonner';
+import { AdminPaginationControls } from '@/admin/components/common/AdminPaginationControls';
 import { AdminSectionCard } from '@/admin/components/common/AdminSectionCard';
 import { Button } from '@/components/common/Button';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -10,18 +12,26 @@ import { formatDateTime } from '@/utils/admin';
 
 export function CustomerNotificationsPage() {
     const queryClient = useQueryClient();
+    const [page, setPage] = useState(1);
+    const [perPage, setPerPage] = useState(10);
     const notificationsQuery = useQuery({
-        queryKey: ['customer-portal', 'notifications'],
-        queryFn: customerPortalService.getNotifications,
+        queryKey: ['customer-portal', 'notifications-page', { page, perPage }],
+        queryFn: () => customerPortalService.getNotificationsPage({ page, perPage }),
         refetchInterval: 15_000,
         refetchOnWindowFocus: true,
     });
 
     const markReadMutation = useMutation({
         mutationFn: customerPortalService.markNotificationRead,
-        onSuccess: (notification) => {
+        onMutate: (notificationId) => {
+            markCustomerNotificationReadInCache(queryClient, notificationId);
+        },
+        onSuccess: () => {
             toast.success('Notification marked as read');
-            markCustomerNotificationReadInCache(queryClient, notification.id);
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: ['customer-portal', 'notifications'] });
+            queryClient.invalidateQueries({ queryKey: ['customer-portal', 'notifications-page'] });
         },
     });
 
@@ -41,7 +51,8 @@ export function CustomerNotificationsPage() {
         );
     }
 
-    const notifications = notificationsQuery.data ?? [];
+    const notifications = (notificationsQuery.data?.items ?? []).filter(Boolean);
+    const meta = notificationsQuery.data?.meta;
     const hasUnreadNotifications = notifications.some((notification) => !notification.read);
 
     return (
@@ -72,10 +83,10 @@ export function CustomerNotificationsPage() {
                                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                                     <div>
                                         <div className="flex flex-wrap items-center gap-3">
-                                            <p className="font-semibold">{notification.title}</p>
+                                            <p className="font-semibold">{notification.title ?? 'Notification'}</p>
                                             {!notification.read ? <span className="ui-outline-accent rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--primary-500)]">Unread</span> : null}
                                         </div>
-                                        <p className="mt-2 text-sm leading-7 text-muted">{notification.message}</p>
+                                        <p className="mt-2 text-sm leading-7 text-muted">{notification.message ?? 'No message available.'}</p>
                                         <p className="mt-3 text-xs text-muted">{formatDateTime(notification.createdAt)}</p>
                                     </div>
                                     {!notification.read ? (
@@ -88,6 +99,17 @@ export function CustomerNotificationsPage() {
                         ))}
                     </div>
                 )}
+
+                {meta ? (
+                    <AdminPaginationControls
+                        meta={meta}
+                        onPageChange={setPage}
+                        onPerPageChange={(nextPerPage) => {
+                            setPerPage(nextPerPage);
+                            setPage(1);
+                        }}
+                    />
+                ) : null}
             </AdminSectionCard>
         </div>
     );

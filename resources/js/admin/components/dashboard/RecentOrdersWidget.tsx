@@ -23,6 +23,11 @@ export function RecentOrdersWidget({ orders }: RecentOrdersWidgetProps) {
             </div>
 
             <div className="mt-5 space-y-4">
+                {orders.length === 0 ? (
+                    <div className="ui-surface-solid rounded-[1.4rem] p-4 text-sm text-muted">
+                        No orders were recorded in the selected date range.
+                    </div>
+                ) : null}
                 {orders.map((order) => {
                     const statusMeta = getOrderStatusMeta(order.status);
                     const cashMeta = getCashStatusMeta(order.cashStatus);

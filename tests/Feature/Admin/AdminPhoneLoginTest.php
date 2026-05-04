@@ -15,14 +15,14 @@ class AdminPhoneLoginTest extends TestCase
         $this->seed(RestaurantPlatformSeeder::class);
 
         $response = $this->withSession([])->postJson('/api/login', [
-            'login' => '(402) 555-0100',
-            'password' => 'password',
+            'login' => '(646) 250-3361',
+            'password' => 'a.password!',
         ]);
 
         $response
             ->assertOk()
             ->assertJsonPath('user.role', 'admin')
-            ->assertJsonPath('user.phone', '+14025550100');
+            ->assertJsonPath('user.phone', '+16462503361');
 
         $this->assertAuthenticated();
     }

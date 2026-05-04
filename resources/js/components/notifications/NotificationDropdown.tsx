@@ -12,7 +12,9 @@ type NotificationDropdownProps = {
 };
 
 export function NotificationDropdown({ notifications, onMarkAllRead, onMarkRead }: NotificationDropdownProps) {
-    const unreadNotifications = notifications.filter((notification) => !notification.read).slice(0, 3);
+    const unreadNotifications = notifications
+        .filter((notification): notification is AppNotification => Boolean(notification) && !notification.read)
+        .slice(0, 3);
 
     return (
         <div
@@ -41,8 +43,8 @@ export function NotificationDropdown({ notifications, onMarkAllRead, onMarkRead 
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <div>
-                                    <p className="font-medium">{notification.title}</p>
-                                    <p className="mt-1 text-sm leading-6 text-muted">{notification.message}</p>
+                                    <p className="font-medium">{notification.title ?? 'Notification'}</p>
+                                    <p className="mt-1 text-sm leading-6 text-muted">{notification.message ?? 'No message available.'}</p>
                                 </div>
                                 <Badge className="shrink-0 bg-[color:var(--accent-500)]/16 text-[color:var(--accent-900)]">
                                     New

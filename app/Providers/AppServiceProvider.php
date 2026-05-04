@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Notifications\Channels\WebPushChannel;
 use App\Services\WebPushService;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,6 +24,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('auth-login', function ($request) {
+            $login = strtolower(trim((string) $request->input('login')));
+
+            return Limit::perMinute(6)->by($login.'|'.$request->ip());
+        });
+
+        RateLimiter::for('auth-register', function ($request) {
+            $phone = trim((string) $request->input('phone'));
+
+            return Limit::perMinutes(10, 4)->by($phone.'|'.$request->ip());
+        });
+
+        RateLimiter::for('customer-orders', function ($request) {
+            return Limit::perMinute(10)->by((string) ($request->user()?->id ?? $request->ip()));
+        });
+
         Notification::extend('webpush', function ($app) {
             return new WebPushChannel($app->make(WebPushService::class));
         });

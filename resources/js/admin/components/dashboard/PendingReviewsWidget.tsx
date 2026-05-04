@@ -19,6 +19,11 @@ export function PendingReviewsWidget({ reviews }: PendingReviewsWidgetProps) {
                 </a>
             </div>
             <div className="mt-5 space-y-4">
+                {reviews.length === 0 ? (
+                    <div className="ui-surface-solid rounded-[1.3rem] p-4 text-sm text-muted">
+                        No pending reviews were submitted in the selected date range.
+                    </div>
+                ) : null}
                 {reviews.map((review) => (
                     <div className="ui-surface-solid rounded-[1.3rem] p-4" key={review.id}>
                         <div className="flex items-center justify-between gap-3">

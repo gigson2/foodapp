@@ -15,6 +15,8 @@ class VisitorController extends Controller
     {
         $perPage = AdminPagination::resolvePerPage($request);
         $search = $request->string('search')->trim()->toString();
+        $dateFrom = $request->date('date_from');
+        $dateTo = $request->date('date_to');
 
         return VisitorSessionResource::collection(
             VisitorSession::query()
@@ -32,6 +34,8 @@ class VisitorController extends Controller
                                 ->orWhere('phone', 'like', "%{$search}%"));
                     });
                 })
+                ->when($dateFrom, fn ($query) => $query->whereDate('created_at', '>=', $dateFrom))
+                ->when($dateTo, fn ($query) => $query->whereDate('created_at', '<=', $dateTo))
                 ->latest('last_seen_at')
                 ->paginate($perPage)
                 ->appends($request->query()),

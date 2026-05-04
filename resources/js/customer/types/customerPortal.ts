@@ -13,6 +13,10 @@ export type CustomerDashboardMetrics = {
 export type CustomerStatusBreakdown = Record<string, number>;
 
 export type CustomerDashboardSummary = {
+    dateRange?: {
+        from: string;
+        to: string;
+    };
     metrics: CustomerDashboardMetrics;
     statusBreakdown: CustomerStatusBreakdown;
     recentOrders: Order[];
@@ -55,4 +59,18 @@ export type CustomerPortalOrder = Order;
 export type CustomerPortalNotification = AppNotification;
 export type CustomerPortalReview = Review & {
     orderNumber?: string;
+};
+
+export type CustomerPaginationMeta = {
+    currentPage: number;
+    lastPage: number;
+    perPage: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+};
+
+export type CustomerPaginatedResult<T> = {
+    items: T[];
+    meta: CustomerPaginationMeta;
 };

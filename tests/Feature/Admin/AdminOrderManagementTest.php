@@ -56,17 +56,17 @@ class AdminOrderManagementTest extends TestCase
         Sanctum::actingAs($admin);
 
         $response = $this->patchJson("/api/admin/orders/{$order->id}/status", [
-            'status' => OrderStatus::Completed->value,
+            'status' => OrderStatus::Processing->value,
         ]);
 
         $response
             ->assertOk()
-            ->assertJsonPath('data.status', OrderStatus::Completed->value);
+            ->assertJsonPath('data.status', OrderStatus::Processing->value);
 
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
-            'status' => OrderStatus::Completed->value,
-            'payment_status' => PaymentStatus::Paid->value,
+            'status' => OrderStatus::Processing->value,
+            'payment_status' => PaymentStatus::Unpaid->value,
         ]);
     }
 }

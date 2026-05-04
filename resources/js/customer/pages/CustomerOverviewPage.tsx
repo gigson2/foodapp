@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Bell, CircleDollarSign, PackageCheck, Star } from 'lucide-react';
+import { Bell, CircleDollarSign, PackageCheck, RotateCcw, Star } from 'lucide-react';
 import { AdminEChart } from '@/admin/components/common/AdminEChart';
 import { AdminSectionCard } from '@/admin/components/common/AdminSectionCard';
+import { Button } from '@/components/common/Button';
+import { Input } from '@/components/common/Input';
 import { MoneyDisplay } from '@/components/ordering/MoneyDisplay';
 import { OrderStatusBadge } from '@/components/ordering/OrderStatusBadge';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -37,10 +39,37 @@ function StatCard({
     );
 }
 
+function toDateInputValue(date: Date) {
+    return date.toISOString().slice(0, 10);
+}
+
+function getCustomerDefaultRange() {
+    const end = new Date();
+    const start = new Date(end);
+    start.setDate(end.getDate() - 1);
+
+    return {
+        dateFrom: toDateInputValue(start),
+        dateTo: toDateInputValue(end),
+    };
+}
+
+function formatRangeLabel(dateFrom?: string, dateTo?: string) {
+    if (!dateFrom || !dateTo) {
+        return '';
+    }
+
+    const from = new Date(`${dateFrom}T00:00:00`);
+    const to = new Date(`${dateTo}T00:00:00`);
+
+    return `${from.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} - ${to.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+}
+
 export function CustomerOverviewPage() {
+    const [range, setRange] = useState(getCustomerDefaultRange);
     const dashboardQuery = useQuery({
-        queryKey: ['customer-portal', 'dashboard'],
-        queryFn: customerPortalService.getDashboard,
+        queryKey: ['customer-portal', 'dashboard', range],
+        queryFn: () => customerPortalService.getDashboard(range),
         refetchInterval: 15_000,
         refetchOnWindowFocus: true,
     });
@@ -99,9 +128,24 @@ export function CustomerOverviewPage() {
     }
 
     const metrics = dashboardQuery.data?.metrics;
+    const appliedDateFrom = dashboardQuery.data?.dateRange?.from ?? range.dateFrom;
+    const appliedDateTo = dashboardQuery.data?.dateRange?.to ?? range.dateTo;
+    const rangeLabel = formatRangeLabel(appliedDateFrom, appliedDateTo);
     const recentOrders = dashboardQuery.data?.recentOrders ?? [];
-    const notifications = notificationsQuery.data ?? [];
-    const reviews = reviewsQuery.data ?? [];
+    const notifications = ((notificationsQuery.data ?? []).filter(Boolean)).filter((notification) => {
+        const createdAt = new Date(notification.createdAt).getTime();
+        const from = new Date(`${appliedDateFrom}T00:00:00`).getTime();
+        const to = new Date(`${appliedDateTo}T23:59:59`).getTime();
+
+        return createdAt >= from && createdAt <= to;
+    });
+    const reviews = (reviewsQuery.data ?? []).filter((review) => {
+        const createdAt = new Date(review.createdAt).getTime();
+        const from = new Date(`${appliedDateFrom}T00:00:00`).getTime();
+        const to = new Date(`${appliedDateTo}T23:59:59`).getTime();
+
+        return createdAt >= from && createdAt <= to;
+    });
 
     return (
         <div className="section-shell space-y-6 py-6">
@@ -113,11 +157,31 @@ export function CustomerOverviewPage() {
                 </p>
             </div>
 
+            <AdminSectionCard className="p-5 sm:p-6">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Dashboard range</p>
+                        <h3 className="mt-2 text-2xl">Filter your account activity by date</h3>
+                        <p className="mt-2 text-sm text-muted">Default view shows the past 2 days. Current range: {rangeLabel}</p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[24rem]">
+                        <Input label="From" max={range.dateTo} onChange={(event) => setRange((current) => ({ ...current, dateFrom: event.target.value }))} type="date" value={range.dateFrom} />
+                        <Input label="To" min={range.dateFrom} onChange={(event) => setRange((current) => ({ ...current, dateTo: event.target.value }))} type="date" value={range.dateTo} />
+                    </div>
+                </div>
+                <div className="mt-4 flex justify-end">
+                    <Button onClick={() => setRange(getCustomerDefaultRange())} size="sm" variant="ghost">
+                        <RotateCcw className="h-4 w-4" />
+                        Reset to past 2 days
+                    </Button>
+                </div>
+            </AdminSectionCard>
+
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard description="Total orders linked to your customer account." icon={PackageCheck} title="Orders" value={metrics?.totalOrders ?? 0} />
-                <StatCard description="Orders currently being handled for pickup." icon={Bell} title="Active" value={metrics?.activeOrders ?? 0} />
-                <StatCard description="Completed pickup orders collected so far." icon={CircleDollarSign} title="Completed" value={metrics?.completedOrders ?? 0} />
-                <StatCard description="Approved or pending customer reviews you submitted." icon={Star} title="Reviews" value={reviews.length} />
+                <StatCard description="Orders placed within the selected range." icon={PackageCheck} title="Orders" value={metrics?.totalOrders ?? 0} />
+                <StatCard description="Orders currently being handled for pickup in the selected range." icon={Bell} title="Active" value={metrics?.activeOrders ?? 0} />
+                <StatCard description="Completed pickup orders inside the selected range." icon={CircleDollarSign} title="Completed" value={metrics?.completedOrders ?? 0} />
+                <StatCard description="Approved or pending reviews submitted in the selected range." icon={Star} title="Reviews" value={reviews.length} />
             </div>
 
             <div className="grid gap-6 xl:grid-cols-[0.56fr_0.44fr]">
@@ -193,8 +257,8 @@ export function CustomerOverviewPage() {
                             <div className="px-5 py-4" key={notification.id}>
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
-                                        <p className="font-semibold">{notification.title}</p>
-                                        <p className="mt-1 text-sm text-muted">{notification.message}</p>
+                                        <p className="font-semibold">{notification.title ?? 'Notification'}</p>
+                                        <p className="mt-1 text-sm text-muted">{notification.message ?? 'No message available.'}</p>
                                     </div>
                                     {!notification.read ? <span className="ui-outline-accent rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--primary-500)]">New</span> : null}
                                 </div>
