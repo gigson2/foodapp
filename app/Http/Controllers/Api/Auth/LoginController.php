@@ -38,7 +38,7 @@ class LoginController extends Controller
             ], 422);
         }
 
-        Auth::login($user);
+        Auth::login($user, remember: true);
 
         if ($request->hasSession()) {
             $request->session()->regenerate();

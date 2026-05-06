@@ -13,9 +13,9 @@ type HeroSectionProps = {
 const defaultHeroSlides = [
     {
         image: '/assets/images/image6.jpeg',
-        title: 'Tender Grilled Chicken & Goat',
+        title: 'Tender Grilled Chicken & Lamb',
         description:
-            'Large-scale grilled chicken and goat prepared with professional seasoning, neat packaging, and pickup-ready service.',
+            'Large-scale grilled chicken and lamb prepared with professional seasoning, neat packaging, and pickup-ready service.',
     },
     {
         image: '/assets/images/image5.jpeg',

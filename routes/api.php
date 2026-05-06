@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\PasswordRecoveryController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\PushNotificationTestController;
+use App\Http\Controllers\Api\Customer\ClaimGuestOrdersController;
 use App\Http\Controllers\Api\Customer\NotificationController as CustomerNotificationController;
 use App\Http\Controllers\Api\Customer\DashboardController as CustomerDashboardController;
 use App\Http\Controllers\Api\Customer\OrderController as CustomerOrderController;
@@ -71,6 +72,7 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::get('/dashboard', CustomerDashboardController::class)->name('api.customer.dashboard');
         Route::get('/orders', [CustomerOrderController::class, 'index'])->name('api.customer.orders.index');
         Route::post('/orders', [CustomerOrderController::class, 'store'])->middleware('throttle:customer-orders')->name('api.customer.orders.store');
+        Route::post('/orders/claim', ClaimGuestOrdersController::class)->name('api.customer.orders.claim');
         Route::get('/orders/{order}', [CustomerOrderController::class, 'show'])->name('api.customer.orders.show');
         Route::get('/reviews', [CustomerReviewController::class, 'index'])->name('api.customer.reviews.index');
         Route::post('/reviews', [CustomerReviewController::class, 'store'])->name('api.customer.reviews.store');

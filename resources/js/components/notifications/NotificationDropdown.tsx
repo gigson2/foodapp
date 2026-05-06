@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 import { Bell, CheckCheck } from 'lucide-react';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
@@ -12,16 +13,37 @@ type NotificationDropdownProps = {
 };
 
 export function NotificationDropdown({ notifications, onMarkAllRead, onMarkRead }: NotificationDropdownProps) {
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const el = dropdownRef.current;
+        if (!el) return;
+
+        const correct = () => {
+            el.style.transform = '';
+            const rect = el.getBoundingClientRect();
+            const leftOverflow = rect.left;
+            if (leftOverflow < 8) {
+                el.style.transform = `translateX(${8 - leftOverflow}px)`;
+            }
+        };
+
+        correct();
+        window.addEventListener('resize', correct);
+        return () => window.removeEventListener('resize', correct);
+    }, []);
+
     const unreadNotifications = notifications
         .filter((notification): notification is AppNotification => Boolean(notification) && !notification.read)
         .slice(0, 3);
 
     return (
         <div
+            ref={dropdownRef}
             className="absolute right-0 top-[calc(100%+0.75rem)] z-[90] w-[min(92vw,24rem)] rounded-[1.75rem] border border-[color:var(--ui-border-strong)] p-4 shadow-[0_24px_60px_rgba(0,0,0,0.24)]"
             style={{ background: 'color-mix(in srgb, var(--background-100) 96%, black 4%)' }}
         >
-            <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <div>
                     <p className="text-sm font-semibold">Notifications</p>
                     <p className="mt-1 text-xs text-muted">Order updates, review events, and account alerts.</p>

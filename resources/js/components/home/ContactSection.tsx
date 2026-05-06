@@ -30,7 +30,7 @@ export function ContactSection({ companySettings, onOrderNow }: ContactSectionPr
                     <div className="relative z-10 mx-auto max-w-4xl text-center">
                         <h2 className="text-5xl sm:text-6xl lg:text-[5rem]">Pickup From Our Grill Location</h2>
                         <p className="mt-5 text-base leading-8 text-muted">
-                            {companyName} serves pickup-only grilled chicken and goat from {locationLabel}.
+                            {companyName} serves pickup-only grilled chicken and lamb from {locationLabel}.
                         </p>
                         {tagline ? <p className="mt-3 text-sm leading-7 text-muted">{tagline}</p> : null}
 

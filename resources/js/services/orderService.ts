@@ -71,6 +71,10 @@ export const orderService = {
 
         return order;
     },
+    removeOrdersByIds(ids: string[]) {
+        const idSet = new Set(ids);
+        persist(this.getOrders().filter((o) => !idSet.has(o.id)));
+    },
     subscribe(listener: () => void) {
         listeners.add(listener);
 

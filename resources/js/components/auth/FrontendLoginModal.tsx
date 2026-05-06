@@ -37,7 +37,7 @@ const registerSchema = z.object({
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
-type PasswordRecoveryLookup = 'phone' | 'email';
+type PasswordRecoveryLookup = 'email';
 
 type FrontendLoginModalProps = {
     errorMessage?: string | null;
@@ -54,6 +54,7 @@ type FrontendLoginModalProps = {
         password: string;
         passwordConfirmation: string;
     }) => Promise<void> | void;
+    onSwitchToLogin?: () => void;
 };
 
 export function FrontendLoginModal({
@@ -65,10 +66,10 @@ export function FrontendLoginModal({
     onRequestPasswordReset,
     onRegister,
     onResetPassword,
+    onSwitchToLogin,
 }: FrontendLoginModalProps) {
     const isMobile = useMediaQuery('(max-width: 767px)');
     const [mode, setMode] = useState<'login' | 'register' | 'reset'>('login');
-    const [resetLookup, setResetLookup] = useState<PasswordRecoveryLookup>('phone');
     const [resetStep, setResetStep] = useState<'request' | 'verify'>('request');
     const [resetIdentifier, setResetIdentifier] = useState('');
     const [resetCode, setResetCode] = useState('');
@@ -89,6 +90,7 @@ export function FrontendLoginModal({
     });
     const {
         formState: { errors: registerErrors },
+        getValues: getRegisterValues,
         handleSubmit: handleRegisterSubmit,
         register: registerField,
         setValue: setRegisterValue,
@@ -123,7 +125,6 @@ export function FrontendLoginModal({
     const openResetMode = () => {
         setMode('reset');
         setResetStep('request');
-        setResetLookup('phone');
         setResetIdentifier('');
         setResetCode('');
         setResetPassword('');
@@ -133,31 +134,20 @@ export function FrontendLoginModal({
 
     const handleResetIdentifierChange = (value: string) => {
         setResetValidationMessage(null);
-        setResetIdentifier(resetLookup === 'phone' ? formatUsPhone(value) : value.trimStart());
-    };
-
-    const handleResetLookupChange = (lookup: PasswordRecoveryLookup) => {
-        setResetLookup(lookup);
-        setResetIdentifier('');
-        setResetValidationMessage(null);
+        setResetIdentifier(value.trimStart());
     };
 
     const handlePasswordResetRequest = async () => {
         const trimmedIdentifier = resetIdentifier.trim();
 
-        if (resetLookup === 'phone' && !isValidUsPhone(trimmedIdentifier)) {
-            setResetValidationMessage('Enter a valid USA phone number.');
-            return;
-        }
-
-        if (resetLookup === 'email' && !z.string().trim().email().safeParse(trimmedIdentifier).success) {
+        if (!z.string().trim().email().safeParse(trimmedIdentifier).success) {
             setResetValidationMessage('Enter a valid email address.');
             return;
         }
 
         setResetValidationMessage(null);
         await onRequestPasswordReset({
-            lookup: resetLookup,
+            lookup: 'email',
             login: trimmedIdentifier,
         });
         setResetStep('verify');
@@ -184,7 +174,7 @@ export function FrontendLoginModal({
         setResetValidationMessage(null);
 
         await onResetPassword({
-            lookup: resetLookup,
+            lookup: 'email',
             login: resetIdentifier.trim(),
             code: trimmedCode,
             password: resetPassword,
@@ -242,24 +232,18 @@ export function FrontendLoginModal({
                 </form>
             ) : mode === 'reset' ? (
                 <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-2 rounded-[1.4rem] p-1" style={{ background: 'var(--ui-surface-muted)' }}>
-                        <button className={`rounded-[1.1rem] px-4 py-2 text-sm font-semibold transition ${resetLookup === 'phone' ? 'ui-active-nav text-(--primary-500)' : 'text-muted'}`} onClick={() => handleResetLookupChange('phone')} type="button">Phone first</button>
-                        <button className={`rounded-[1.1rem] px-4 py-2 text-sm font-semibold transition ${resetLookup === 'email' ? 'ui-active-nav text-(--primary-500)' : 'text-muted'}`} onClick={() => handleResetLookupChange('email')} type="button">Email fallback</button>
-                    </div>
-
                     {resetStep === 'request' ? (
                         <div className="space-y-4">
                             <Input
-                                autoComplete={resetLookup === 'phone' ? 'tel-national' : 'email'}
-                                inputMode={resetLookup === 'phone' ? 'tel' : 'email'}
-                                label={resetLookup === 'phone' ? 'Phone number' : 'Email address'}
-                                maxLength={resetLookup === 'phone' ? 14 : undefined}
+                                autoComplete="email"
+                                inputMode="email"
+                                label="Email address"
                                 onChange={(event) => handleResetIdentifierChange(event.target.value)}
-                                placeholder={resetLookup === 'phone' ? '(402) 555-0100' : 'you@example.com'}
+                                placeholder="you@example.com"
                                 value={resetIdentifier}
                             />
                             <div className="rounded-3xl border border-white/10 bg-white/6 p-4 text-sm leading-7 text-muted">
-                                Enter your phone number first. If we find a matching account and it has a recovery email on file, we will send a 6-digit reset code there.
+                                Enter your account email address. We will send a 6-digit reset code there.
                             </div>
                             {resetValidationMessage ? <p className="text-sm text-(--primary-600)">{resetValidationMessage}</p> : null}
                             {errorMessage ? <p className="text-sm text-(--primary-600)">{errorMessage}</p> : null}
@@ -273,7 +257,7 @@ export function FrontendLoginModal({
                             <div className="rounded-3xl border border-white/10 bg-white/6 p-4 text-sm leading-7 text-muted">
                                 Enter the 6-digit code sent to the recovery email on your account, then choose a new password.
                             </div>
-                            <Input label={resetLookup === 'phone' ? 'Phone number' : 'Email address'} onChange={(event) => handleResetIdentifierChange(event.target.value)} value={resetIdentifier} />
+                            <Input label="Email address" onChange={(event) => handleResetIdentifierChange(event.target.value)} value={resetIdentifier} />
                             <Input inputMode="numeric" label="Reset code" maxLength={6} onChange={(event) => {
                                 setResetValidationMessage(null);
                                 setResetCode(event.target.value.replace(/\D+/g, '').slice(0, 6));
@@ -323,7 +307,24 @@ export function FrontendLoginModal({
                         <br />
                         Registration uses your full name, USA phone number, password, and an optional recovery email.
                     </div>
-                    {errorMessage ? <p className="text-sm text-(--primary-600)">{errorMessage}</p> : null}
+                    {errorMessage ? (
+                        <div className="space-y-2">
+                            <p className="text-sm text-(--primary-600)">{errorMessage}</p>
+                            {onSwitchToLogin ? (
+                                <button
+                                    className="text-sm font-semibold text-(--primary-500)"
+                                    onClick={() => {
+                                        setValue('phone', getRegisterValues('phone'));
+                                        setMode('login');
+                                        onSwitchToLogin();
+                                    }}
+                                    type="button"
+                                >
+                                    Sign in instead &rarr;
+                                </button>
+                            ) : null}
+                        </div>
+                    ) : null}
                     <Button className="w-full" disabled={loading} type="submit">
                         {loading ? <LoadingSpinner /> : null}
                         Create account

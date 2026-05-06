@@ -19,7 +19,7 @@ export function PopularGrillsSection({ foods, onSelectFood }: PopularGrillsSecti
             <SectionContainer
                 align="center"
                 className="relative pt-14 pb-20 lg:pt-16 lg:pb-[8.5rem]"
-                description="Our most requested grill packs are prepared with tender chicken and goat, neat takeaway presentation, dependable availability, and hospitality that keeps customer service first."
+                description="Our most requested grill packs are prepared with tender chicken and lamb, neat takeaway presentation, dependable availability, and hospitality that keeps customer service first."
                 eyebrow="Popular Grills"
                 id="popular"
                 tone="inverse"

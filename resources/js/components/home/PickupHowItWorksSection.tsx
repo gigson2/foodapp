@@ -15,7 +15,7 @@ export function PickupHowItWorksSection({ companySettings }: PickupHowItWorksSec
     const steps = [
         {
             title: 'Choose Your Grill',
-            description: 'Browse grilled goat, grilled chicken, or mixed packs.',
+            description: 'Browse grilled lamb, grilled chicken, or mixed packs.',
             icon: PackageSearch,
         },
         {

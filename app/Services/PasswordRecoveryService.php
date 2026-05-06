@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\PasswordResetOtp;
 use App\Models\User;
 use App\Notifications\CustomerPasswordResetOtpNotification;
-use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -99,22 +98,7 @@ class PasswordRecoveryService
      */
     protected function resolveUser(string $login, string $lookup): array
     {
-        $trimmedLogin = trim($login);
-
-        if ($lookup === 'phone') {
-            $normalizedPhone = PhoneNumber::normalizeUs($trimmedLogin);
-
-            if (! $normalizedPhone) {
-                return [null, null];
-            }
-
-            return [
-                User::query()->where('phone', $normalizedPhone)->first(),
-                $normalizedPhone,
-            ];
-        }
-
-        $normalizedEmail = strtolower($trimmedLogin);
+        $normalizedEmail = strtolower(trim($login));
 
         return [
             User::query()->where('email', $normalizedEmail)->first(),

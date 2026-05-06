@@ -36,17 +36,17 @@ export const mockAdminDashboard: AdminDashboardSnapshot = {
         { label: 'Sun', amount: 0 },
     ],
     popularFoods: [
-        { id: 'food_001', name: 'Grilled Goat Pack', ordersCount: 44, revenue: 1320 },
+        { id: 'food_001', name: 'Grilled Lamb Pack', ordersCount: 44, revenue: 1320 },
         { id: 'food_002', name: 'Grilled Chicken Pack', ordersCount: 38, revenue: 950 },
-        { id: 'food_003', name: 'Family Goat Tray', ordersCount: 15, revenue: 1110 },
-        { id: 'food_004', name: 'Mixed Goat & Chicken Pack', ordersCount: 22, revenue: 792 },
+        { id: 'food_003', name: 'Family Lamb Tray', ordersCount: 15, revenue: 1110 },
+        { id: 'food_004', name: 'Mixed Lamb & Chicken Pack', ordersCount: 22, revenue: 792 },
     ],
     pendingReviews: [
         {
             id: 'rev_001',
             customerName: 'Esi Agyeman',
             rating: 5,
-            message: 'The goat was soft, hot, and packaged very neatly for pickup.',
+            message: 'The lamb was soft, hot, and packaged very neatly for pickup.',
             createdAt: '2026-05-03T09:05:00-05:00',
         },
         {

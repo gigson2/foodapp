@@ -9,7 +9,7 @@ const galleryItems = [
     },
     {
         src: '/assets/images/image2.jpeg',
-        alt: 'Close-up of grilled goat pieces cooking over open flame',
+        alt: 'Close-up of grilled lamb pieces cooking over open flame',
         imageClassName: 'aspect-[4/5] object-[center_48%] md:aspect-[5/6]',
     },
     {
@@ -19,12 +19,12 @@ const galleryItems = [
     },
     {
         src: '/assets/images/image4.jpeg',
-        alt: 'Packaged grilled goat in a takeaway container with onions and tomatoes',
+        alt: 'Packaged grilled lamb in a takeaway container with onions and tomatoes',
         imageClassName: 'aspect-[4/5] object-[center_36%] md:aspect-[5/6]',
     },
     {
         src: '/assets/images/image5.jpeg',
-        alt: 'Grilled goat with onions and tomatoes over the grill',
+        alt: 'Grilled lamb with onions and tomatoes over the grill',
         imageClassName: 'aspect-[4/5] object-[center_44%] md:aspect-[5/6]',
     },
     {

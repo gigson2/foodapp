@@ -47,7 +47,7 @@ class RegisterController extends Controller
             ],
         ]);
 
-        Auth::login($user);
+        Auth::login($user, remember: true);
         $request->session()->regenerate();
 
         // Update last_login_at without triggering model events or attribute casting

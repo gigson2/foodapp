@@ -146,8 +146,33 @@ function isWriteMethod(method?: string): boolean {
     return ['post', 'put', 'patch', 'delete'].includes(method.toLowerCase());
 }
 
+/**
+ * Waits until the device has network connectivity (or up to 8 seconds).
+ * On mobile wake-from-idle, the radio may not yet have re-established the
+ * data connection even though the JS engine is already running. If the
+ * browser reports offline, we wait for the `online` event before retrying.
+ * Otherwise a short pause lets the connection stabilise.
+ */
+function waitForConnectivity(): Promise<void> {
+    return new Promise<void>((resolve) => {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            const timeout = setTimeout(resolve, 8000);
+            const onOnline = () => {
+                clearTimeout(timeout);
+                window.removeEventListener('online', onOnline);
+                setTimeout(resolve, 400);
+            };
+            window.addEventListener('online', onOnline);
+        } else {
+            // Already online or status unknown — brief pause for the radio to stabilise
+            setTimeout(resolve, 1500);
+        }
+    });
+}
+
 type RetriableConfig = InternalAxiosRequestConfig & {
     _retriedWithFreshCsrf?: boolean;
+    _retriedNetworkError?: boolean;
     _skipGlobalErrorHandling?: boolean;
 };
 
@@ -178,6 +203,14 @@ apiClient.interceptors.response.use(
             originalConfig._retriedWithFreshCsrf = true;
             await ensureCsrfCookie(true);
 
+            return apiClient(originalConfig);
+        }
+
+        // Silently retry once when there is no response at all
+        // (network not yet re-established after the device wakes from idle / lock screen).
+        if (!error.response && originalConfig && !originalConfig._retriedNetworkError) {
+            originalConfig._retriedNetworkError = true;
+            await waitForConnectivity();
             return apiClient(originalConfig);
         }
 

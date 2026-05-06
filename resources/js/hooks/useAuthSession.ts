@@ -25,6 +25,9 @@ export function useAuthSession() {
 
     useEffect(() => {
         function handleUnauthorized() {
+            // Cancel any in-flight /me refetch first so its result cannot overwrite null
+            // (e.g. refetchOnWindowFocus racing with the unauthorized event).
+            void queryClient.cancelQueries({ queryKey: AUTH_SESSION_QUERY_KEY });
             queryClient.setQueryData(AUTH_SESSION_QUERY_KEY, null);
         }
 

@@ -9,7 +9,7 @@ type AboutSectionProps = {
 
 export function AboutSection({ companySettings }: AboutSectionProps) {
     const companyName = getCompanyName(companySettings);
-    const aboutText = getCompanyAbout(companySettings) ?? 'This restaurant focuses on professionally grilled chicken and goat prepared in large scale without losing tenderness, flavor, or quality. Every pack is neatly arranged in takeaway containers, making pickup simple, clean, and satisfying.';
+    const aboutText = getCompanyAbout(companySettings) ?? 'This restaurant focuses on professionally grilled chicken and lamb prepared in large scale without losing tenderness, flavor, or quality. Every pack is neatly arranged in takeaway containers, making pickup simple, clean, and satisfying.';
     const taglineText = getCompanyTagline(companySettings) ?? 'The brand is built around trust, professional preparation, smoky flavor, and clean packaging that customers can rely on.';
 
     return (
@@ -48,7 +48,7 @@ export function AboutSection({ companySettings }: AboutSectionProps) {
 
                     <div className="overflow-hidden rounded-[1.75rem] lg:-mt-32">
                         <img
-                            alt={`Packaged grilled goat ready for pickup from ${companyName}`}
+                            alt={`Packaged grilled lamb ready for pickup from ${companyName}`}
                             className="h-[18rem] w-full object-cover lg:h-[26rem]"
                             src="/assets/images/image4.jpeg"
                         />

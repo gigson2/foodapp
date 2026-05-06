@@ -1,6 +1,6 @@
 import { apiClient, ensureCsrfCookie } from '@/services/apiClient';
 import { getExistingPushSubscription, getNotificationPermission, subscribeToPush } from '@/services/pwaService';
-import type { AuthenticatedUser } from '@/types';
+import type { AuthenticatedUser, Order } from '@/types';
 
 type ApiItem<T> = {
     data: T | null;
@@ -92,14 +92,14 @@ export const sessionService = {
 
         return payload;
     },
-    async requestPasswordResetOtp(input: { lookup: 'phone' | 'email'; login: string }) {
+    async requestPasswordResetOtp(input: { lookup: 'email'; login: string }) {
         await ensureCsrfCookie();
         const response = await apiClient.post<{ message: string }>('/password/forgot', input);
 
         return response.data.message;
     },
     async resetPasswordWithOtp(input: {
-        lookup: 'phone' | 'email';
+        lookup: 'email';
         login: string;
         code: string;
         password: string;
@@ -115,6 +115,29 @@ export const sessionService = {
         });
 
         return response.data.message;
+    },
+    async claimGuestOrders(orders: Order[]): Promise<number> {
+        const payload = orders.map((o) => ({
+            order_number: o.orderNumber,
+            customer_name: o.customerName,
+            subtotal: o.subtotal,
+            total: o.total,
+            payment_method: o.paymentMethod,
+            order_type: o.orderType,
+            created_at: o.createdAt,
+            items: o.items.map((item) => ({
+                food_name: item.foodName,
+                price: item.price,
+                quantity: item.quantity,
+                total: item.total,
+            })),
+        }));
+
+        const response = await apiClient.post<{ claimed_count: number }>('/customer/orders/claim', {
+            orders: payload,
+        });
+
+        return response.data.claimed_count;
     },
     async logout() {
         await ensureCsrfCookie();

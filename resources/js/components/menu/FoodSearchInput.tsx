@@ -13,7 +13,7 @@ export function FoodSearchInput({ onChange, value }: FoodSearchInputProps) {
             <input
                 className="w-full rounded-full border border-white/10 bg-transparent py-4 pl-11 pr-4 text-sm text-[color:var(--text-950)] outline-none transition placeholder:text-[color:var(--text-800)] focus:border-[color:var(--accent-500)]/40 focus:bg-white/8"
                 onChange={(event) => onChange(event.target.value)}
-                placeholder="Search grilled goat, chicken, mixed packs..."
+                placeholder="Search grilled lamb, chicken, mixed packs..."
                 type="search"
                 value={value}
             />

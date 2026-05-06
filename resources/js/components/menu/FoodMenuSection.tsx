@@ -56,7 +56,7 @@ export function FoodMenuSection({
             <SectionContainer
                 align="center"
                 className="relative pb-16 lg:pb-24"
-                description="Browse professionally grilled goat, chicken, mixed packs, and extras prepared with clean packaging, respectful service, clear availability, and hospitality policies built around customer satisfaction."
+                description="Browse professionally grilled lamb, chicken, mixed packs, and extras prepared with clean packaging, respectful service, clear availability, and hospitality policies built around customer satisfaction."
                 eyebrow="Our Special Menu"
                 id="menu"
                 title="Our Special Menus"

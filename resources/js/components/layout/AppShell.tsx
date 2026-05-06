@@ -196,11 +196,11 @@ export function AppShell() {
         mutationFn: (input: { name: string; phone: string; email?: string; password: string; passwordConfirmation: string }) => sessionService.register(input),
     });
     const passwordRecoveryRequestMutation = useMutation({
-        mutationFn: (input: { lookup: 'phone' | 'email'; login: string }) => sessionService.requestPasswordResetOtp(input),
+        mutationFn: (input: { lookup: 'email'; login: string }) => sessionService.requestPasswordResetOtp(input),
     });
     const passwordRecoveryResetMutation = useMutation({
         mutationFn: (input: {
-            lookup: 'phone' | 'email';
+            lookup: 'email';
             login: string;
             code: string;
             password: string;
@@ -363,11 +363,13 @@ export function AppShell() {
             return;
         }
 
-        if (sessionUser?.role === 'customer' || effectiveCustomer) {
+        if (sessionUser?.role === 'customer') {
             navigate('/customer/dashboard');
             return;
         }
 
+        // No active server session — open login modal even if a local guest identity exists,
+        // so a user whose session expired can re-authenticate without getting stuck.
         setLoginError(null);
         setLoginOpen(true);
     };
@@ -835,6 +837,15 @@ export function AppShell() {
                                 name: payload.user.name,
                                 phone: payload.user.phone,
                             });
+
+                            const guestOrders = orderService.getOrdersByCustomer(payload.user.phone);
+                            if (guestOrders.length > 0) {
+                                const ids = guestOrders.map((o) => o.id);
+                                sessionService
+                                    .claimGuestOrders(guestOrders)
+                                    .then(() => orderService.removeOrdersByIds(ids))
+                                    .catch(() => undefined);
+                            }
                         }
 
                         setLoginOpen(false);
@@ -865,12 +876,35 @@ export function AppShell() {
                                 name: payload.user.name,
                                 phone: payload.user.phone,
                             });
+
+                            const guestOrders = orderService.getOrdersByCustomer(payload.user.phone);
+                            if (guestOrders.length > 0) {
+                                const ids = guestOrders.map((o) => o.id);
+                                sessionService
+                                    .claimGuestOrders(guestOrders)
+                                    .then(() => orderService.removeOrdersByIds(ids))
+                                    .catch(() => undefined);
+                            }
                         }
 
                         setLoginOpen(false);
                         toast.success('Account created successfully');
                     } catch (error) {
                         if (axios.isAxiosError(error)) {
+                            const responseErrors = error.response?.data?.errors as Record<string, string[]> | undefined;
+                            const isPhoneTaken = responseErrors?.phone?.some((m) => m.toLowerCase().includes('taken'));
+
+                            if (isPhoneTaken) {
+                                const phone = normalizeUsPhone(values.phone);
+                                const pending = orderService.getOrdersByCustomer(phone);
+                                const ordersHint =
+                                    pending.length > 0
+                                        ? ` Your ${pending.length} pending order${pending.length === 1 ? '' : 's'} will be linked automatically once you sign in.`
+                                        : '';
+                                setLoginError(`This phone number is already registered.${ordersHint}`);
+                                return;
+                            }
+
                             setLoginError((error.response?.data?.message as string | undefined) ?? 'Unable to create account.');
                             return;
                         }
@@ -878,12 +912,13 @@ export function AppShell() {
                         setLoginError(error instanceof Error ? error.message : 'Unable to create account.');
                     }
                 }}
+                onSwitchToLogin={() => setLoginError(null)}
                 onRequestPasswordReset={async (values) => {
                     try {
                         setLoginError(null);
                         const message = await passwordRecoveryRequestMutation.mutateAsync({
                             lookup: values.lookup,
-                            login: values.lookup === 'phone' ? normalizeUsPhone(values.login) : values.login.trim().toLowerCase(),
+                            login: values.login.trim().toLowerCase(),
                         });
                         toast.success(message);
                     } catch (error) {
@@ -900,7 +935,7 @@ export function AppShell() {
                         setLoginError(null);
                         const message = await passwordRecoveryResetMutation.mutateAsync({
                             lookup: values.lookup,
-                            login: values.lookup === 'phone' ? normalizeUsPhone(values.login) : values.login.trim().toLowerCase(),
+                            login: values.login.trim().toLowerCase(),
                             code: values.code,
                             password: values.password,
                             passwordConfirmation: values.passwordConfirmation,
