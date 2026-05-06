@@ -8,6 +8,7 @@ import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Textarea } from '@/components/common/Textarea';
+import { AppInstallGuideModal } from '@/customer/components/AppInstallGuideModal';
 import { customerPortalService } from '@/customer/services/customerPortalService';
 import { apiClient } from '@/services/apiClient';
 import { getExistingPushSubscription, requestNotificationAccess, subscribeToPush } from '@/services/pwaService';
@@ -38,6 +39,7 @@ export function CustomerProfilePage() {
         password: '',
         passwordConfirmation: '',
     });
+    const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
 
     const baseForm = useMemo(() => ({
         name: profileQuery.data?.name ?? '',
@@ -124,7 +126,7 @@ export function CustomerProfilePage() {
                 <p className="section-eyebrow">Customer dashboard</p>
                 <h2 className="mt-4 text-4xl sm:text-5xl">Profile</h2>
                 <p className="mt-4 max-w-3xl text-sm leading-7 text-muted sm:text-base">
-                    Update the customer profile details, pickup notes, password, and notification preferences used for your account.
+                    Update your profile details, pickup notes, password, and notification preferences.
                 </p>
             </div>
 
@@ -166,6 +168,17 @@ export function CustomerProfilePage() {
                             <input checked={form.emailEnabled} onChange={(event) => setProfileDraft((current) => ({ ...(current ?? baseForm), emailEnabled: event.target.checked }))} type="checkbox" />
                             Email notifications
                         </label>
+                        <div className="sm:col-span-2">
+                            <Button
+                                className="w-full sm:w-auto"
+                                onClick={() => setIsInstallGuideOpen(true)}
+                                size="sm"
+                                type="button"
+                                variant="ghost"
+                            >
+                                App Install Guide
+                            </Button>
+                        </div>
                     </div>
                     <div className="mt-5 flex flex-wrap gap-3">
                         <Button
@@ -213,6 +226,8 @@ export function CustomerProfilePage() {
                     </div>
                 </AdminSectionCard>
             </div>
+
+            <AppInstallGuideModal isOpen={isInstallGuideOpen} onClose={() => setIsInstallGuideOpen(false)} />
         </div>
     );
 }

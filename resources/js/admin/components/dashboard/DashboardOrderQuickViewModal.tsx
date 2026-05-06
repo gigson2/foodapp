@@ -33,9 +33,6 @@ export function DashboardOrderQuickViewModal({
 }: DashboardOrderQuickViewModalProps) {
     return (
         <Modal
-            description={mode === 'received'
-                ? 'Review the newest customer order and move it into kitchen workflow without leaving the dashboard.'
-                : 'Finalize a ready-for-pickup order after the customer collects the food and pays cash.'}
             isOpen={isOpen}
             onClose={onClose}
             panelClassName="max-w-3xl"

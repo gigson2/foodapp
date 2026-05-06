@@ -50,13 +50,13 @@ export function AdminPwaSettingsPage() {
     return (
         <div className="space-y-6">
             <AdminPageHeader
-                description="Manage browser notification readiness and verify the admin install experience without breaking the existing PWA structure."
+                description="Manage notification access for this device."
                 title="PWA settings"
             />
 
-            <div className="grid gap-6 xl:grid-cols-2">
+            <div className="grid gap-6 xl:grid-cols-[0.9fr_0.7fr]">
                 <AdminSectionCard className="p-5 sm:p-6">
-                    <h2 className="text-2xl">Notification permission</h2>
+                    <h2 className="text-2xl">Notifications</h2>
                     <p className="mt-3 text-sm leading-7 text-muted">
                         Current browser permission: <span className="font-semibold text-[color:var(--primary-500)]">{permission}</span>
                     </p>
@@ -67,16 +67,13 @@ export function AdminPwaSettingsPage() {
                 </AdminSectionCard>
 
                 <AdminSectionCard className="p-5 sm:p-6">
-                    <h2 className="text-2xl">Install readiness</h2>
+                    <h2 className="text-2xl">About this page</h2>
                     <p className="mt-3 text-sm leading-7 text-muted">
-                        The storefront keeps the manifest, service worker, and offline fallback in place. This page is for admin-side verification of installability and alert readiness.
+                        Use this page to enable notifications on the current device and send a quick test alert when needed.
                     </p>
-                    <ul className="mt-5 space-y-3 text-sm text-muted">
-                        <li>Manifest is available at <code>/manifest.webmanifest</code>.</li>
-                        <li>Offline fallback is available at <code>/offline.html</code>.</li>
-                        <li>Admin notifications rely on browser permission, a saved subscription, and valid VAPID keys.</li>
-                        <li>Mobile browsers may use the system default alert sound when web push is delivered and the device/browser allows it.</li>
-                    </ul>
+                    <p className="mt-4 text-sm leading-7 text-muted">
+                        If notifications are blocked in the browser, update the browser settings for this site and try again.
+                    </p>
                 </AdminSectionCard>
             </div>
         </div>

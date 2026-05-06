@@ -47,10 +47,10 @@ export function AdminLoginPage() {
                         <p className="section-eyebrow">Admin access</p>
                         <h1 className="mt-4 text-4xl">Dri Africain admin dashboard</h1>
                         <p className="mt-4 text-base leading-8 text-muted">
-                            Sign in with your admin phone number and password to manage foods, categories, pickup orders, visitors, SEO, and company operations.
+                            Sign in with your authorized admin phone number and password to manage the menu, categories, pickup orders, customer activity, SEO, and business settings.
                         </p>
                         <p className="mt-3 text-sm leading-7 text-muted">
-                            This uses the same real Laravel account system as the storefront. Only users with the admin role can continue into the admin dashboard.
+                            Access to this dashboard is restricted to approved administrator accounts only.
                         </p>
                     </div>
                     <ThemeToggle />

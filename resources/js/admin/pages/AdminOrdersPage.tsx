@@ -16,6 +16,7 @@ import { formatAdminMoney } from '@/admin/utils/adminMoney';
 import { getCashStatusMeta, getOrderStatusMeta } from '@/admin/utils/adminStatus';
 import type { AdminOrderStatus, CashStatus } from '@/admin/types/adminOrder';
 import { Button } from '@/components/common/Button';
+import { Modal } from '@/components/common/Modal';
 import { Textarea } from '@/components/common/Textarea';
 import type { AdminOrder } from '@/admin/types/adminOrder';
 
@@ -151,12 +152,12 @@ export function AdminOrdersPage() {
     return (
         <div className="space-y-6">
             <AdminPageHeader
-                description="Search, filter, and move pickup orders through the grill workflow while tracking cash collection and internal notes."
+                description="Search, filter, and manage pickup orders while tracking cash collection and internal notes."
                 title="Orders"
             />
 
             <AdminSectionCard className="overflow-hidden">
-                <div className="grid gap-4 border-b border-white/10 px-5 py-5 lg:grid-cols-[1.3fr_repeat(2,minmax(0,0.55fr))]">
+                <div className="grid gap-4 border-b border-white/10 px-4 py-5 sm:px-5 md:grid-cols-2 xl:grid-cols-[minmax(0,1.3fr)_minmax(13rem,0.7fr)_minmax(13rem,0.7fr)]">
                     <AdminSearchInput label="Search" onChange={(value) => { setSearch(value); setPage(1); }} placeholder="Search order number, customer, phone, or item" value={search} />
                     <AdminFilterSelect label="Status" onChange={(value) => { setStatus(value); setPage(1); }} options={statusOptions} value={status} />
                     <AdminFilterSelect label="Cash status" onChange={(value) => { setPaymentStatus(value); setPage(1); }} options={cashOptions} value={paymentStatus} />
@@ -179,81 +180,94 @@ export function AdminOrdersPage() {
                 ) : null}
             </AdminSectionCard>
 
-            {selectedOrder ? (
-                <AdminSectionCard className="p-5 sm:p-6">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Order detail</p>
-                            <h2 className="mt-2 text-3xl">{selectedOrder.orderNumber}</h2>
-                            <p className="mt-3 text-sm text-muted">{selectedOrder.customerName} · {selectedOrder.customerPhone}</p>
+            <Modal
+                isOpen={selectedOrderId !== null}
+                onClose={() => setSelectedOrderId(null)}
+                panelClassName="max-w-4xl"
+                title={selectedOrder?.orderNumber ?? 'Order details'}
+            >
+                {selectedOrderQuery.isLoading || !selectedOrder ? (
+                    <div className="py-8 text-sm text-muted">Loading order details...</div>
+                ) : (
+                    <div className="space-y-6">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Order detail</p>
+                                <h2 className="mt-2 text-3xl">{selectedOrder.orderNumber}</h2>
+                                <p className="mt-3 text-sm text-muted">{selectedOrder.customerName} | {selectedOrder.customerPhone}</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <AdminBadge className={getOrderStatusMeta(selectedOrder.status).className}>{getOrderStatusMeta(selectedOrder.status).label}</AdminBadge>
+                                <AdminBadge className={getCashStatusMeta(selectedOrder.cashStatus).className}>{getCashStatusMeta(selectedOrder.cashStatus).label}</AdminBadge>
+                            </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            <AdminBadge className={getOrderStatusMeta(selectedOrder.status).className}>{getOrderStatusMeta(selectedOrder.status).label}</AdminBadge>
-                            <AdminBadge className={getCashStatusMeta(selectedOrder.cashStatus).className}>{getCashStatusMeta(selectedOrder.cashStatus).label}</AdminBadge>
-                        </div>
-                    </div>
 
-                    <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-                        <div>
-                            <div className="rounded-[1.35rem] border border-white/10 bg-white/5">
-                                <div className="border-b border-white/10 px-5 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                                    Items ordered
-                                </div>
-                                <div className="divide-y divide-white/6">
-                                    {selectedOrder.items.map((item) => (
-                                        <div className="flex items-center justify-between gap-3 px-5 py-4" key={item.id}>
-                                            <div>
-                                                <p className="font-semibold">{item.foodName}</p>
-                                                <p className="mt-1 text-sm text-muted">Qty {item.quantity}</p>
+                        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+                            <div>
+                                <div className="rounded-[1.35rem] border border-white/10 bg-white/5">
+                                    <div className="border-b border-white/10 px-5 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                                        Items ordered
+                                    </div>
+                                    <div className="divide-y divide-white/6">
+                                        {selectedOrder.items.map((item) => (
+                                            <div className="flex items-center justify-between gap-3 px-5 py-4" key={item.id}>
+                                                <div>
+                                                    <p className="font-semibold">{item.foodName}</p>
+                                                    <p className="mt-1 text-sm text-muted">Qty {item.quantity}</p>
+                                                </div>
+                                                <p className="font-semibold">{formatAdminMoney(item.lineTotal)}</p>
                                             </div>
-                                            <p className="font-semibold">{formatAdminMoney(item.lineTotal)}</p>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 rounded-[1.35rem] border border-white/10 bg-white/5 p-5">
+                                    <div className="grid gap-3 text-sm sm:grid-cols-2">
+                                        <div><span className="text-muted">Payment method:</span> Cash</div>
+                                        <div><span className="text-muted">Order type:</span> Pickup</div>
+                                        <div><span className="text-muted">Created:</span> {formatAdminDateTime(selectedOrder.createdAt)}</div>
+                                        <div><span className="text-muted">Total:</span> {formatAdminMoney(selectedOrder.total)}</div>
+                                    </div>
+                                    {selectedOrder.customerNote ? <p className="mt-4 text-sm text-muted">Customer note: {selectedOrder.customerNote}</p> : null}
                                 </div>
                             </div>
 
-                            <div className="mt-4 rounded-[1.35rem] border border-white/10 bg-white/5 p-5">
-                                <div className="grid gap-3 text-sm sm:grid-cols-2">
-                                    <div><span className="text-muted">Payment method:</span> Cash</div>
-                                    <div><span className="text-muted">Order type:</span> Pickup</div>
-                                    <div><span className="text-muted">Created:</span> {formatAdminDateTime(selectedOrder.createdAt)}</div>
-                                    <div><span className="text-muted">Total:</span> {formatAdminMoney(selectedOrder.total)}</div>
+                            <div className="space-y-4">
+                                <div className="rounded-[1.35rem] border border-white/10 bg-white/5 p-5">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Quick status actions</p>
+                                    <div className="mt-4 grid gap-3">
+                                        <Button onClick={() => statusMutation.mutate({ orderId: selectedOrder.id, nextStatus: 'processing' })} size="sm" type="button" variant="secondary">Start processing</Button>
+                                        <Button onClick={() => statusMutation.mutate({ orderId: selectedOrder.id, nextStatus: 'ready_for_pickup' })} size="sm" type="button" variant="secondary">Mark ready for pickup</Button>
+                                        <Button onClick={() => statusMutation.mutate({ orderId: selectedOrder.id, nextStatus: 'completed' })} size="sm" type="button" variant="accent">Mark completed</Button>
+                                        <Button onClick={() => cashMutation.mutate({ orderId: selectedOrder.id, cashStatus: 'cash_collected' })} size="sm" type="button">Mark cash collected</Button>
+                                        <Button
+                                            disabled={!canCancelSelectedOrder}
+                                            onClick={() => statusMutation.mutate({ orderId: selectedOrder.id, nextStatus: 'cancelled' })}
+                                            size="sm"
+                                            type="button"
+                                            variant="ghost"
+                                        >
+                                            Cancel order
+                                        </Button>
+                                    </div>
                                 </div>
-                                {selectedOrder.customerNote ? <p className="mt-4 text-sm text-muted">Customer note: {selectedOrder.customerNote}</p> : null}
-                            </div>
-                        </div>
 
-                        <div className="space-y-4">
-                            <div className="rounded-[1.35rem] border border-white/10 bg-white/5 p-5">
-                                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Quick status actions</p>
-                                <div className="mt-4 grid gap-3">
-                                    <Button onClick={() => statusMutation.mutate({ orderId: selectedOrder.id, nextStatus: 'processing' })} size="sm" variant="secondary">Start processing</Button>
-                                    <Button onClick={() => statusMutation.mutate({ orderId: selectedOrder.id, nextStatus: 'ready_for_pickup' })} size="sm" variant="secondary">Mark ready for pickup</Button>
-                                    <Button onClick={() => statusMutation.mutate({ orderId: selectedOrder.id, nextStatus: 'completed' })} size="sm" variant="accent">Mark completed</Button>
-                                    <Button onClick={() => cashMutation.mutate({ orderId: selectedOrder.id, cashStatus: 'cash_collected' })} size="sm">Mark cash collected</Button>
-                                    <Button
-                                        disabled={!canCancelSelectedOrder}
-                                        onClick={() => statusMutation.mutate({ orderId: selectedOrder.id, nextStatus: 'cancelled' })}
-                                        size="sm"
-                                        variant="ghost"
-                                    >
-                                        Cancel order
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <div className="rounded-[1.35rem] border border-white/10 bg-white/5 p-5">
-                                <Textarea label="Admin note" onChange={(event) => selectedOrder && setNoteDraftByOrder((current) => ({ ...current, [selectedOrder.id]: event.target.value }))} value={noteDraft} />
-                                <div className="mt-4">
-                                    <Button onClick={() => noteMutation.mutate({ orderId: selectedOrder.id, adminNote: noteDraft })} size="sm">
-                                        Save note
-                                    </Button>
+                                <div className="rounded-[1.35rem] border border-white/10 bg-white/5 p-5">
+                                    <Textarea label="Admin note" onChange={(event) => setNoteDraftByOrder((current) => ({ ...current, [selectedOrder.id]: event.target.value }))} value={noteDraft} />
+                                    <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                                        <Button onClick={() => setSelectedOrderId(null)} size="sm" type="button" variant="ghost">
+                                            Close
+                                        </Button>
+                                        <Button onClick={() => noteMutation.mutate({ orderId: selectedOrder.id, adminNote: noteDraft })} size="sm" type="button">
+                                            Save note
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </AdminSectionCard>
-            ) : null}
+                )}
+            </Modal>
         </div>
     );
 }

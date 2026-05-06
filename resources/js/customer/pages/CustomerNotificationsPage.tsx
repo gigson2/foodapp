@@ -62,7 +62,7 @@ export function CustomerNotificationsPage() {
                     <p className="section-eyebrow">Customer dashboard</p>
                     <h2 className="mt-4 text-4xl sm:text-5xl">Notifications</h2>
                     <p className="mt-4 max-w-3xl text-sm leading-7 text-muted sm:text-base">
-                        Read customer-specific updates for order status, review moderation, and system activity linked to your account.
+                        Read updates about your orders, reviews, and account activity.
                     </p>
                 </div>
                 <Button disabled={markAllMutation.isPending || !hasUnreadNotifications} onClick={() => markAllMutation.mutate()} size="sm" variant="secondary">

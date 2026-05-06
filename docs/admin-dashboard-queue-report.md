@@ -1,113 +1,33 @@
-# Admin Dashboard Queue Report
+# Admin Dashboard Order Queues
 
-Date: 2026-05-03
+The admin dashboard overview includes queue-oriented widgets so staff can review operational work without leaving the dashboard.
 
-## Scope
+## Current queue widgets
 
-Updated the admin dashboard overview to add two operational queue sections:
+### Pickup queue
 
-- Pickup queue
-- Completed orders queue
+- focuses on newly received pickup orders
+- supports quick review from the dashboard
+- is intended to move staff quickly from receipt to processing
 
-Both are responsive and use real database-backed order data.
+### Completed queue
 
-## Pickup Queue
+- surfaces recently completed orders
+- helps staff confirm recent fulfillment activity
 
-Purpose:
+## Quick-view behavior
 
-- show only newly received customer orders
-- let admin staff open a quick view without leaving the dashboard
-- let staff move the order into workflow immediately
+- order inspection happens in a modal instead of an inline panel
+- admins can review customer details, items, payment status, and internal notes without scrolling down the page
+- the same modal pattern is used on the dedicated orders page
 
-Behavior:
+## Data source
 
-- only orders with status `received` are shown
-- paginated at 4 items per page
-- each card shows:
-  - order number
-  - customer
-  - items
-  - total
-  - created date/time
-  - `View order` link
-- quick view modal actions:
-  - Start processing
-  - Mark ready for pickup
-  - Cancel order
-- once the order leaves `received`, it disappears from this queue
+- queue widgets are backed by live database orders
+- dashboard metrics and lists are returned from `AdminDashboardController`
+- order data is serialized through the same resource layer used elsewhere in the admin UI
 
-## Completed Orders Queue
+## Related pages
 
-Purpose:
-
-- show orders that are ready for pickup and still unpaid
-- let admin finalize them quickly after handoff
-
-Behavior:
-
-- shows orders where:
-  - status = `ready_for_pickup`
-  - payment status = `unpaid`
-- paginated at 4 items per page
-- each card shows:
-  - order number
-  - customer
-  - items
-  - total
-  - created date/time
-  - `View order` link
-- quick view modal action:
-  - Mark completed & cash received
-- once completed, the order disappears from this queue
-
-## Responsive Design
-
-Desktop:
-
-- two-column card grid inside each queue
-- full-width completed-orders section under the top dashboard row
-
-Tablet:
-
-- queue cards remain readable in two-column layout where space allows
-- pager stays compact and aligned
-
-Mobile:
-
-- queue cards stack to one column
-- modal stays usable with the shared responsive modal shell
-- pager remains touch-friendly with previous/next controls
-
-## Files Added
-
-- `resources/js/admin/components/dashboard/DashboardOrderQueueWidget.tsx`
-- `resources/js/admin/components/dashboard/DashboardOrderQuickViewModal.tsx`
-
-## Files Updated
-
-- `resources/js/admin/pages/AdminDashboardPage.tsx`
-
-## Verification
-
-Passed:
-
-- `npm.cmd run typecheck`
-- `npm.cmd run lint`
-- `php artisan test`
-
-## QA Checklist
-
-1. Open `/admin/dashboard/overview`
-2. Confirm `Pickup queue` shows only `received` orders
-3. Confirm `Ready for pickup & awaiting cash` shows only unpaid `ready_for_pickup` orders
-4. Confirm each queue paginates at 4 items per page
-5. Click `View order` in pickup queue
-6. Confirm the modal opens and allows:
-   - Start processing
-   - Mark ready for pickup
-   - Cancel order
-7. Perform one of those actions and confirm the order disappears from pickup queue
-8. Click `View order` in the ready-for-pickup queue
-9. Confirm the modal only offers `Mark completed & cash received`
-10. Complete the order and confirm it disappears from that queue
-11. Test the same flows on desktop, tablet, and mobile widths
+- `/admin/dashboard/overview`
+- `/admin/orders`

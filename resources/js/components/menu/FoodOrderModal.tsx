@@ -26,7 +26,7 @@ export function FoodOrderModal({ companySettings, food, isOpen, onClose, onPlace
     const companyName = getCompanyName(companySettings);
     const pickupAddress = getCompanyAddress(companySettings);
     const pickupLocationLabel = getCompanyLocationLabel(companySettings);
-    const fridayHours = companySettings?.opening_hours?.friday ?? 'Pre-orders open';
+    const fridayHours = companySettings?.opening_hours?.friday ?? 'Pre-orders start';
     const saturdayHours = companySettings?.opening_hours?.saturday ?? '11:00 AM to 10:00 PM';
     const orderingCutoff = companySettings?.opening_hours?.ordering_cutoff ?? 'Saturday 9:00 PM';
 
@@ -114,7 +114,7 @@ export function FoodOrderModal({ companySettings, food, isOpen, onClose, onPlace
                 >
                     Pickup location: {pickupAddress}.
                 </button>
-                <p>Friday: {fridayHours}. Grill preparation and pickup happen Saturday {saturdayHours}, with a final ordering cutoff at {orderingCutoff}.</p>
+                <p>Thursday: {fridayHours}. Grill preparation and pickup happen Saturday {saturdayHours}, with a final ordering cutoff at {orderingCutoff}.</p>
             </div>
 
             <Button className="w-full" disabled={submitting} onClick={() => onPlaceOrder(food, quantity)} type="button">

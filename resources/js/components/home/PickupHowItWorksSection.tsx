@@ -9,7 +9,7 @@ type PickupHowItWorksSectionProps = {
 
 export function PickupHowItWorksSection({ companySettings }: PickupHowItWorksSectionProps) {
     const pickupAddress = getCompanyAddress(companySettings);
-    const fridayHours = companySettings?.opening_hours?.friday ?? 'Pre-orders open';
+    const fridayHours = companySettings?.opening_hours?.friday ?? 'Pre-orders start';
     const saturdayHours = companySettings?.opening_hours?.saturday ?? '11:00 AM - 10:00 PM';
     const orderingCutoff = companySettings?.opening_hours?.ordering_cutoff ?? 'Saturday 9:00 PM';
     const steps = [
@@ -20,7 +20,7 @@ export function PickupHowItWorksSection({ companySettings }: PickupHowItWorksSec
         },
         {
             title: 'Place Pickup Order',
-            description: 'Enter your name and USA phone number if it is your first order, or pre-order on Friday for Saturday pickup.',
+            description: 'Enter your name and USA phone number if it is your first order, or pre-order from Thursday for Saturday pickup.',
             icon: UserRoundPen,
         },
         {
@@ -34,7 +34,7 @@ export function PickupHowItWorksSection({ companySettings }: PickupHowItWorksSec
         <SectionContainer
             align="center"
             className="pb-12 lg:pb-16"
-            description={`Pre-orders open Friday (${fridayHours}), and Saturday grill preparation plus pickup run ${saturdayHours} with a ${orderingCutoff} ordering cutoff.`}
+            description={`Pre-orders start from Thursday (${fridayHours}), and Saturday grill preparation plus pickup run ${saturdayHours} with a ${orderingCutoff} ordering cutoff.`}
             eyebrow="How Pickup Works"
             id="pickup"
             title="Three Clear Steps From Grill Selection To Collection"

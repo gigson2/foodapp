@@ -16,6 +16,7 @@ import { formatAdminMoney } from '@/admin/utils/adminMoney';
 import { Button } from '@/components/common/Button';
 import { IconButton } from '@/components/common/IconButton';
 import { Input } from '@/components/common/Input';
+import { Modal } from '@/components/common/Modal';
 import { Textarea } from '@/components/common/Textarea';
 import { PUBLIC_FOODS_QUERY_KEY } from '@/services/publicService';
 import { publishPublicContentUpdate } from '@/services/publicContentSync';
@@ -46,6 +47,14 @@ function splitTags(value: string) {
     return value.split(',').map((item) => item.trim()).filter(Boolean);
 }
 
+function slugify(value: string) {
+    return value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
 export function AdminMenuPage() {
     const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
@@ -53,6 +62,7 @@ export function AdminMenuPage() {
     const [search, setSearch] = useState('');
     const [categoryId, setCategoryId] = useState(0);
     const [availability, setAvailability] = useState<boolean | ''>('');
+    const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [editingFood, setEditingFood] = useState<AdminFoodRecord | null>(null);
     const [form, setForm] = useState<AdminFoodFormInput>(buildInitialFoodForm());
     const [ingredientsText, setIngredientsText] = useState('');
@@ -78,12 +88,7 @@ export function AdminMenuPage() {
                 queryClient.invalidateQueries({ queryKey: PUBLIC_FOODS_QUERY_KEY }),
             ]);
             publishPublicContentUpdate('foods');
-            setEditingFood(null);
-            setForm(buildInitialFoodForm(categoryId));
-            setIngredientsText('');
-            setAllergensText('');
-            setLabelsText('');
-            setImagePreview(null);
+            closeEditor();
         },
     });
 
@@ -113,6 +118,20 @@ export function AdminMenuPage() {
     const categories = categoriesQuery.data?.items ?? [];
     const categoryOptions = [{ label: 'All categories', value: '0' }, ...categories.map((category) => ({ label: category.name, value: category.id }))];
 
+    const resetEditorState = (nextCategoryId = categoryId) => {
+        setEditingFood(null);
+        setForm(buildInitialFoodForm(nextCategoryId));
+        setIngredientsText('');
+        setAllergensText('');
+        setLabelsText('');
+        setImagePreview(null);
+    };
+
+    const openCreateModal = () => {
+        resetEditorState(categoryId);
+        setIsEditorOpen(true);
+    };
+
     const startEditing = (food: AdminFoodRecord) => {
         setEditingFood(food);
         setForm({
@@ -138,15 +157,12 @@ export function AdminMenuPage() {
         setAllergensText(food.allergens.join(', '));
         setLabelsText(food.dietaryLabels.join(', '));
         setImagePreview(food.image ?? null);
+        setIsEditorOpen(true);
     };
 
-    const resetForm = () => {
-        setEditingFood(null);
-        setForm(buildInitialFoodForm(categoryId));
-        setIngredientsText('');
-        setAllergensText('');
-        setLabelsText('');
-        setImagePreview(null);
+    const closeEditor = () => {
+        setIsEditorOpen(false);
+        resetEditorState(categoryId);
     };
 
     const foods = foodsQuery.data?.items ?? [];
@@ -212,111 +228,142 @@ export function AdminMenuPage() {
     return (
         <div className="space-y-6">
             <AdminPageHeader
-                actions={<Button onClick={resetForm} size="sm">{editingFood ? 'Create new food' : 'Reset form'}</Button>}
-                description="Manage grill packs, pricing, availability, tags, and food images using the live restaurant database."
+                actions={(
+                    <Button className="w-full sm:w-auto" onClick={openCreateModal} size="sm">
+                        Add menu
+                    </Button>
+                )}
+                description="Manage grill packs, pricing, availability, tags, and food images."
                 title="Menu"
             />
 
-            <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-                <AdminSectionCard className="overflow-hidden">
-                    <div className="grid gap-4 border-b border-white/10 px-5 py-5 lg:grid-cols-[1.3fr_repeat(2,minmax(0,0.6fr))]">
-                        <AdminSearchInput label="Search" onChange={(value) => { setSearch(value); setPage(1); }} placeholder="Search foods by name, slug, or description" value={search} />
-                        <AdminFilterSelect label="Category" onChange={(value) => { setCategoryId(Number(value)); setPage(1); }} options={categoryOptions} value={String(categoryId)} />
-                        <AdminFilterSelect
-                            label="Availability"
-                            onChange={(value) => { setAvailability(value === '' ? '' : value === 'true'); setPage(1); }}
-                            options={[
-                                { label: 'All', value: '' },
-                                { label: 'Available', value: 'true' },
-                                { label: 'Unavailable', value: 'false' },
-                            ]}
-                            value={availability === '' ? '' : String(availability)}
-                        />
-                    </div>
+            <AdminSectionCard className="overflow-hidden">
+                <div className="grid gap-4 border-b border-white/10 px-4 py-5 sm:px-5 md:grid-cols-2 xl:grid-cols-[minmax(0,1.45fr)_minmax(13rem,0.75fr)_minmax(13rem,0.75fr)]">
+                    <AdminSearchInput label="Search" onChange={(value) => { setSearch(value); setPage(1); }} placeholder="Search foods by name, slug, or description" value={search} />
+                    <AdminFilterSelect label="Category" onChange={(value) => { setCategoryId(Number(value)); setPage(1); }} options={categoryOptions} value={String(categoryId)} />
+                    <AdminFilterSelect
+                        label="Availability"
+                        onChange={(value) => { setAvailability(value === '' ? '' : value === 'true'); setPage(1); }}
+                        options={[
+                            { label: 'All', value: '' },
+                            { label: 'Available', value: 'true' },
+                            { label: 'Unavailable', value: 'false' },
+                        ]}
+                        value={availability === '' ? '' : String(availability)}
+                    />
+                </div>
 
-                    {meta ? (
-                        <AdminDataTable
-                            columns={columns}
-                            currentPage={page}
-                            data={foods}
-                            loading={foodsQuery.isLoading}
-                            perPage={perPage}
-                            totalRows={meta.total}
-                            onPageChange={setPage}
-                            onPerPageChange={(nextPerPage) => {
-                                setPerPage(nextPerPage);
-                                setPage(1);
-                            }}
-                        />
-                    ) : null}
-                </AdminSectionCard>
+                {meta ? (
+                    <AdminDataTable
+                        columns={columns}
+                        currentPage={page}
+                        data={foods}
+                        loading={foodsQuery.isLoading}
+                        perPage={perPage}
+                        totalRows={meta.total}
+                        onPageChange={setPage}
+                        onPerPageChange={(nextPerPage) => {
+                            setPerPage(nextPerPage);
+                            setPage(1);
+                        }}
+                    />
+                ) : null}
+            </AdminSectionCard>
 
-                <AdminSectionCard className="p-5 sm:p-6">
-                    <h2 className="text-2xl">{editingFood ? 'Edit food' : 'Add food'}</h2>
-                    <div className="mt-5 grid gap-4">
+            <Modal
+                isOpen={isEditorOpen}
+                onClose={closeEditor}
+                panelClassName="max-w-4xl"
+                title={editingFood ? 'Edit menu item' : 'Add menu item'}
+            >
+                <form
+                    className="space-y-5"
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        saveMutation.mutate({
+                            ...form,
+                            ingredients: splitTags(ingredientsText),
+                            allergens: splitTags(allergensText),
+                            dietaryLabels: splitTags(labelsText),
+                        });
+                    }}
+                >
+                    <div className="grid gap-4 lg:grid-cols-2">
                         <label className="block space-y-2">
                             <span className="text-sm font-medium text-[color:var(--text-950)]">Category</span>
-                            <select className="theme-field w-full rounded-2xl px-4 py-3" onChange={(event) => setForm((current) => ({ ...current, categoryId: Number(event.target.value) }))} value={form.categoryId}>
+                            <select
+                                className="theme-field w-full rounded-2xl px-4 py-3"
+                                onChange={(event) => setForm((current) => ({ ...current, categoryId: Number(event.target.value) }))}
+                                value={form.categoryId}
+                            >
                                 <option value={0}>Select category</option>
                                 {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
                             </select>
                         </label>
-                        <Input label="Food name" onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} value={form.name} />
-                        <Input label="Slug" onChange={(event) => setForm((current) => ({ ...current, slug: event.target.value }))} value={form.slug} />
-                        <Textarea label="Description" onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} value={form.description} />
-                        <Input label="Short description" onChange={(event) => setForm((current) => ({ ...current, shortDescription: event.target.value }))} value={form.shortDescription ?? ''} />
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <Input label="Price" onChange={(event) => setForm((current) => ({ ...current, price: Number(event.target.value) }))} step="0.01" type="number" value={form.price} />
-                            <Input label="Preparation time (minutes)" onChange={(event) => setForm((current) => ({ ...current, preparationTimeMinutes: Number(event.target.value) }))} type="number" value={form.preparationTimeMinutes} />
-                            <Input label="Sort order" onChange={(event) => setForm((current) => ({ ...current, sortOrder: Number(event.target.value) }))} type="number" value={form.sortOrder} />
-                        </div>
-                        <AdminImageUploadField
-                            helperText="Upload a food image for menu cards and order details."
-                            label="Food image"
-                            onChange={(file) => {
-                                setForm((current) => ({ ...current, image: file }));
-                                setImagePreview(file ? URL.createObjectURL(file) : (editingFood?.image ?? null));
+                        <Input
+                            label="Food name"
+                            onChange={(event) => {
+                                const name = event.target.value;
+                                setForm((current) => ({ ...current, name, slug: slugify(name) }));
                             }}
-                            previewAlt={form.name || 'Food preview'}
-                            previewSrc={imagePreview ?? editingFood?.image ?? null}
+                            value={form.name}
                         />
+                        <Input label="Slug" readOnly value={form.slug} />
+                        <Input label="Short description" onChange={(event) => setForm((current) => ({ ...current, shortDescription: event.target.value }))} value={form.shortDescription ?? ''} />
+                        <div className="lg:col-span-2">
+                            <Textarea label="Description" onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} value={form.description} />
+                        </div>
+                        <Input label="Price" onChange={(event) => setForm((current) => ({ ...current, price: Number(event.target.value) }))} step="0.01" type="number" value={form.price} />
+                        <Input label="Preparation time (minutes)" onChange={(event) => setForm((current) => ({ ...current, preparationTimeMinutes: Number(event.target.value) }))} type="number" value={form.preparationTimeMinutes} />
+                        <Input label="Sort order" onChange={(event) => setForm((current) => ({ ...current, sortOrder: Number(event.target.value) }))} type="number" value={form.sortOrder} />
+                        <Input label="SEO title" onChange={(event) => setForm((current) => ({ ...current, seoTitle: event.target.value }))} value={form.seoTitle ?? ''} />
+                        <div className="lg:col-span-2">
+                            <AdminImageUploadField
+                                helperText="Upload a food image for menu cards and order details."
+                                label="Food image"
+                                onChange={(file) => {
+                                    setForm((current) => ({ ...current, image: file }));
+                                    setImagePreview(file ? URL.createObjectURL(file) : (editingFood?.image ?? null));
+                                }}
+                                previewAlt={form.name || 'Food preview'}
+                                previewSrc={imagePreview ?? editingFood?.image ?? null}
+                            />
+                        </div>
                         <Input label="Ingredients (comma separated)" onChange={(event) => setIngredientsText(event.target.value)} value={ingredientsText} />
                         <Input label="Allergens (comma separated)" onChange={(event) => setAllergensText(event.target.value)} value={allergensText} />
-                        <Input label="Dietary labels (comma separated)" onChange={(event) => setLabelsText(event.target.value)} value={labelsText} />
-                        <Input label="SEO title" onChange={(event) => setForm((current) => ({ ...current, seoTitle: event.target.value }))} value={form.seoTitle ?? ''} />
-                        <Textarea label="SEO description" onChange={(event) => setForm((current) => ({ ...current, seoDescription: event.target.value }))} value={form.seoDescription ?? ''} />
-                        <div className="grid gap-3 sm:grid-cols-3">
-                            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm">
-                                <input checked={form.isAvailable} onChange={(event) => setForm((current) => ({ ...current, isAvailable: event.target.checked }))} type="checkbox" />
-                                Available
-                            </label>
-                            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm">
-                                <input checked={form.isPopular} onChange={(event) => setForm((current) => ({ ...current, isPopular: event.target.checked }))} type="checkbox" />
-                                Popular
-                            </label>
-                            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm">
-                                <input checked={form.isFeatured} onChange={(event) => setForm((current) => ({ ...current, isFeatured: event.target.checked }))} type="checkbox" />
-                                Featured
-                            </label>
+                        <div className="lg:col-span-2">
+                            <Input label="Dietary labels (comma separated)" onChange={(event) => setLabelsText(event.target.value)} value={labelsText} />
+                        </div>
+                        <div className="lg:col-span-2">
+                            <Textarea label="SEO description" onChange={(event) => setForm((current) => ({ ...current, seoDescription: event.target.value }))} value={form.seoDescription ?? ''} />
                         </div>
                     </div>
-                    <div className="mt-5 flex flex-wrap gap-3">
-                        <Button
-                            disabled={saveMutation.isPending}
-                            onClick={() => saveMutation.mutate({
-                                ...form,
-                                ingredients: splitTags(ingredientsText),
-                                allergens: splitTags(allergensText),
-                                dietaryLabels: splitTags(labelsText),
-                            })}
-                            size="sm"
-                        >
+
+                    <div className="grid gap-3 sm:grid-cols-3">
+                        <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm">
+                            <input checked={form.isAvailable} onChange={(event) => setForm((current) => ({ ...current, isAvailable: event.target.checked }))} type="checkbox" />
+                            Available
+                        </label>
+                        <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm">
+                            <input checked={form.isPopular} onChange={(event) => setForm((current) => ({ ...current, isPopular: event.target.checked }))} type="checkbox" />
+                            Popular
+                        </label>
+                        <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm">
+                            <input checked={form.isFeatured} onChange={(event) => setForm((current) => ({ ...current, isFeatured: event.target.checked }))} type="checkbox" />
+                            Featured
+                        </label>
+                    </div>
+
+                    <div className="mb-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <Button disabled={saveMutation.isPending} onClick={closeEditor} type="button" variant="ghost">
+                            Cancel
+                        </Button>
+                        <Button disabled={saveMutation.isPending} type="submit">
                             {editingFood ? 'Update food' : 'Create food'}
                         </Button>
-                        {editingFood ? <Button disabled={saveMutation.isPending} onClick={resetForm} size="sm" variant="ghost">Cancel edit</Button> : null}
                     </div>
-                </AdminSectionCard>
-            </div>
+                </form>
+            </Modal>
         </div>
     );
 }

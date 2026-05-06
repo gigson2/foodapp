@@ -102,7 +102,7 @@ export function AdminNotificationsPage() {
         <div className="space-y-6">
             <AdminPageHeader
                 actions={<Button disabled={markAllMutation.isPending || !hasUnreadNotifications} onClick={() => markAllMutation.mutate()} size="sm" variant="secondary">Mark all read</Button>}
-                description="Review new order alerts, pending review notices, and other operational notifications generated from the live restaurant data."
+                description="Review new order alerts, pending review notices, and other operational notifications."
                 title="Notifications"
             />
 

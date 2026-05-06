@@ -30,12 +30,21 @@ function emptyCategoryForm(): AdminCategoryFormInput {
     };
 }
 
+function slugify(value: string) {
+    return value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
 export function AdminCategoriesPage() {
     const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [search, setSearch] = useState('');
     const [active, setActive] = useState<boolean | ''>('');
+    const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<AdminCategoryRecord | null>(null);
     const [viewingCategoryId, setViewingCategoryId] = useState<string | null>(null);
     const [form, setForm] = useState<AdminCategoryFormInput>(emptyCategoryForm());
@@ -62,9 +71,7 @@ export function AdminCategoriesPage() {
             ]);
             publishPublicContentUpdate('categories');
             publishPublicContentUpdate('foods');
-            setEditingCategory(null);
-            setForm(emptyCategoryForm());
-            setImagePreview(null);
+            closeEditor();
         },
     });
 
@@ -157,6 +164,17 @@ export function AdminCategoriesPage() {
         },
     ];
 
+    const resetEditorState = () => {
+        setEditingCategory(null);
+        setForm(emptyCategoryForm());
+        setImagePreview(null);
+    };
+
+    const openCreateModal = () => {
+        resetEditorState();
+        setIsEditorOpen(true);
+    };
+
     const startEditing = (category: AdminCategoryRecord) => {
         setEditingCategory(category);
         setForm({
@@ -168,80 +186,115 @@ export function AdminCategoriesPage() {
             image: null,
         });
         setImagePreview(category.image ?? null);
+        setIsEditorOpen(true);
+    };
+
+    const closeEditor = () => {
+        setIsEditorOpen(false);
+        resetEditorState();
     };
 
     return (
         <div className="space-y-6">
             <AdminPageHeader
-                actions={<Button onClick={() => { setEditingCategory(null); setForm(emptyCategoryForm()); setImagePreview(null); }} size="sm">{editingCategory ? 'Create new category' : 'Reset form'}</Button>}
-                description="Maintain the restaurant menu categories, sort order, active state, and category artwork used across the store and admin."
+                actions={(
+                    <Button className="w-full sm:w-auto" onClick={openCreateModal} size="sm">
+                        Add category
+                    </Button>
+                )}
+                description="Maintain menu categories, sort order, active state, and category artwork."
                 title="Categories"
             />
 
-            <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-                <AdminSectionCard className="overflow-hidden">
-                    <div className="grid gap-4 border-b border-white/10 px-5 py-5 lg:grid-cols-[1.2fr_0.7fr]">
-                        <AdminSearchInput label="Search" onChange={(value) => { setSearch(value); setPage(1); }} placeholder="Search categories by name or slug" value={search} />
-                        <AdminFilterSelect
-                            label="Status"
-                            onChange={(value) => { setActive(value === '' ? '' : value === 'true'); setPage(1); }}
-                            options={[
-                                { label: 'All', value: '' },
-                                { label: 'Active', value: 'true' },
-                                { label: 'Inactive', value: 'false' },
-                            ]}
-                            value={active === '' ? '' : String(active)}
-                        />
-                    </div>
+            <AdminSectionCard className="overflow-hidden">
+                <div className="grid gap-4 border-b border-white/10 px-4 py-5 sm:px-5 md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(14rem,0.8fr)]">
+                    <AdminSearchInput label="Search" onChange={(value) => { setSearch(value); setPage(1); }} placeholder="Search categories by name or slug" value={search} />
+                    <AdminFilterSelect
+                        label="Status"
+                        onChange={(value) => { setActive(value === '' ? '' : value === 'true'); setPage(1); }}
+                        options={[
+                            { label: 'All', value: '' },
+                            { label: 'Active', value: 'true' },
+                            { label: 'Inactive', value: 'false' },
+                        ]}
+                        value={active === '' ? '' : String(active)}
+                    />
+                </div>
 
-                    {meta ? (
-                        <AdminDataTable
-                            columns={columns}
-                            currentPage={page}
-                            data={categories}
-                            loading={categoriesQuery.isLoading}
-                            perPage={perPage}
-                            totalRows={meta.total}
-                            onPageChange={setPage}
-                            onPerPageChange={(nextPerPage) => {
-                                setPerPage(nextPerPage);
-                                setPage(1);
+                {meta ? (
+                    <AdminDataTable
+                        columns={columns}
+                        currentPage={page}
+                        data={categories}
+                        loading={categoriesQuery.isLoading}
+                        perPage={perPage}
+                        totalRows={meta.total}
+                        onPageChange={setPage}
+                        onPerPageChange={(nextPerPage) => {
+                            setPerPage(nextPerPage);
+                            setPage(1);
+                        }}
+                    />
+                ) : null}
+            </AdminSectionCard>
+
+            <Modal
+                isOpen={isEditorOpen}
+                onClose={closeEditor}
+                panelClassName="max-w-3xl"
+                title={editingCategory ? 'Edit category' : 'Add category'}
+            >
+                <form
+                    className="space-y-5"
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        saveMutation.mutate(form);
+                    }}
+                >
+                    <div className="grid gap-4 lg:grid-cols-2">
+                        <Input
+                            label="Name"
+                            onChange={(event) => {
+                                const name = event.target.value;
+                                setForm((current) => ({ ...current, name, slug: slugify(name) }));
                             }}
+                            value={form.name}
                         />
-                    ) : null}
-                </AdminSectionCard>
-
-                <AdminSectionCard className="p-5 sm:p-6">
-                    <h2 className="text-2xl">{editingCategory ? 'Edit category' : 'Add category'}</h2>
-                    <div className="mt-5 grid gap-4">
-                        <Input label="Name" onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} value={form.name} />
-                        <Input label="Slug" onChange={(event) => setForm((current) => ({ ...current, slug: event.target.value }))} value={form.slug} />
-                        <Textarea label="Description" onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} value={form.description ?? ''} />
+                        <Input label="Slug" readOnly value={form.slug} />
+                        <div className="lg:col-span-2">
+                            <Textarea label="Description" onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} value={form.description ?? ''} />
+                        </div>
                         <Input label="Sort order" onChange={(event) => setForm((current) => ({ ...current, sortOrder: Number(event.target.value) }))} type="number" value={form.sortOrder} />
-                        <AdminImageUploadField
-                            helperText="Upload a category image or icon."
-                            label="Category image"
-                            onChange={(file) => {
-                                setForm((current) => ({ ...current, image: file }));
-                                setImagePreview(file ? URL.createObjectURL(file) : (editingCategory?.image ?? null));
-                            }}
-                            previewAlt={form.name || 'Category preview'}
-                            previewSrc={imagePreview ?? editingCategory?.image ?? null}
-                        />
-                        <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm">
+                        <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm lg:mt-8">
                             <input checked={form.isActive} onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.checked }))} type="checkbox" />
                             Active
                         </label>
+                        <div className="lg:col-span-2">
+                            <AdminImageUploadField
+                                helperText="Upload a category image or icon."
+                                label="Category image"
+                                onChange={(file) => {
+                                    setForm((current) => ({ ...current, image: file }));
+                                    setImagePreview(file ? URL.createObjectURL(file) : (editingCategory?.image ?? null));
+                                }}
+                                previewAlt={form.name || 'Category preview'}
+                                previewSrc={imagePreview ?? editingCategory?.image ?? null}
+                            />
+                        </div>
                     </div>
-                    <div className="mt-5 flex flex-wrap gap-3">
-                        <Button disabled={saveMutation.isPending} onClick={() => saveMutation.mutate(form)} size="sm">{editingCategory ? 'Update category' : 'Create category'}</Button>
-                        {editingCategory ? <Button disabled={saveMutation.isPending} onClick={() => { setEditingCategory(null); setForm(emptyCategoryForm()); setImagePreview(null); }} size="sm" variant="ghost">Cancel edit</Button> : null}
+
+                    <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <Button disabled={saveMutation.isPending} onClick={closeEditor} type="button" variant="ghost">
+                            Cancel
+                        </Button>
+                        <Button disabled={saveMutation.isPending} type="submit">
+                            {editingCategory ? 'Update category' : 'Create category'}
+                        </Button>
                     </div>
-                </AdminSectionCard>
-            </div>
+                </form>
+            </Modal>
 
             <Modal
-                description="Category details and storefront visibility information."
                 isOpen={viewingCategoryId !== null}
                 onClose={() => setViewingCategoryId(null)}
                 panelClassName="max-w-2xl"

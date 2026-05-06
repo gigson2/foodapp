@@ -14,6 +14,7 @@ import { PopularGrillsSection } from '@/components/home/PopularGrillsSection';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { IconButton } from '@/components/common/IconButton';
+import { SiteFooter } from '@/components/common/SiteFooter';
 import { DesktopHeader } from '@/components/layout/DesktopHeader';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { TabletHeader } from '@/components/layout/TabletHeader';
@@ -737,7 +738,7 @@ export function AppShell() {
                                 <p className="section-eyebrow">Account access</p>
                                 <h2 className="mt-4 text-4xl sm:text-5xl">Sign in from the storefront</h2>
                                 <p className="mt-4 max-w-2xl text-base leading-8 text-muted">
-                                    Admin users are sent directly to the operations dashboard. Customer users stay on the public app and can open their dashboard whenever they want.
+                                    Sign in to manage your orders, save your details, and access your account whenever you need it.
                                 </p>
                             </div>
                             <div className="flex flex-col gap-3 sm:flex-row">
@@ -751,6 +752,7 @@ export function AppShell() {
                         </div>
                     </Card>
                 </section>
+                <SiteFooter className="section-shell pt-0 pb-8 md:pb-4" />
             </main>
 
             <MobileBottomNav

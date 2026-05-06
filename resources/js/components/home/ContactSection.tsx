@@ -14,7 +14,7 @@ export function ContactSection({ companySettings, onOrderNow }: ContactSectionPr
     const companyName = getCompanyName(companySettings);
     const locationLabel = getCompanyAddress(companySettings);
     const locationShortLabel = getCompanyLocationLabel(companySettings);
-    const fridayHours = companySettings?.opening_hours?.friday ?? 'Pre-orders open';
+    const fridayHours = companySettings?.opening_hours?.friday ?? 'Pre-orders start';
     const saturdayHours = companySettings?.opening_hours?.saturday ?? '11:00 AM - 10:00 PM';
     const orderingCutoff = companySettings?.opening_hours?.ordering_cutoff ?? 'Saturday 9:00 PM';
     const phoneLabel = companySettings?.phone ?? 'Phone number coming soon';
@@ -48,7 +48,7 @@ export function ContactSection({ companySettings, onOrderNow }: ContactSectionPr
                             <div className="ui-surface-solid ui-outline-gold rounded-2xl p-5">
                                 <MapPin className="mx-auto h-5 w-5 text-[color:var(--primary-500)]" />
                                 <h3 className="mt-4 text-2xl">Ordering Schedule</h3>
-                                <p className="mt-3 text-sm leading-7 text-muted">Friday: {fridayHours}. Saturday preparation and pickup run {saturdayHours}, with final ordering at {orderingCutoff}.</p>
+                                <p className="mt-3 text-sm leading-7 text-muted">Thursday: {fridayHours}. Saturday preparation and pickup run {saturdayHours}, with final ordering at {orderingCutoff}.</p>
                             </div>
                         </div>
 

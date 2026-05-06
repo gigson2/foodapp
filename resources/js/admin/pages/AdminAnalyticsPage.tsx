@@ -148,7 +148,7 @@ export function AdminAnalyticsPage() {
     return (
         <div className="space-y-6">
             <AdminPageHeader
-                description="Track visitor behavior, top-performing foods, and recent activity signals from the live restaurant data set."
+                description="Track visitor activity, top-performing foods, and recent traffic trends."
                 title="Analytics"
             />
 

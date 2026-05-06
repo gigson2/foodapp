@@ -1,39 +1,91 @@
 # Testing Guide
 
-## Phase 1 automated checks
+This repository already contains backend feature coverage for the main production flows and frontend quality gates for linting, type safety, and builds.
 
-Run:
+## Automated checks
+
+Run the full standard verification set:
 
 ```powershell
-php artisan route:list
 php artisan test
+npm.cmd run lint
 npm.cmd run typecheck
 npm.cmd run build
 ```
 
-## Manual QA checklist for this phase
+## Current backend coverage
 
-- Load `/` and confirm the React storefront renders.
-- Toggle dark, light, and system theme modes.
-- Refresh the page and confirm the theme preference persists.
-- Navigate to `/customer` and `/admin`.
-- Open the application in DevTools and confirm `manifest.webmanifest` is linked.
-- Confirm `sw.js` registers without console errors.
-- Disable network in DevTools and verify `/offline.html` is available.
+The feature tests in `tests/Feature` cover:
 
-## Phase 2+ planned automated tests
+- session authentication
+- admin phone login
+- password recovery
+- admin dashboard access
+- admin order management
+- admin food management
+- admin customer password reset
+- customer order listing
+- customer duplicate-order protection
+- public payload exposure boundaries
 
-- Registration and login flows.
-- Admin access denial for customers.
-- Food and category CRUD validation.
-- Order creation, pricing, and state transitions.
-- Notification creation and read-state behavior.
-- Visitor analytics event capture.
-- Dashboard metrics aggregation.
+## Recommended release gate
 
-## Regression rule
-
-Every phase should leave both of these green before moving on:
+Treat a release as blocked if any of the following fail:
 
 - `php artisan test`
-- `npm.cmd run build`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+## Manual QA checklist
+
+### Storefront
+
+- homepage loads without console errors
+- menu, categories, reviews, and company settings load from the API
+- ordering modal works on mobile and desktop
+- offline fallback loads when navigation is attempted without network
+- favicon, title, and SEO metadata reflect database content
+
+### Authentication
+
+- customer registration succeeds
+- customer login succeeds
+- admin login succeeds
+- logout clears the session cleanly
+- password recovery request and reset succeed
+
+### Customer portal
+
+- dashboard metrics load
+- orders list and order details load
+- notifications mark-read flows work
+- profile update and password change work
+- review submission works
+
+### Admin console
+
+- dashboard overview loads with charts and queue widgets
+- orders table loads and order quick view modal works
+- menu modal add and edit flows work
+- category modal add and edit flows work
+- SEO modal add and edit flows work
+- company settings save correctly
+- reviews moderation works
+- notification broadcast works
+
+### Push notifications
+
+- browser permission prompt appears when expected
+- subscription is saved after permission is granted
+- test notification reaches the device
+- clicking a notification opens the intended app route
+
+## Environment-specific checks
+
+Before a production release, also verify:
+
+- HTTPS cookies behave correctly on the real domain
+- `SANCTUM_STATEFUL_DOMAINS` and CORS settings match the deployment hostnames
+- mail delivery works from the live environment
+- queue worker and scheduler are running

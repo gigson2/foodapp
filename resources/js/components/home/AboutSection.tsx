@@ -1,4 +1,3 @@
-import { Button } from '@/components/common/Button';
 import { SectionContainer } from '@/components/layout/SectionContainer';
 import { getCompanyAbout, getCompanyName, getCompanyTagline } from '@/utils/company';
 import type { CompanySettings } from '@/types';
@@ -41,9 +40,6 @@ export function AboutSection({ companySettings }: AboutSectionProps) {
                         <p className="mt-5 text-base leading-8 text-muted">
                             {taglineText}
                         </p>
-                        <Button className="mt-10" size="lg">
-                            More About
-                        </Button>
                     </div>
 
                     <div className="overflow-hidden rounded-[1.75rem] lg:-mt-32">

@@ -238,7 +238,7 @@ export function AdminDashboardPage() {
                                     <h2 className="mt-2 text-2xl">Alert readiness</h2>
                                 </div>
                             </div>
-                            <p className="mt-4 text-sm leading-7 text-muted">Admin alerts reflect live order and review activity from the database and support faster kitchen and pickup coordination.</p>
+                            <p className="mt-4 text-sm leading-7 text-muted">Admin alerts help staff stay on top of orders and review activity throughout the day.</p>
                         </AdminSectionCard>
                         <AdminSectionCard className="p-5">
                             <div className="flex items-center gap-3">

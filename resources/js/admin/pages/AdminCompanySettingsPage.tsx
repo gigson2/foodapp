@@ -94,11 +94,11 @@ export function AdminCompanySettingsPage() {
                         <div className="lg:col-span-2">
                             <Textarea label="Pickup instructions" onChange={(event) => setDraftForm((current) => ({ ...(current ?? baseForm), pickupInstructions: event.target.value }))} value={form.pickupInstructions} />
                         </div>
-                        <div className="lg:col-span-2">
+                        <div>
                             <Input label="Cash-only notice" onChange={(event) => setDraftForm((current) => ({ ...(current ?? baseForm), cashOnlyNotice: event.target.value }))} value={form.cashOnlyNotice} />
                         </div>
                         <Input
-                            label="Friday schedule"
+                            label="Thursday schedule"
                             onChange={(event) => setDraftForm((current) => ({ ...(current ?? baseForm), openingHours: { ...(current ?? baseForm).openingHours, friday: event.target.value } }))}
                             value={form.openingHours.friday ?? ''}
                         />

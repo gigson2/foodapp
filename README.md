@@ -1,196 +1,226 @@
-# Restaurant SPA PWA Ordering Platform
+# IDDRISSA
 
-Laravel 12 + React 19 + TypeScript + TailwindCSS 4 foundation for a premium restaurant ordering platform with separated public, customer, and admin experiences.
+IDDRISSA is a production-ready Laravel and React pickup-ordering platform for Dri Africain Traditional Grill LLC. It ships a public storefront, a customer portal, and an admin console in a single SPA-backed application, using Laravel 12 for the API and React 19 for the frontend.
 
-## Phase 1 status
+## What the application includes
 
-Completed in this repository:
+- Public storefront with live menu, categories, reviews, company settings, SEO metadata, and visitor tracking.
+- Customer account area for dashboard metrics, order history, notifications, reviews, profile updates, password changes, and guest-order claiming.
+- Admin console for dashboard analytics, orders, menu management, categories, reviews, customers, notifications, company settings, SEO settings, and PWA notification setup.
+- Session-based SPA authentication with Laravel Sanctum and role-based route protection for admin and customer areas.
+- Push notifications with browser subscriptions stored in the database and delivered through `minishlink/web-push`.
+- PWA support with `manifest.webmanifest`, `service-worker.js`, and `offline.html`.
 
-- Laravel `12.58` foundation with Sanctum installed and stateful SPA middleware enabled.
-- React + TypeScript SPA shell mounted through a single Blade entry.
-- Dark mode by default with light/system switching and local persistence.
-- Public storefront foundation with polished menu discovery UI.
-- Customer and admin dashboard shells routed separately.
-- Initial PWA primitives: `manifest.webmanifest`, `sw.js`, and `offline.html`.
-- AI agent and skill documentation under `.ai/`.
-
-## Recommended architecture
+## Technology stack
 
 ### Backend
 
-- `app/Actions` for command-style write operations.
-- `app/DTOs` for validated payload transport objects.
-- `app/Enums` for `UserRole`, order state, payment state, and similar domain constants.
-- `app/Http/Controllers/Api/Public|Customer|Admin` for explicit API boundaries.
-- `app/Http/Requests` for validation and authorization per action.
-- `app/Http/Resources` for stable JSON contracts.
-- `app/Services` for pricing, orders, notifications, visitor tracking, and dashboard metrics.
-- `app/Policies` for admin/customer authorization rules.
-- `app/Support` for shared helpers, metadata, and infrastructure glue.
+- PHP `8.3+`
+- Laravel `12`
+- Laravel Sanctum
+- MySQL or MariaDB
+- Database-backed queue, cache, and session storage by default
+- `minishlink/web-push` for browser push delivery
 
 ### Frontend
 
-- `resources/js/layouts` for public/customer/admin shells.
-- `resources/js/pages` for route-level screens.
-- `resources/js/components` for shared UI and feature cards.
-- `resources/js/providers` for theme and server-state plumbing.
-- `resources/js/stores` for cart and auth state.
-- `resources/js/lib` for HTTP and utility helpers.
-- `resources/js/data` for temporary Phase 1 view data until public APIs land in Phase 3.
+- React `19`
+- TypeScript
+- Vite `8`
+- React Router `7`
+- TanStack Query
+- Zustand
+- React Hook Form + Zod
+- Tailwind CSS `4`
+- ECharts + `echarts-for-react`
+- `react-data-table-component`
 
-## Exact installation commands
+## Product architecture
 
-### Windows PowerShell / XAMPP
+### Application surfaces
+
+- `/` renders the public storefront.
+- `/customer/*` renders the authenticated customer portal.
+- `/admin/*` renders the authenticated admin console.
+- `/admin/login` is the dedicated admin login route.
+
+### API boundaries
+
+- `routes/api.php` exposes public, auth, customer, admin, and push-notification endpoints.
+- `routes/web.php` serves the SPA shell and excludes `api`, `sanctum`, and `storage` paths.
+- Role restrictions are enforced server-side with the `role` middleware alias in `bootstrap/app.php`.
+
+### Key backend domains
+
+- `users`, `customer_profiles`, `notification_preferences`
+- `categories`, `foods`
+- `orders`, `order_items`
+- `reviews`
+- `company_settings`, `seo_settings`
+- `visitor_sessions`, `visitor_events`
+- `push_subscriptions`
+- `password_reset_otps`
+- Laravel `notifications`, `sessions`, `cache`, and `jobs`
+
+### Key frontend directories
+
+- `resources/js/components` shared storefront and common UI
+- `resources/js/customer` customer application module
+- `resources/js/admin` admin application module
+- `resources/js/services` public/auth/shared service layer
+- `resources/js/routes` root route registration
+
+## Local setup
+
+### Requirements
+
+- PHP `8.3+`
+- Composer `2.8+`
+- Node.js `24+`
+- MySQL `8+` or compatible MariaDB version
+
+### First-time install
 
 ```powershell
 cd C:\xampp\htdocs\iddrissa
 composer install
 Copy-Item .env.example .env -Force
 php artisan key:generate
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS restaurant_spa CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-php artisan migrate
 npm.cmd install
-npm.cmd run build
-php artisan storage:link
-composer run dev
 ```
 
-### Cross-platform equivalent
+Create the database configured in `.env`, then run:
 
-```bash
-composer install
-cp .env.example .env
-php artisan key:generate
+```powershell
 php artisan migrate
-npm install
-npm run build
 php artisan storage:link
+npm.cmd run build
+```
+
+If you want seeded content for local development:
+
+```powershell
+php artisan db:seed
+```
+
+The seed data creates company settings, SEO settings, categories, foods, and a bootstrap admin account. Treat seeded credentials as development-only and rotate or remove them before any shared or production environment.
+
+### Day-to-day local development
+
+```powershell
 composer run dev
 ```
 
-## Dependency list
+That starts:
 
-### Backend
+- Laravel HTTP server
+- queue listener
+- `pail` log viewer
+- Vite dev server
 
-- `laravel/framework:^12.0`
-- `laravel/sanctum:^4.3`
-- `laravel/tinker:^3.0`
+## Environment configuration
 
-### Frontend runtime
+Review `.env.example` before deployment. The main variables you will typically set are:
 
-- `react`
-- `react-dom`
-- `react-router-dom`
-- `axios`
-- `@tanstack/react-query`
-- `zustand`
-- `react-hook-form`
-- `zod`
-- `@hookform/resolvers`
-- `lucide-react`
-- `clsx`
-- `tailwind-merge`
-- `class-variance-authority`
-- `sonner`
+- `APP_NAME`
+- `APP_ENV`
+- `APP_DEBUG`
+- `APP_URL`
+- `FRONTEND_URL`
+- `DB_*`
+- `SESSION_*`
+- `SANCTUM_STATEFUL_DOMAINS`
+- `CORS_ALLOWED_ORIGINS`
+- `QUEUE_CONNECTION`
+- `CACHE_STORE`
+- `MAIL_*`
+- `VITE_VAPID_PUBLIC_KEY`
+- `VAPID_SUBJECT`
+- `VAPID_PUBLIC_KEY`
+- `VAPID_PRIVATE_KEY`
 
-### Frontend build tooling
+### Session and SPA auth notes
 
-- `typescript`
-- `@vitejs/plugin-react`
-- `vite`
-- `laravel-vite-plugin`
-- `tailwindcss`
-- `@tailwindcss/vite`
+- Authentication is cookie-based, not bearer-token based, for the normal web app.
+- Write requests automatically bootstrap the Sanctum CSRF cookie through the shared Axios client.
+- `GET /api/me` is the source of truth for the current signed-in user.
 
-### PWA note
+## Background processing
 
-`vite-plugin-pwa` was intentionally not installed because the currently resolved package line does not support the Laravel starter's `Vite 8` dependency tree. Phase 1 uses a manual manifest + service worker foundation instead of forcing an unstable peer-dependency override.
+Two runtime processes matter in production:
 
-## Folder structure
+1. A queue worker for queued notifications and other async work.
+2. The Laravel scheduler, which is configured in `routes/console.php` to run a queue worker every minute on shared-hosting style setups.
 
-```text
-app/
-  Actions/
-  DTOs/
-  Enums/
-  Http/
-    Controllers/
-      Api/
-        Admin/
-        Auth/
-        Customer/
-        Public/
-    Middleware/
-    Resources/
-  Notifications/
-  Policies/
-  Services/
-  Support/
-resources/
-  css/
-  js/
-    components/
-    data/
-    layouts/
-    lib/
-    pages/
-    providers/
-    stores/
-    types/
-  views/
-routes/
-  api.php
-  web.php
-public/
-  icons/
-  manifest.webmanifest
-  offline.html
-  sw.js
-.ai/
-  agents/
-  skills/
+If you deploy to a server with a supervisor or service manager, prefer a long-running queue worker plus a standard `schedule:run` cron entry.
+
+## Notifications and PWA
+
+- The service worker is served from `public/service-worker.js`.
+- The PWA manifest is `public/manifest.webmanifest`.
+- Offline fallback is `public/offline.html`.
+- Push subscriptions are saved through `/api/push-subscriptions`.
+- Test notifications are sent through `/api/push-notifications/test`.
+
+Production push delivery requires valid VAPID keys and HTTPS.
+
+## Main API groups
+
+### Public
+
+- `GET /api/health`
+- `GET /api/foods`
+- `GET /api/foods/{slug}`
+- `GET /api/categories`
+- `GET /api/company-settings`
+- `GET /api/reviews`
+- `POST /api/visitor-events`
+
+### Authentication
+
+- `POST /api/register`
+- `POST /api/login`
+- `POST /api/password/forgot`
+- `POST /api/password/reset`
+- `GET /api/me`
+- `POST /api/logout`
+
+### Customer
+
+- dashboard
+- orders
+- notifications
+- reviews
+- profile
+- push subscriptions
+
+### Admin
+
+- dashboard overview
+- orders and status updates
+- menu and categories
+- customers
+- visitors and analytics
+- reviews
+- notifications
+- company settings
+- SEO settings
+- profile
+
+## Verification commands
+
+Run these before merging or releasing:
+
+```powershell
+php artisan test
+npm.cmd run lint
+npm.cmd run typecheck
+npm.cmd run build
 ```
 
-## Key files created in Phase 1
+## Production references
 
-- `bootstrap/app.php`
-- `routes/api.php`
-- `routes/web.php`
-- `resources/views/app.blade.php`
-- `resources/js/app.tsx`
-- `resources/js/router.tsx`
-- `resources/js/layouts/marketing-layout.tsx`
-- `resources/js/pages/public/home-page.tsx`
-- `resources/js/pages/customer/customer-dashboard.tsx`
-- `resources/js/pages/admin/admin-dashboard.tsx`
-- `resources/js/providers/theme-provider.tsx`
-- `public/manifest.webmanifest`
-- `public/sw.js`
-- `.ai/agents/*.md`
-- `.ai/skills/*.md`
-
-## Verification checklist for Phase 1
-
-- `php artisan --version` returns a Laravel 12.x version.
-- `php artisan route:list` shows the SPA route plus `/api/health` and `/api/me`.
-- `npm.cmd run build` completes successfully.
-- Loading `/` shows the React storefront instead of the default Laravel welcome screen.
-- Theme toggle switches between dark, light, and system preferences.
-- `/customer` and `/admin` render their dashboard shells.
-- DevTools shows a registered service worker and linked web manifest.
-
-## Common errors to check
-
-- MySQL database missing or misnamed in `.env`.
-- `npm` PowerShell execution-policy failures: use `npm.cmd` on Windows.
-- Session/auth issues if `APP_URL`, `FRONTEND_URL`, and `SANCTUM_STATEFUL_DOMAINS` do not reflect your local hostname.
-- Cached config after env changes: run `php artisan optimize:clear`.
-
-## Next phase recommendation
-
-Phase 2 should focus on database-first backend foundation:
-
-- Replace the default Laravel user migration with the full restaurant schema.
-- Add enums for order, payment, and visitor event state.
-- Build models, relationships, factories, seeders, and policy scaffolding.
-- Seed a real menu and company profile so Phase 3 can swap the current static storefront dataset to live APIs.
+- `DEPLOYMENT.md` for release and runtime operations
+- `SECURITY.md` for reporting and hardening expectations
+- `TESTING.md` for automated and manual QA guidance
+- `docs/` for product-area and operational notes

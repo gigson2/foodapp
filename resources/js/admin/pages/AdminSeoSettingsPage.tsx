@@ -10,6 +10,7 @@ import { AdminSectionCard } from '@/admin/components/common/AdminSectionCard';
 import { adminSettingsService, type AdminSeoInput, type AdminSeoRecord } from '@/admin/services/adminSettingsService';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
+import { Modal } from '@/components/common/Modal';
 import { Textarea } from '@/components/common/Textarea';
 
 function emptySeoForm(): AdminSeoInput {
@@ -28,6 +29,7 @@ export function AdminSeoSettingsPage() {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [search, setSearch] = useState('');
+    const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [editingRecord, setEditingRecord] = useState<AdminSeoRecord | null>(null);
     const [form, setForm] = useState<AdminSeoInput>(emptySeoForm());
     const [schemaJsonText, setSchemaJsonText] = useState('{}');
@@ -43,10 +45,7 @@ export function AdminSeoSettingsPage() {
         onSuccess: async () => {
             toast.success(editingRecord ? 'SEO setting updated' : 'SEO setting created');
             await queryClient.invalidateQueries({ queryKey: ['admin-app', 'seo-settings'] });
-            setEditingRecord(null);
-            setForm(emptySeoForm());
-            setSchemaJsonText('{}');
-            setImagePreview(null);
+            closeEditor();
         },
     });
 
@@ -57,6 +56,38 @@ export function AdminSeoSettingsPage() {
             await queryClient.invalidateQueries({ queryKey: ['admin-app', 'seo-settings'] });
         },
     });
+
+    const resetEditorState = () => {
+        setEditingRecord(null);
+        setForm(emptySeoForm());
+        setSchemaJsonText('{}');
+        setImagePreview(null);
+    };
+
+    const openCreateModal = () => {
+        resetEditorState();
+        setIsEditorOpen(true);
+    };
+
+    const openEditModal = (record: AdminSeoRecord) => {
+        setEditingRecord(record);
+        setForm({
+            pageKey: record.pageKey,
+            title: record.title ?? '',
+            description: record.description ?? '',
+            keywords: record.keywords ?? '',
+            schemaJson: record.schemaJson,
+            ogImage: null,
+        });
+        setSchemaJsonText(JSON.stringify(record.schemaJson, null, 2));
+        setImagePreview(record.ogImage ?? null);
+        setIsEditorOpen(true);
+    };
+
+    const closeEditor = () => {
+        setIsEditorOpen(false);
+        resetEditorState();
+    };
 
     const records = seoQuery.data?.items ?? [];
     const meta = seoQuery.data?.meta;
@@ -85,30 +116,17 @@ export function AdminSeoSettingsPage() {
             button: true,
             cell: (record) => (
                 <div className="flex gap-3">
-                    <button
-                        className="text-sm font-semibold text-[color:var(--primary-500)]"
-                        onClick={() => {
-                            setEditingRecord(record);
-                            setForm({
-                                pageKey: record.pageKey,
-                                title: record.title ?? '',
-                                description: record.description ?? '',
-                                keywords: record.keywords ?? '',
-                                schemaJson: record.schemaJson,
-                                ogImage: null,
-                            });
-                            setSchemaJsonText(JSON.stringify(record.schemaJson, null, 2));
-                            setImagePreview(record.ogImage ?? null);
-                        }}
-                        type="button"
-                    >
+                    <button className="text-sm font-semibold text-[color:var(--primary-500)]" onClick={() => openEditModal(record)} type="button">
                         Edit
                     </button>
-                    <button className="text-sm font-semibold text-rose-300" onClick={() => deleteMutation.mutate(record.id)} type="button">Delete</button>
+                    <button className="text-sm font-semibold text-rose-300" onClick={() => deleteMutation.mutate(record.id)} type="button">
+                        Delete
+                    </button>
                 </div>
             ),
         },
     ];
+
     const handleSave = () => {
         try {
             saveMutation.mutate({
@@ -123,60 +141,80 @@ export function AdminSeoSettingsPage() {
     return (
         <div className="space-y-6">
             <AdminPageHeader
-                actions={<Button onClick={() => { setEditingRecord(null); setForm(emptySeoForm()); setSchemaJsonText('{}'); setImagePreview(null); }} size="sm">{editingRecord ? 'Create new setting' : 'Reset form'}</Button>}
-                description="Manage searchable SEO records for the storefront, including metadata, Open Graph images, and structured schema JSON."
+                actions={<Button className="w-full sm:w-auto" onClick={openCreateModal} size="sm">Add SEO setting</Button>}
+                description="Manage page titles, descriptions, keywords, and sharing images."
                 title="SEO settings"
             />
 
-            <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-                <AdminSectionCard className="overflow-hidden">
-                    <div className="border-b border-white/10 px-5 py-5">
-                        <AdminSearchInput label="Search" onChange={(value) => { setSearch(value); setPage(1); }} placeholder="Search by page key, title, or description" value={search} />
-                    </div>
-                    {meta ? (
-                        <AdminDataTable
-                            columns={columns}
-                            currentPage={page}
-                            data={records}
-                            loading={seoQuery.isLoading}
-                            perPage={perPage}
-                            totalRows={meta.total}
-                            onPageChange={setPage}
-                            onPerPageChange={(nextPerPage) => {
-                                setPerPage(nextPerPage);
-                                setPage(1);
-                            }}
-                        />
-                    ) : null}
-                </AdminSectionCard>
+            <AdminSectionCard className="overflow-hidden">
+                <div className="border-b border-white/10 px-5 py-5">
+                    <AdminSearchInput label="Search" onChange={(value) => { setSearch(value); setPage(1); }} placeholder="Search by page key, title, or description" value={search} />
+                </div>
+                {meta ? (
+                    <AdminDataTable
+                        columns={columns}
+                        currentPage={page}
+                        data={records}
+                        loading={seoQuery.isLoading}
+                        perPage={perPage}
+                        totalRows={meta.total}
+                        onPageChange={setPage}
+                        onPerPageChange={(nextPerPage) => {
+                            setPerPage(nextPerPage);
+                            setPage(1);
+                        }}
+                    />
+                ) : null}
+            </AdminSectionCard>
 
-                <AdminSectionCard className="p-5 sm:p-6">
-                    <h2 className="text-2xl">{editingRecord ? 'Edit SEO setting' : 'Add SEO setting'}</h2>
-                    <div className="mt-5 grid gap-4">
+            <Modal
+                isOpen={isEditorOpen}
+                onClose={closeEditor}
+                panelClassName="max-w-3xl"
+                title={editingRecord ? 'Edit SEO setting' : 'Add SEO setting'}
+            >
+                <form
+                    className="space-y-5"
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        handleSave();
+                    }}
+                >
+                    <div className="grid gap-4 lg:grid-cols-2">
                         <Input label="Page key" onChange={(event) => setForm((current) => ({ ...current, pageKey: event.target.value }))} value={form.pageKey} />
                         <Input label="Title" onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} value={form.title ?? ''} />
-                        <Textarea label="Description" onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} value={form.description ?? ''} />
-                        <Input label="Keywords" onChange={(event) => setForm((current) => ({ ...current, keywords: event.target.value }))} value={form.keywords ?? ''} />
-                        <Textarea label="Schema JSON" onChange={(event) => setSchemaJsonText(event.target.value)} value={schemaJsonText} />
-                        <AdminImageUploadField
-                            helperText="Upload an image for Open Graph previews."
-                            label="Open Graph image"
-                            onChange={(file) => {
-                                setForm((current) => ({ ...current, ogImage: file }));
-                                setImagePreview(file ? URL.createObjectURL(file) : (editingRecord?.ogImage ?? null));
-                            }}
-                            previewAlt={form.pageKey || 'SEO image preview'}
-                            previewSrc={imagePreview ?? editingRecord?.ogImage ?? null}
-                        />
+                        <div className="lg:col-span-2">
+                            <Textarea label="Description" onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} value={form.description ?? ''} />
+                        </div>
+                        <div className="lg:col-span-2">
+                            <Input label="Keywords" onChange={(event) => setForm((current) => ({ ...current, keywords: event.target.value }))} value={form.keywords ?? ''} />
+                        </div>
+                        <div className="lg:col-span-2">
+                            <Textarea label="Schema JSON" onChange={(event) => setSchemaJsonText(event.target.value)} value={schemaJsonText} />
+                        </div>
+                        <div className="lg:col-span-2">
+                            <AdminImageUploadField
+                                helperText="Upload an image for social sharing previews."
+                                label="Sharing image"
+                                onChange={(file) => {
+                                    setForm((current) => ({ ...current, ogImage: file }));
+                                    setImagePreview(file ? URL.createObjectURL(file) : (editingRecord?.ogImage ?? null));
+                                }}
+                                previewAlt={form.pageKey || 'SEO image preview'}
+                                previewSrc={imagePreview ?? editingRecord?.ogImage ?? null}
+                            />
+                        </div>
                     </div>
-                    <div className="mt-5 flex flex-wrap gap-3">
-                        <Button disabled={saveMutation.isPending} onClick={handleSave} size="sm">
+                    <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <Button disabled={saveMutation.isPending} onClick={closeEditor} type="button" variant="ghost">
+                            Cancel
+                        </Button>
+                        <Button disabled={saveMutation.isPending} type="submit">
                             {editingRecord ? 'Update SEO setting' : 'Create SEO setting'}
                         </Button>
-                        {editingRecord ? <Button disabled={saveMutation.isPending} onClick={() => { setEditingRecord(null); setForm(emptySeoForm()); setSchemaJsonText('{}'); setImagePreview(null); }} size="sm" variant="ghost">Cancel edit</Button> : null}
                     </div>
-                </AdminSectionCard>
-            </div>
+                </form>
+            </Modal>
         </div>
     );
 }

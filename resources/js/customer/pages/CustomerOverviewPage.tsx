@@ -153,7 +153,7 @@ export function CustomerOverviewPage() {
                 <p className="section-eyebrow">Customer dashboard</p>
                 <h2 className="mt-4 text-4xl sm:text-5xl">Pickup overview</h2>
                 <p className="mt-4 max-w-3xl text-sm leading-7 text-muted sm:text-base">
-                    Track active pickup orders, recent notifications, and the review activity linked to your customer account.
+                    Track active pickup orders, recent notifications, and your latest review activity.
                 </p>
             </div>
 

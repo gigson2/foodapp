@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { useEffect, useId, useRef, type PropsWithChildren } from 'react';
+import { useEffect, useEffectEvent, useId, useRef, type PropsWithChildren } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/utils/classNames';
 
@@ -37,6 +37,9 @@ export function Modal({
     const descriptionId = useId();
     const panelRef = useRef<HTMLDivElement | null>(null);
     const previousFocused = useRef<Element | null>(null);
+    const handleClose = useEffectEvent(() => {
+        onClose();
+    });
 
     useEffect(() => {
         if (! isOpen) {
@@ -54,7 +57,7 @@ export function Modal({
         const handleKeydown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 event.preventDefault();
-                onClose();
+                handleClose();
             }
 
             if (event.key === 'Tab' && panelRef.current) {
@@ -87,7 +90,7 @@ export function Modal({
                 previousFocused.current.focus();
             }
         };
-    }, [isOpen, onClose]);
+    }, [isOpen]);
 
     if (! isOpen) {
         return null;
